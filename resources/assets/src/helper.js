@@ -10,11 +10,11 @@ export const UserAuth = {
     detak apakah sedang login atau tidak
     */
     isLogin(){
-        return store.getters.isLogin?true:false;
+        return this.store.getters.isLogin?true:false;
     },
     getUser(field){
-        if(store.state.user[field])return store.state.user[field];
-        return store.state.user;
+        if(this.store.state.user[field])return this.store.state.user[field];
+        return this.store.state.user;
     },
 };
 
@@ -25,5 +25,11 @@ export const AppTemplate = {
     isOnAdminArea(){
         return true;
     },
+    adminGetTitle(){
+        return this.store.getters.getAdminTitle;
+    },
+    setAdminTitle(newTitle){
+        this.store.dispatch('setAdminTitle', newTitle);
+    }
     
 }

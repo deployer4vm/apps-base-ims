@@ -2,14 +2,12 @@ import Vuex from "vuex";
 import VuexPersist from "vuex-persist";
 import projectStore from "../../../../app/MainApp/resources/js/store/store";
 import templateStore from "./modules/template";
-import authStore from "./modules/auth";
 
 window.Vue.use(Vuex);
 
 let vuexConfig = {
     modules: {
         template: templateStore,
-        auth: authStore,
         ...projectStore
     }
 };

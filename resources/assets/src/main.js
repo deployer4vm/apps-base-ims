@@ -18,37 +18,38 @@ Vue.config.productionTip = false;
 
 Vue.use(BootstrapVue);
 
-//register all project Modules vue component
-const moduleVueComponents = require.context(
-    "../../../app/MainApp/Modules",
-    true,
-    /components*\.vue$/i
-);
-moduleVueComponents.keys().forEach(key =>
-    Vue.component(
-        key
-            .split("/")
-            .pop()
-            .split(".")[0],
-        moduleVueComponents(key).default
-    )
-);
+// //register all project Modules vue component
+// const moduleVueComponents = require.context(
+//     "../../../app/MainApp/Modules",
+//     true,
+//     /components*\.vue$/i
+// );
+// moduleVueComponents.keys().forEach(key =>
+//     Vue.component(
+//         key
+//             .split("/")
+//             .pop()
+//             .split(".")[0],
+//         moduleVueComponents(key).default
+//     )
+// );
 
-//register project global vue component
-const projectVueComponents = require.context(
-    "../../../app/MainApp/resources/js/components",
-    true,
-    /\.vue$/i
-);
-projectVueComponents.keys().forEach(key =>
-    Vue.component(
-        key
-            .split("/")
-            .pop()
-            .split(".")[0],
-        projectVueComponents(key).default
-    )
-);
+// //register project global vue component
+// const projectVueComponents = require.context(
+//     "../../../app/MainApp/resources/js/components",
+//     true,
+//     /\.vue$/i
+// );
+
+// projectVueComponents.keys().forEach(key => {
+//     Vue.component(
+//         key
+//             .split("/")
+//             .pop()
+//             .split(".")[0],
+//         projectVueComponents(key).default
+//     );
+// });
 
 // load project main.js init
 require("../../../app/MainApp/resources/js/main");

@@ -43,20 +43,29 @@ const state = {
 };
 
 const getters = {
-    isOnAdmin() {
-        return 
+    isOnAdmin(state) {
+        return ;
+    },
+    getAdminTitle(state) {
+        return state.admin.title;
     }
 };
 
 const mutations = {
     addBreadcrumb (state, data) {
-      state.example_data = data
+      state.example_data = data;
+    },
+    setAdminTitle (state, newTitle) {
+      state.admin.title = newTitle;
     }
 };
 
 const actions = {
+    setAdminTitle({commit}, newTitle) {
+        commit('setAdminTitle', newTitle);
+    },
     updateTemplate({commit}, data) {
-        commit('changeData', data)
+        commit('changeData', data);
     },
     addBreadcrumb({commit}, data){
 

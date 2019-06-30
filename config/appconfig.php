@@ -2,16 +2,31 @@
 /**
  * Config utama yang menyimpan semua config aplikasi. Datanya disimpan di app/Module/System/config
  */
-$client = json_decode(file_get_contents(__DIR__.'/../app/MainApp/config/client.json'),true);
-$listener = json_decode(file_get_contents(__DIR__.'/../app/MainApp/config/listener.json'),true);
+$client = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/client.json'), true);
+$listener = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/listener.json'), true);
 
+$keyConfig = json_decode(file_get_contents(__DIR__ . '/../resources/assets/src/config.json'), true);
+// dd($keyConfig);
 /*
 Load config system
 */
-$system = json_decode(file_get_contents(__DIR__.'/../app/MainApp/config/system.json'),true);
-$tmpEnvSystem = json_decode(file_get_contents(__DIR__.'/../app/MainApp/config/systemEnv.json'),true);
-if($tmpEnvSystem['mode']=='dev')
-    $system = array_merge($system,$tmpEnvSystem);
+$system = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/system.json'), true);
+$tmpEnvSystem = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/systemEnv.json'), true);
+if ($tmpEnvSystem['mode'] == 'dev') {
+    $newEnv = [];
+    //hanya load systemEnv yang boleh dieditnya saja
+    foreach ($keyConfig['allowed_systemEnv_key'] as $value) {
+        if (isset($tmpEnvSystem[$value])) {
+            $newEnv[$value] = $tmpEnvSystem[$value];
+        }
+    }
+    if (count($newEnv) >= 1) {
+        //save ulang config pastikan tidak mengandung key yang tidak boleh diedit
+        file_put_contents(__DIR__ . '/../app/MainApp/config/systemEnv.json', json_encode($newEnv, JSON_PRETTY_PRINT));
+        $system = array_merge($system, $newEnv);
+    }
+}
+
 
 /*
 Proses package & packageLocal config.
@@ -21,38 +36,58 @@ merge config package & packageLocal menjadi packageLocal, karena package akan di
 /*
 load config module & lib
 */
-$package = json_decode(file_get_contents(__DIR__.'/../app/MainApp/config/package.json'),true);
-// tidak jadi digenerate di sini, otomatis di generate saat build npm
-// $tmpPackage = json_decode(file_get_contents(__DIR__.'/../app/MainApp/config/package.json'),true);
-// foreach ($tmpPackage as $key => $value) {
-//     if($value['is_package']){
-//         $path = __DIR__.'/../vendor/hp-synapse/'.$value['package_dir'].'/packageconfig.json';
-//     }else{
-//         $path = __DIR__.'/../app/MainApp/Modules/'.$value['package_dir'].'/packageconfig.json';
-//     }
-//     $package[$value['package_namespace']] = json_decode(file_get_contents($path),true);
-// }
+$tmpPackage = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/package.json'), true);
+$package = [];
+foreach ($tmpPackage as $key => $value) {
+    if ($value['is_package']) {
+        $path = __DIR__ . '/../vendor/hp-synapse/' . $value['package_dir'] . '/packageconfig.json';
+    } else {
+        $path = __DIR__ . '/../app/MainApp/Modules/' . $value['package_dir'] . '/packageconfig.json';
+    }
+    $package[$value['package_namespace']] = json_decode(file_get_contents($path), true);
+}
+file_put_contents(__DIR__ . '/../app/MainApp/config/package.json', json_encode($package, JSON_PRETTY_PRINT));
 
 //merge config package dengan package local
-$tmpPackageLocal = json_decode(file_get_contents(__DIR__.'/../app/MainApp/config/packageLocal.json'),true);
-$packageLocal = array_map(function($item) use ($tmpPackageLocal){
-    return array_merge($item,$tmpPackageLocal[$item['package_namespace']]);
-},$package);
-
-//merge config packageLocal dengan packageLocalEnv nya jika dalam mode dev
-if($system['mode']=='dev'){
-    $packageLocalEnv = json_decode(file_get_contents(__DIR__.'/../app/MainApp/config/packageLocalEnv.json'),true);
-    $packageLocal = array_map(function($item) use ($packageLocalEnv){
-        return array_merge($item,$packageLocalEnv[$item['package_namespace']]);
-    },$packageLocal);
+$tmpPackageLocal = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/packageLocal.json'), true);
+$tmpPackageLocalEnv = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/packageLocalEnv.json'), true);
+$packageLocal = []; //untuk di load di config
+$newPackageLocal = []; //untuk filtered packageLocal.json yang akan disave ulang
+$newPackageLocalEnv = []; //untuk filtered packageLocalEnv.json yang akan disave ulang
+foreach ($package as $item) {
+    $newPackageLocal[$item['package_namespace']] =
+        isset($tmpPackageLocal[$item['package_namespace']])
+        ? $tmpPackageLocal[$item['package_namespace']]
+        : $item;
+    $newPackageLocalEnv[$item['package_namespace']] =
+        isset($tmpPackageLocalEnv[$item['package_namespace']])
+        ? $tmpPackageLocalEnv[$item['package_namespace']]
+        : $item;
+    //hanya load systemEnv yang boleh dieditnya saja
+    foreach ($keyConfig['protected_packageLocal_key'] as $value) {
+        if (isset($newPackageLocal[$item['package_namespace']][$value]))
+            unset($newPackageLocal[$item['package_namespace']][$value]);
+        if (isset($newPackageLocalEnv[$item['package_namespace']][$value]))
+            unset($newPackageLocalEnv[$item['package_namespace']][$value]);
+    }
+    $packageLocal[$item['package_namespace']] = array_merge($item, $newPackageLocal[$item['package_namespace']]);
+    if ($system['mode'] == 'dev') {
+        $packageLocal[$item['package_namespace']] = array_merge(
+            $packageLocal[$item['package_namespace']],
+            $newPackageLocalEnv[$item['package_namespace']]
+        );
+    }
 }
+file_put_contents(__DIR__ . '/../app/MainApp/config/packageLocal.json', json_encode($newPackageLocal, JSON_PRETTY_PRINT));
+file_put_contents(__DIR__ . '/../app/MainApp/config/packageLocalEnv.json', json_encode($newPackageLocalEnv, JSON_PRETTY_PRINT));
+
 /*
 package dan module berisi config yang sama persis
 */
 return [
     'client' => $client,
     'system' => $system,
-    'packageLocal' => $packageLocal,//config2 dari module dan lib yang sudah diedit per project
-    'package' => $package,//config2 default dari module dan lib
+    'packageLocal' => $packageLocal, //config2 dari module dan lib yang sudah diedit per project
+    'package' => $package, //config2 default dari module dan lib
     'listener' => $listener
 ];

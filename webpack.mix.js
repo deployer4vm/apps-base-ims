@@ -70,7 +70,6 @@ mixAssetsDir("vendor/js/**/*.js", (src, dest) => mix.scripts(src, dest));
 mixAssetsDir("vendor/fonts/*.css", (src, dest) => mix.copy(src, dest));
 mixAssetsDir("vendor/fonts/*/*", (src, dest) => mix.copy(src, dest));
 
-
 /*
 ----------------------------------------------------------------------
 generate config package.json
@@ -126,6 +125,7 @@ var moduleRouterAdmin = [
     "// load all router admin endpoint for every module registered to this project \n\n"
 ];
 var moduleRouterAdminNamespace = [];
+
 forEach(varPackage,(value,key)=>{
     if(value.is_package){
         filePath = "vendor/hp-synapse/" + value.package_dir + "/src"
@@ -138,7 +138,7 @@ forEach(varPackage,(value,key)=>{
     }
 
     //load package hanya jika aktif saja
-    if(packageLocal[value.package_namespace].enable){
+    if(packageLocal[value.package_namespace]['enable']){
         //untuk loader main.js
         if (fs.existsSync(filePath + "resources/js/main.js")) {
             moduleMainJs.push('require("' + packageMainPath + 'resources/js/main");' + "\n");
@@ -146,19 +146,19 @@ forEach(varPackage,(value,key)=>{
 
         //untuk loader vuex store
         if (fs.existsSync(filePath + "resources/js/store/store.js")) {
-            moduleStore.push("import " + value.package_namespace + ' from "' + packagePath + 'resources/js/store/store");' + "\n");
+            moduleStore.push("import " + value.package_namespace + ' from "' + packagePath + 'resources/js/store/store";' + "\n");
             moduleStoreNamespace.push("    ..." + value.package_namespace);
         }
 
         //untuk loader vue router
         if (fs.existsSync(filePath + "resources/js/router/index.js")) {
-            moduleRouter.push("import " + value.package_namespace + ' from "' + packagePath + 'resources/js/router/index");' + "\n");
+            moduleRouter.push("import " + value.package_namespace + ' from "' + packagePath + 'resources/js/router/index";' + "\n");
             moduleRouterNamespace.push("    .concat(" + value.package_namespace + ")");
         }
 
         //untuk loader vue router admin endpoint
         if (fs.existsSync(filePath + "resources/js/router/indexAdmin.js")) {
-            moduleRouterAdmin.push("import " + value.package_namespace + ' from "' + packagePath + 'resources/js/router/indexAdmin");' + "\n");
+            moduleRouterAdmin.push("import " + value.package_namespace + ' from "' + packagePath + 'resources/js/router/indexAdmin";' + "\n");
             moduleRouterAdminNamespace.push("    .concat(" + value.package_namespace + ")");
         }
     }
@@ -185,7 +185,7 @@ fs.writeFileSync(
     "app/MainApp/resources/js/router/modules.js",
     moduleRouter.join('') + 
     "\nconst routes = []\n" +
-    moduleRouterAdminNamespace.join("\n") + ";\n\n" +
+    moduleRouterNamespace.join("\n") + ";\n\n" +
     "export default routes;"
 );
 
@@ -208,7 +208,7 @@ let systemVar = JSON.parse(fs.readFileSync("app/MainApp/config/system.json"));
 
 mix.sass(
     "resources/assets/src/vendor/styles/theme-" +
-        systemVar.frontend_admin.theme +
+        systemVar.web_admin.theme +
         ".scss",
     "public/dist/css/theme-app.css"
     )

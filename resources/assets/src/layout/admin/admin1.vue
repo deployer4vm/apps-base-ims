@@ -20,9 +20,9 @@
 </template>
 
 <script>
-import LayoutNavbar from './LayoutNavbar'
-import LayoutSidenav from './LayoutSidenav'
-import LayoutFooter from './LayoutFooter'
+import LayoutNavbar from './adminNavbar'
+import LayoutSidenav from './adminSidenav'
+import LayoutFooter from './adminFooter'
 
 export default {
   name: 'app-admin-1',

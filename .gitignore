@@ -1,10 +1,14 @@
 /node_modules
 /public/hot
+/public/dist
+/public/dist/*
+/public/assets
+/public/assets/*
 /public/storage
 /public/sw.js
 /storage/*.key
 /vendor
-/app/MainApp/
+/app/MainApp
 /app/MainApp/*
 .env
 .phpunit.result.cache
@@ -14,3 +18,4 @@ npm-debug.log
 yarn-error.log
 composer.json
 composer.lock
+mix-manifest.json

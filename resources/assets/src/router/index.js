@@ -9,25 +9,26 @@ import projectRoutes from "../../../../app/MainApp/resources/js/router/index";
 //load all routes web modules general
 import modulesRoutes from "../../../../app/MainApp/resources/js/router/modules";
 //load all routes web modules admin
-// import modulesAdminRoutes from "../../../../app/MainApp/resources/js/router/modulesAdmin";
+import modulesAdminRoutes from "../../../../app/MainApp/resources/js/router/modulesAdmin";
 
 Vue.use(Router);
 Vue.use(Meta);
 
-let Routes = [...projectRoutes];
-if(window.appconfig.system.web_admin.autoload_router){
-    Routes.push({    
+let tmpRoutes = [...projectRoutes];
+if(window.appconfig.system.web_admin.autoload_router.frontend){
+    tmpRoutes.push({    
         path: window.appconfig.client.endpoint[window.appconfig.system.mode]['admin'],
         component: () => import('@/layout/' + window.appconfig.system.web_admin.layout),
-        children: import("../../../../app/MainApp/resources/js/router/modulesAdmin")
+        children: modulesAdminRoutes
     });
 }
-Routes.concat(modulesRoutes);
+
+tmpRoutes.concat(modulesRoutes);
 
 const router = new Router({
     base: "/",
     mode: "history",
-    routes: Routes
+    routes: tmpRoutes
 });
 
 router.afterEach(() => {
