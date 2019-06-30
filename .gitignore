@@ -1,10 +1,11 @@
 /node_modules
 /public/hot
 /public/storage
+/public/sw.js
 /storage/*.key
 /vendor
-/app/Modules
-/app/Modules/*
+/app/MainApp/
+/app/MainApp/*
 .env
 .phpunit.result.cache
 Homestead.json

@@ -1,4 +1,16 @@
 window._ = require('lodash');
+// Polyfills
+require('core-js/modules/es6.array.fill')
+require('core-js/modules/es6.array.iterator')
+require('core-js/modules/es6.object.assign')
+require('core-js/modules/es6.object.keys')
+require('core-js/modules/es6.promise')
+require('core-js/modules/es6.string.includes')
+require('core-js/modules/es6.symbol')
+require('core-js/modules/es7.array.includes')
+require('core-js/modules/es7.object.entries')
+require('core-js/modules/es7.promise.finally')
+require('core-js/modules/es7.symbol.async-iterator')
 
 /**
  * We'll load jQuery and the Bootstrap jQuery plugin which provides support
