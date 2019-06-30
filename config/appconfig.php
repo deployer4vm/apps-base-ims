@@ -65,10 +65,8 @@ foreach ($package as $item) {
         : $item;
     //hanya load systemEnv yang boleh dieditnya saja
     foreach ($keyConfig['protected_packageLocal_key'] as $value) {
-        if (isset($newPackageLocal[$item['package_namespace']][$value]))
-            unset($newPackageLocal[$item['package_namespace']][$value]);
-        if (isset($newPackageLocalEnv[$item['package_namespace']][$value]))
-            unset($newPackageLocalEnv[$item['package_namespace']][$value]);
+        $newPackageLocal[$item['package_namespace']][$value] = $item[$value];
+        $newPackageLocalEnv[$item['package_namespace']][$value] = $item[$value];
     }
     $packageLocal[$item['package_namespace']] = array_merge($item, $newPackageLocal[$item['package_namespace']]);
     if ($system['mode'] == 'dev') {

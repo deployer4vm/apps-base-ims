@@ -6,6 +6,7 @@
 /public/assets/*
 /public/storage
 /public/sw.js
+/public/mix-manifest.json
 /storage/*.key
 /vendor
 /app/MainApp
@@ -18,4 +19,3 @@ npm-debug.log
 yarn-error.log
 composer.json
 composer.lock
-mix-manifest.json
