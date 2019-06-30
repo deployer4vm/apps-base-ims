@@ -44,7 +44,8 @@ foreach ($tmpPackage as $key => $value) {
     } else {
         $path = __DIR__ . '/../app/MainApp/Modules/' . $value['package_dir'] . '/packageconfig.json';
     }
-    $package[$value['package_namespace']] = json_decode(file_get_contents($path), true);
+    if(file_exists($path))
+        $package[$value['package_namespace']] = json_decode(file_get_contents($path), true);
 }
 file_put_contents(__DIR__ . '/../app/MainApp/config/package.json', json_encode($package, JSON_PRETTY_PRINT));
 
