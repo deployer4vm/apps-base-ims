@@ -75,23 +75,24 @@ mixAssetsDir("vendor/fonts/*/*", (src, dest) => mix.copy(src, dest));
 generate config package.json
 ----------------------------------------------------------------------
 */
-var varPackage = {};
+var varPackage = JSON.parse(fs.readFileSync("app/MainApp/config/package.json"));
 var packageLocal = JSON.parse(fs.readFileSync("app/MainApp/config/packageLocal.json"));
 
-(glob.sync("vendor/hp-synapse/*/packageconfig.json") || []).forEach(f => {
-    f = f.replace(/[\\\/]+/g, "/");
-    tmpfile = JSON.parse(fs.readFileSync(f));
-    varPackage[tmpfile.package_namespace] = tmpfile;
-});
-(glob.sync("app/MainApp/Modules/*/packageconfig.json") || []).forEach(f => {
-    f = f.replace(/[\\\/]+/g, "/");
-    tmpfile = JSON.parse(fs.readFileSync(f));
-    varPackage[tmpfile.package_namespace] = tmpfile;
-});
-fs.writeFileSync(
-    "app/MainApp/config/package.json",
-    JSON.stringify(varPackage, null, 4)
-);
+// TIDAK JADI, SEMENTARA DISATUIN DI appconfig.php
+// (glob.sync("vendor/hp-synapse/*/packageconfig.json") || []).forEach(f => {
+//     f = f.replace(/[\\\/]+/g, "/");
+//     tmpfile = JSON.parse(fs.readFileSync(f));
+//     varPackage[tmpfile.package_namespace] = tmpfile;
+// });
+// (glob.sync("app/MainApp/Modules/*/packageconfig.json") || []).forEach(f => {
+//     f = f.replace(/[\\\/]+/g, "/");
+//     tmpfile = JSON.parse(fs.readFileSync(f));
+//     varPackage[tmpfile.package_namespace] = tmpfile;
+// });
+// fs.writeFileSync(
+//     "app/MainApp/config/package.json",
+//     JSON.stringify(varPackage, null, 4)
+// );
 
 /*
 ----------------------------------------------------------------------
@@ -128,9 +129,9 @@ var moduleRouterAdminNamespace = [];
 
 forEach(varPackage,(value,key)=>{
     if(value.is_package){
-        filePath = "vendor/hp-synapse/" + value.package_dir + "/src"
-        packagePath = "../../../../../vendor/hp-synapse/" + value.package_dir + "/src/";
-        packageMainPath = "../../../../vendor/hp-synapse/" + value.package_dir + "/src/";
+        filePath = "vendor/hp-synapse/" + value.package_dir + "/src/"
+        packagePath = __dirname.replace(/[\\\/]+/g,"/") + "/vendor/hp-synapse/" + value.package_dir + "/src/";
+        packageMainPath = __dirname.replace(/[\\\/]+/g,"/") + "/vendor/hp-synapse/" + value.package_dir + "/src/";
     }else{
         filePath = "app/MainApp/Modules/" + value.package_dir + "/"
         packagePath = "../../../Modules/" + value.package_dir + "/";
@@ -143,7 +144,7 @@ forEach(varPackage,(value,key)=>{
         if (fs.existsSync(filePath + "resources/js/main.js")) {
             moduleMainJs.push('require("' + packageMainPath + 'resources/js/main");' + "\n");
         }
-
+        
         //untuk loader vuex store
         if (fs.existsSync(filePath + "resources/js/store/store.js")) {
             moduleStore.push("import " + value.package_namespace + ' from "' + packagePath + 'resources/js/store/store";' + "\n");
@@ -229,7 +230,8 @@ mix.sass(
         "public/dist/css/uikit.css"
     )
     .sass("resources/assets/src/style.scss", "public/dist/css/style.css")
-    .copyDirectory("public/dist", "app/MainApp/resources/dist");
+    .copyDirectory("app/MainApp/resources/assets", "public/assets");
+    // .copyDirectory("public/dist", "app/MainApp/resources/dist");
 
 if (Mix.isUsing("hmr")) {
     mix.disableNotifications();

@@ -14,19 +14,19 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i,900" rel="stylesheet">
 
     <!-- Icons. Uncomment required icon fonts -->
-    @if(config('appconfig.system.frontend_admin.assets_admintemplate.font.fontawesome'))
+    @if(config('appconfig.system.web_admin.assets_template.font.fontawesome'))
     <link rel="stylesheet" href="{{ asset('/dist/vendor/fonts/fontawesome.css') }}">
     @endif
-    @if(config('appconfig.system.frontend_admin.assets_admintemplate.font.ionicons'))
+    @if(config('appconfig.system.web_admin.assets_template.font.ionicons'))
     <link rel="stylesheet" href="{{ asset('/dist/vendor/fonts/ionicons.css') }}">
     @endif
-    @if(config('appconfig.system.frontend_admin.assets_admintemplate.font.linearicons'))
+    @if(config('appconfig.system.web_admin.assets_template.font.linearicons'))
     <link rel="stylesheet" href="{{ asset('/dist/vendor/fonts/linearicons.css') }}">
     @endif
-    @if(config('appconfig.system.frontend_admin.assets_admintemplate.font.open-iconic'))
+    @if(config('appconfig.system.web_admin.assets_template.font.open-iconic'))
     <link rel="stylesheet" href="{{ asset('/dist/vendor/fonts/open-iconic.css') }}">
     @endif
-    @if(config('appconfig.system.frontend_admin.assets_admintemplate.font.pe-icon-7-stroke'))
+    @if(config('appconfig.system.web_admin.assets_template.font.pe-icon-7-stroke'))
     <link rel="stylesheet" href="{{ asset('/dist/vendor/fonts/pe-icon-7-stroke.css') }}">
     @endif
     
@@ -37,8 +37,8 @@
     <link href="{{ asset('/dist/css/uikit.css') }}" rel="stylesheet">
     <link href="{{ asset('/dist/css/style.css') }}" rel="stylesheet">
     
-    @if(config('appconfig.system.frontend_admin.assets_link'))
-    @foreach (config('appconfig.system.frontend_admin.assets_link') as $value)
+    @if(config('appconfig.system.web_admin.assets_link'))
+    @foreach (config('appconfig.system.web_admin.assets_link') as $value)
     <link rel="stylesheet" href="{{ asset($value) }}">
     @endforeach
     @endif
@@ -46,10 +46,18 @@
 </head>
 <body>
 
+    <!-- Splash screen -->
+    <div class="app-splash-screen" style="background: #fff; position: fixed; z-index: 99999999; top: 0; right: 0; bottom: 0; left: 0; opacity: 1; -webkit-transition: opacity .3s; transition: opacity .3s;">
+      <div class="app-splash-screen-content" style="position: absolute; top: 50%; left: 50%; -webkit-transform: translate(-50%, -50%); transform: translate(-50%, -50%);">
+        <span class="text-large font-weight-bolder">{{ config('appconfig.system.title') }}</span>
+      </div>
+    </div>
+    <!-- / Splash screen -->
+
     <div id="app"></div>
 
-    @if(config('appconfig.system.frontend_admin.assets_js'))
-    @foreach (config('appconfig.system.frontend_admin.assets_js') as $value)
+    @if(config('appconfig.system.web_admin.assets_js'))
+    @foreach (config('appconfig.system.web_admin.assets_js') as $value)
     <script src="{{ asset($value) }}"></script>
     @endforeach
     @endif

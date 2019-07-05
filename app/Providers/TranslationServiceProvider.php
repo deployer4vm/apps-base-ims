@@ -20,12 +20,23 @@ class TranslationServiceProvider extends BaseTranslationServiceProvider
         $config = $this->app['config']['hpsynapse'];
 
         $paths = Utilities::findNamespaceResources(
-                $config['namespaces'], $config['language_folder_name'], $config['resource_namespace']
+            $config['namespaces'],
+            $config['language_folder_name'],
+            $config['resource_namespace']
         );
-        $paths = array_merge([resource_path('lang')],$paths);        
+
+        $paths = array_merge(
+            [
+                resource_path('lang')
+            ], 
+            $paths
+        );
+        $paths[] = app_path('MainApp' . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'lang');
+        
+        $GLOBALS['LANG_PATH'] = $paths;
+
         $this->app->singleton('translation.loader', function ($app) use ($paths) {
             return new DistributedFileLoader($app['files'], $paths);
         });
     }
-
 }

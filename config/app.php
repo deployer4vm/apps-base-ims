@@ -1,4 +1,5 @@
 <?php
+$system = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/system.json'), true);
 
 return [
 
@@ -80,7 +81,7 @@ return [
     |
     */
 
-    'locale' => 'en',
+    'locale' => $system['locale'],
 
     /*
     |--------------------------------------------------------------------------
@@ -93,7 +94,7 @@ return [
     |
     */
 
-    'fallback_locale' => 'en',
+    'fallback_locale' => $system['fallback_locale'],
 
     /*
     |--------------------------------------------------------------------------

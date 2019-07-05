@@ -1,13 +1,25 @@
+import globals from "@/globals";
+
 const state = {
+    nextAlert: { // route yg ditampilkan dihalaman selanjutnya
+        show: false,
+        alertStyleType: "hover",
+        isInstant: 1, //1/0
+        data: {
+            type: "",
+            title: "",
+            content: ""
+        }
+    },   
     frontend: {
-        title: window.appconfig.system.template.frontend.title,
+        title: globals().appconfig.system.template.frontend.title,
         breadcrumb:[
             
         ]
     },
     admin: {
-        title: window.appconfig.system.template.admin.title,
-        header: {
+        title: globals().appconfig.system.template.admin.title,
+        navbar: {
             appsbar: {
 
             },
@@ -17,7 +29,8 @@ const state = {
                     title: "Home",
                     route: "/dashboard"
                 }
-            ]
+            ],
+            menu: {}
         },
         breadcrumb:[
             {
@@ -25,19 +38,11 @@ const state = {
                 link: "/"
             }            
         ],
-        sidebar: [
-            {
-                title: "",
-                children: [
-                    {
-                        
-                    }
-                ]
-            }
-        ],
+        sidenav: {},
         footer: {
-            text: window.appconfig.system.template.admin.footer.text,
-            menu: window.appconfig.system.template.admin.footer.menu
+            show: globals().appconfig.system.template.admin.footer.show,
+            text: globals().appconfig.system.template.admin.footer.text,
+            menu: globals().appconfig.system.template.admin.footer.menu
         }
     }    
 };
@@ -46,27 +51,66 @@ const getters = {
     isOnAdmin(state) {
         return ;
     },
+    //---------------navbar (header-------------------
     getAdminTitle(state) {
         return state.admin.title;
+    },
+    getTabs(state) {
+        return state.admin.navbar.tabs;
+    },
+    //---------------sidenav-------------------
+    getSidenavMenu(state) {
+        return state.admin.sidenav;
+    },
+    
+    //---------------body-------------------
+    getBreadcrumb(state) {
+        return state.admin.sidenav;
+    },   
+    
+    //---------------footer-------------------
+    isFooterShowed(state) {
+        return state.admin.footer.show;
+    },
+    getFooterText(state) {
+        return state.admin.footer.text;
+    },
+    getFooterMenu(state) {
+        return state.admin.footer.menu;
     }
 };
 
-const mutations = {
-    addBreadcrumb (state, data) {
-      state.example_data = data;
-    },
+const mutations = {    
+    //---------------navbar (header-------------------
     setAdminTitle (state, newTitle) {
-      state.admin.title = newTitle;
-    }
+        state.admin.title = newTitle;
+    },    
+    //---------------sidenav-------------------
+    setSidenavMenu (state) {
+        _.forEach(globals().appconfig.packageLocal, (value, index) => {
+            if(value.access &&  value.enable){
+                state.admin.sidenav[index] = value.access;
+            }
+        });
+    },
+    //---------------body-------------------
+    addBreadcrumb (state, data) {
+        state.example_data = data;
+    },
 };
 
 const actions = {
+    //initialize yang perlu diinitialize
+    //action ini dieksekusi saat vue instace utama created
+    initTemplateState({commit}){
+        commit('setSidenavMenu');
+    },
     setAdminTitle({commit}, newTitle) {
         commit('setAdminTitle', newTitle);
     },
     updateTemplate({commit}, data) {
         commit('changeData', data);
-    },
+    },    
     addBreadcrumb({commit}, data){
 
     }

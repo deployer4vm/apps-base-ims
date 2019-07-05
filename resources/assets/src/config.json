@@ -4,7 +4,10 @@
         "laravel_key",
         "web_state_persistant",
         "web_serviceworker",
-        "web_pushnotif"
+        "web_pushnotif",
+        "locale",
+        "fallback_locale",
+        "lang_endpoint"
     ],
     "protected_packageLocal_key": [
         "name",

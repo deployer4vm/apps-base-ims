@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use App\Services\Utilities;
+use Illuminate\Http\Request;
 
 class RouteServiceProvider extends ServiceProvider
 {
@@ -33,16 +34,18 @@ class RouteServiceProvider extends ServiceProvider
      */
     private function bootMigration()
     {
-        $mainPath = database_path('migrations');       
+        $mainPath = database_path('migrations'); 
+        $appPath = app_path('MainApp'.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations');       
         
         $modulePath = Utilities::listModulePath($this->app['config']['hpsynapse']['namespaces'], function($namespace,$pathToModule){            
-            $pathToModule .= DIRECTORY_SEPARATOR.'migrations';
+            $pathToModule .= DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
             if(file_exists($pathToModule)){
                 return $pathToModule;
             }
         });
         
         $paths = array_merge([$mainPath], $modulePath);
+        $paths[] = $appPath;
         $this->loadMigrationsFrom($paths);
     }
 
@@ -51,7 +54,7 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        require_once __DIR__. '/../Helpers/Helper.php';
+        require_once app_path('Helpers/Helper.php');
         // $this->mergeConfigFrom(
         //     __DIR__.'/../config/HPSynapse.php', config_path('hpsynapse.php')
         // );      
@@ -74,13 +77,45 @@ class RouteServiceProvider extends ServiceProvider
         if(isset($config['protection_middleware'])){
             $middleware = array_merge($middleware,$config['protection_middleware']);
         }
+        /*
+        language resource for vue apps
+        get params : *optional
+            lang : lang id nya
+            item : item nya jika diperlukan
+        */
+        Route::get(config('appconfig.system.lang_endpoint'), function (Request $request) {            
+            if($request->input('lang')){
+                app()->setLocale($request->input('lang'));
+            }
+            if($request->input('item')){
+                return response()->json(trans($request->input('item')));
+            }
+            $lang = app()->getLocale();
+            $trans = [];
+            //get all language namespace
+            foreach ($GLOBALS['LANG_PATH'] as $path) {
+                $langItem = glob($path.DIRECTORY_SEPARATOR.$lang.DIRECTORY_SEPARATOR.'*');                
+                foreach($langItem as $langFile){
+                    $filename = basename($langFile, ".php");
+                    if(!isset($trans[$filename])){
+                        $trans[$filename] = trans($filename);
+                        if(!is_array($trans[$filename]))unset($trans[$filename]);
+                    }
+                }
+            }
+            return response()->json($trans);
+        });
 
         //jika route admin autoload, maka langsung load
         if(config('appconfig.system.web_admin.autoload_router.backend')){
             $adminEndpoint = config('appconfig.client.endpoint.'.config('appconfig.system.mode').'.admin');
-            Route::get($adminEndpoint, function(){
-                return view('layouts.admin.main');
-            });
+            if($adminEndpoint!='/' && !empty($adminEndpoint)){
+                Route::get($adminEndpoint, function(){
+                    return view('layouts.admin.main');
+                });
+            }else{
+                $adminEndpoint = '';
+            }
             Route::get($adminEndpoint.'{any}', function(){
                 return view('layouts.admin.main');
             })->where('any', '.*');

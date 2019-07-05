@@ -1,12 +1,38 @@
-import layoutHelpers from '@/layout/helpers.js'
+import layoutHelpers from '@/helpers/layout.js';
+import UserAuth from '@/helpers/userauth.js';
+import Web from '@/helpers/web.js';
+import Trans from '@/helpers/trans.js';
+import appconfig from '@/appconfig.js';
+
+let web = Web;
+web.endpoint = appconfig.endpoint;
+
+/*
+set local Api
+*/
+var localapi = new axios.create();
+localapi.defaults.baseURL = appconfig.client.endpoint[appconfig.system.mode]["domain"];
+localapi.defaults.headers.get["Accepts"] = "application/json";
+
+console.log('global loaded');
 
 export default function () {
   return {
     // Public url
     publicUrl: '/',
-
+    
     // Layout helpers
     layoutHelpers,
+
+    //config app
+    appconfig,
+
+    //translation / locale
+    Trans,
+    LocalApi: localapi,
+    UserAuth,
+    
+    Web: web,
 
     // Check for RTL layout
     get isRTL () {
@@ -31,7 +57,7 @@ export default function () {
 
     // Layout sidenav color
     get layoutSidenavBg () {
-      return 'sidenav-theme'
+      return 'white'
     },
 
     // Layout footer color
@@ -39,6 +65,7 @@ export default function () {
       return 'footer-theme'
     },
 
+    
     // Animate scrollTop
     scrollTop (to, duration, element = document.scrollingElement || document.documentElement) {
       if (element.scrollTop === to) return

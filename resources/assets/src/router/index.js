@@ -1,7 +1,8 @@
 import Vue from "vue";
 import Router from "vue-router";
 import Meta from "vue-meta";
-
+import authAxios from "axios";
+import BlankRouterContainer from '@/layout/BlankRouterContainer';
 import globals from "@/globals";
 
 //load routes level project
@@ -15,14 +16,17 @@ Vue.use(Router);
 Vue.use(Meta);
 
 let tmpRoutes = [...projectRoutes];
-if(window.appconfig.system.web_admin.autoload_router.frontend){
-    tmpRoutes.push({    
-        path: window.appconfig.client.endpoint[window.appconfig.system.mode]['admin'],
-        component: () => import('@/layout/' + window.appconfig.system.web_admin.layout),
+if (globals().appconfig.system.web_admin.autoload_router.frontend) {
+    tmpRoutes.push({
+        name: "homeadmin",
+        path:
+            globals().appconfig.client.endpoint[globals().appconfig.system.mode][
+                "admin"
+            ],
+        component: BlankRouterContainer,
         children: modulesAdminRoutes
     });
 }
-
 tmpRoutes.concat(modulesRoutes);
 
 const router = new Router({
@@ -32,13 +36,43 @@ const router = new Router({
 });
 
 router.afterEach(() => {
+    /*
+    detek dan proteksi halaman admin dengan auth jika diaktifkan di config
+    */
+    if(
+        globals().appconfig.system.has_auth &&
+        globals().appconfig.system.web_admin.protected_by_auth &&
+        globals().Web.isAdminEndpoint()
+    ){
+        //jika tidak login dan mengakses halaman selain auth maka redire
+        if(!globals().UserAuth.isLogin() && !globals().Web.isAuthEdnpoint() ){
+            globals().UserAuth.goToLogin();
+        //jika sudah login tapi mengakses halaman auth maka redirect
+        }else if( globals().UserAuth.isLogin() && globals().Web.isAuthEdnpoint() ){
+            globals().UserAuth.goToDashboard();
+        }        
+    }
+    
+
+    // Remove initial splash screen
+    const splashScreen = document.querySelector(".app-splash-screen");
+    if (splashScreen) {
+        splashScreen.style.opacity = 0;
+        setTimeout(
+            () =>
+                splashScreen &&
+                splashScreen.parentNode.removeChild(splashScreen),
+            300
+        );
+    }
+
     // On small screens collapse sidenav
     if (
-        window.layoutHelpers &&
-        window.layoutHelpers.isSmallScreen() &&
-        !window.layoutHelpers.isCollapsed()
+        globals().layoutHelpers &&
+        globals().layoutHelpers.isSmallScreen() &&
+        !globals().layoutHelpers.isCollapsed()
     ) {
-        setTimeout(() => window.layoutHelpers.setCollapsed(true, true), 10);
+        setTimeout(() => globals().layoutHelpers.setCollapsed(true, true), 10);
     }
 
     // Scroll to top of the page

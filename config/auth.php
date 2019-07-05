@@ -43,8 +43,8 @@ return [
 
         'api' => [
             'driver' => 'token',
-            'provider' => 'users',
-            'hash' => false,
+            'provider' => 'apps',//ganti sama "users" jika menggunakan users
+            // 'hash' => false,
         ],
     ],
 
@@ -68,9 +68,13 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => App\User::class,
+            'model' => hpsynapse\moduser\Models\User::class,
         ],
 
+        'apps' => [
+            'driver' => 'eloquent',
+            'model' => hpsynapse\moduser\Models\ApiToken::class,
+        ],
         // 'users' => [
         //     'driver' => 'database',
         //     'table' => 'users',

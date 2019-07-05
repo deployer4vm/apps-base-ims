@@ -1,0 +1,205 @@
+<template>
+  <sidenav :orientation="orientation" :class="curClasses">
+    <!-- Brand demo (see src/demo.css) -->
+    <div class="app-brand demo sidenav-app-brand" v-if="orientation !== 'horizontal'">
+      <!-- <span class="app-brand-logo demo bg-primary">
+        <svg viewBox="0 0 148 80" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><linearGradient id="a" x1="46.49" x2="62.46" y1="53.39" y2="48.2" gradientUnits="userSpaceOnUse"><stop stop-opacity=".25" offset="0"></stop><stop stop-opacity=".1" offset=".3"></stop><stop stop-opacity="0" offset=".9"></stop></linearGradient><linearGradient id="e" x1="76.9" x2="92.64" y1="26.38" y2="31.49" xlink:href="#a"></linearGradient><linearGradient id="d" x1="107.12" x2="122.74" y1="53.41" y2="48.33" xlink:href="#a"></linearGradient></defs><path style="fill: #fff;" transform="translate(-.1)" d="M121.36,0,104.42,45.08,88.71,3.28A5.09,5.09,0,0,0,83.93,0H64.27A5.09,5.09,0,0,0,59.5,3.28L43.79,45.08,26.85,0H.1L29.43,76.74A5.09,5.09,0,0,0,34.19,80H53.39a5.09,5.09,0,0,0,4.77-3.26L74.1,35l16,41.74A5.09,5.09,0,0,0,94.82,80h18.95a5.09,5.09,0,0,0,4.76-3.24L148.1,0Z"></path><path transform="translate(-.1)" d="M52.19,22.73l-8.4,22.35L56.51,78.94a5,5,0,0,0,1.64-2.19l7.34-19.2Z" fill="url(#a)"></path><path transform="translate(-.1)" d="M95.73,22l-7-18.69a5,5,0,0,0-1.64-2.21L74.1,35l8.33,21.79Z" fill="url(#e)"></path><path transform="translate(-.1)" d="M112.73,23l-8.31,22.12,12.66,33.7a5,5,0,0,0,1.45-2l7.3-18.93Z" fill="url(#d)"></path></svg>
+      </span>-->
+      <span class="sidenav-button-onhover">
+        <i class="ion ion-md-menu align-middle"></i>
+      </span>
+      <router-link
+        :to="{name : 'dashboard'}"
+        class="app-brand-text demo sidenav-text font-weight-normal ml-2"
+      >{{ title }}</router-link>
+      <a
+        href="javascript:void(0)"
+        class="layout-sidenav-toggle sidenav-link text-large ml-auto"
+        @click="toggleSidenav()"
+      >
+        <i class="ion ion-md-menu align-middle"></i>
+      </a>
+    </div>
+
+    <!-- Inner -->
+    <div class="sidenav-inner" :class="{ 'py-1': orientation !== 'horizontal' }">
+      <!-- <div class="sidenav-divider mt-0" v-if="orientation !== 'horizontal'"></div> -->
+
+      <template v-for="(menus, packageNamespace) in sidebarMenu">
+        <sidenav-router-link
+          v-if="menus.route"
+          v-bind:key="menus.id"
+          :icon="'ion ' + menus.icon"
+          :to="procRoute(menus.route,packageNamespace)"
+          :exact="true"
+          :active="isMenuActive(Web.getModuleEndpoint(packageNamespace))"
+          :open="isMenuOpen(Web.getModuleEndpoint(packageNamespace))"
+        >
+        {{ menus.caption }}
+        </sidenav-router-link>
+        <sidenav-menu
+          v-else
+          :icon="'ion ' + menus.icon"
+          v-bind:key="menus.id"
+          :active="isMenuActive(Web.getModuleEndpoint(packageNamespace))"
+          :open="isMenuOpen(Web.getModuleEndpoint(packageNamespace))"
+        >
+          <template slot="link-text">{{ menus.caption }}</template>
+
+          <!-- start level 1 -->
+          <template v-for="(menu, aclIdLv1) in menus.children">
+            <template v-if="menu.is_navbar && menu.active_acl.has_access">
+              <template v-if="menu.children == undefined">
+                <sidenav-router-link
+                  :to="procRoute(menu.route,packageNamespace)"
+                  v-bind:key="aclIdLv1"
+                  :exact="true"
+                >{{ menu.caption }}</sidenav-router-link>
+              </template>
+              <template v-else>
+                <!-- start level 2 -->
+                <sidenav-menu
+                  v-bind:key="aclIdLv1"
+                  :active="isMenuActive(procRoute(menu.route,packageNamespace))"
+                  :open="isMenuOpen(procRoute(menu.route,packageNamespace))"
+                >
+                  <template slot="link-text">{{ menu.caption }}</template>
+
+                  <template v-for="(submenu,aclIdLv2) in menu.children">
+                    <template v-if="submenu.is_navbar && submenu.active_acl.has_access">
+                      <template v-if="submenu.children == undefined">
+                        <sidenav-router-link
+                          :to="procRoute(submenu.route,packageNamespace)"
+                          v-bind:key="aclIdLv2"
+                          :exact="true"
+                        >{{ submenu.caption }}</sidenav-router-link>
+                      </template>
+                      <template v-else>
+                        <!-- start level 3 -->
+                        <sidenav-menu
+                          v-bind:key="submenu.aclIdLv2"
+                          :active="isMenuActive(procRoute(submenu.route,packageNamespace))"
+                          :open="isMenuOpen(procRoute(submenu.route,packageNamespace))"
+                        >
+                          <template slot="link-text">{{ submenu.caption }}</template>
+
+                          <template v-for="(subsubmenu,aclIdLv3) in submenu.children">
+                            <template
+                              v-if="subsubmenu.is_navbar && subsubmenu.active_acl.has_access"
+                            >
+                              <sidenav-router-link
+                                :to="procRoute(subsubmenu.route,packageNamespace)"
+                                v-bind:key="aclIdLv3"
+                                :exact="true"
+                              >{{ subsubmenu.caption }}</sidenav-router-link>
+                            </template>
+                          </template>
+                        </sidenav-menu>
+                        <!-- end level 3 -->
+                      </template>
+                    </template>
+                  </template>
+                </sidenav-menu>
+                <!-- end level 2 -->
+              </template>
+            </template>
+          </template>
+          <!-- end level 1 -->
+        </sidenav-menu>
+      </template>
+    </div>
+  </sidenav>
+</template>
+
+<script>
+import {
+  Sidenav,
+  SidenavLink,
+  SidenavRouterLink,
+  SidenavMenu,
+  SidenavHeader,
+  SidenavBlock,
+  SidenavDivider
+} from "@/vendor/libs/sidenav";
+
+export default {
+  name: "app-layout-sidenav",
+  components: {
+    /* eslint-disable vue/no-unused-components */
+    Sidenav,
+    SidenavLink,
+    SidenavRouterLink,
+    SidenavMenu,
+    SidenavHeader,
+    SidenavBlock,
+    SidenavDivider
+    /* eslint-enable vue/no-unused-components */
+  },
+
+  props: {
+    orientation: {
+      type: String,
+      default: "vertical"
+    }
+  },
+  created() {},
+  computed: {
+    title() {
+      return this.Web.getAdminTitle();
+    },
+    sidebarMenu() {
+      return this.Web.getSidenavMenu();
+    },
+    curClasses() {
+      let bg = this.layoutSidenavBg;
+
+      if (
+        this.orientation === "horizontal" &&
+        (bg.indexOf(" sidenav-dark") !== -1 ||
+          bg.indexOf(" sidenav-light") !== -1)
+      ) {
+        bg = bg
+          .replace(" sidenav-dark", "")
+          .replace(" sidenav-light", "")
+          .replace("-darker", "")
+          .replace("-dark", "");
+      }
+
+      return (
+        `bg-${bg} ` +
+        (this.orientation !== "horizontal"
+          ? "layout-sidenav"
+          : "layout-sidenav-horizontal container-p-x flex-grow-0")
+      );
+    }
+  },
+  methods: {
+    //ubah route access di packageLocal menjadi ready
+    procRoute(featureRoute, packageNamespace) {
+      let fullEndpoint = this.Web.getModuleEndpoint(packageNamespace);
+      if (
+        featureRoute.path != undefined &&
+        featureRoute.path.charAt(0) != "/"
+      ) {
+        featureRoute.path = fullEndpoint + "/" + featureRoute.path;
+      }
+      return featureRoute;
+    },
+    isMenuActive(route) {
+      let routePath = "";
+      if (typeof route == "string") {
+        routePath = route;
+      } else {
+        routePath = route.path;
+      }
+      return this.Web.isOnEndpoint(routePath);
+    },
+    isMenuOpen(route) {
+      return this.isMenuActive(route) && this.orientation !== "horizontal";
+    },
+    toggleSidenav() {
+      this.layoutHelpers.toggleCollapsed();
+    }
+  }
+};
+</script>

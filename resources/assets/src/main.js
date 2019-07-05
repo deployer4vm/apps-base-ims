@@ -7,9 +7,16 @@ import BootstrapVue from "bootstrap-vue";
 
 import globals from "./globals";
 import Popper from "popper.js";
-import { UserAuth, AppTemplate } from "./helper";
 
 // import { resolve } from 'dns';
+
+import Vuelidate from 'vuelidate';
+import Notifications from 'vue-notification';
+// import Toasted from 'vue-toasted';
+
+Vue.use(Vuelidate);
+Vue.use(Notifications);
+// Vue.use(Toasted)
 
 // Required to enable animations on dropdowns/tooltips/popovers
 Popper.Defaults.modifiers.computeStyle.gpuAcceleration = false;
@@ -17,6 +24,10 @@ Popper.Defaults.modifiers.computeStyle.gpuAcceleration = false;
 Vue.config.productionTip = false;
 
 Vue.use(BootstrapVue);
+
+// axios.defaults.baseURL = 'https://apiurl'
+// axios.defaults.headers.common['Authorization'] = 'fasfdsa'
+// axios.defaults.headers.get['Accepts'] = 'application/json'
 
 // //register all project Modules vue component
 // const moduleVueComponents = require.context(
@@ -58,21 +69,59 @@ require("../../../app/MainApp/resources/js/main");
 require("../../../app/MainApp/resources/js/modules");
 
 // Global RTL flag
-window.Vue.mixin({
+Vue.mixin({
     data: globals
 });
 
-new Vue({
+var VM = new Vue({
     router,
     store,
+
     created() {
-        //init helper UserAuth
-        window.UserAuth = UserAuth;
-        window.UserAuth.store = this.$store;
-        //init helper app template
-        window.AppTemplate = AppTemplate;
-        window.AppTemplate.store = this.$store;
-        window.AppTemplate.router = this.$router;
+        console.log('Main instance initated');
+        //initiate language helper
+        this.Trans.store = this.$store;
+        this.Trans.router = this.$router;
+        this.Trans.loadLang();
+
+        //init helper app web
+        this.Web.store = this.$store;
+        this.Web.router = this.$router;
+        this.Web.notify = this.$notify;
+        this.Web.endpoint = this.appconfig.endpoint;      
+
+        //set token LocalApi jika sudah login
+        if(this.UserAuth.isLogin()){
+            this.LocalApi.defaults.headers.common['Authorization'] = 'bearer ' + this.UserAuth.getToken();
+        }
+
+        //jika ada fitur auth dan sedang posisi login maka implementAcl
+        if(
+            this.appconfig.packageLocal.moduser != undefined
+            && this.appconfig.packageLocal.moduser.enable 
+            && this.appconfig.system.has_auth
+            ) {
+
+            //init helper UserAuth
+            this.UserAuth.store = this.$store;
+            this.UserAuth.router = this.$router;
+
+            if(this.appconfig.system.has_acl && this.UserAuth.isLogin()){
+                //set ACL jika memiliki akses ke module user auth 
+                this.UserAuth.implementAcl().then((val)=>{
+                    //initialsize vuex template
+                    this.Web.initTemplateState();
+                });
+
+            }else{
+                this.Web.initTemplateState();
+            }            
+            
+        } else {
+            //initialsize vuex template
+            this.Web.initTemplateState();
+        }
+
     },
     render: h => h(App)
 }).$mount("#app");

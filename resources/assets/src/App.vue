@@ -1,9 +1,15 @@
 <template>
   <div id="app">
     <router-view/>
+    <notifications group="notifications-default" />
+    <notifications group="notifications-top-left" position="top left" />
+    <notifications group="notifications-top-center" position="top center" />
+    <notifications group="notifications-bottom-right" position="bottom right" />
+    <notifications group="notifications-bottom-left" position="bottom left" />
+    <notifications group="notifications-bottom-center" position="bottom center" />
   </div>
 </template>
-
+<style src="@/vendor/libs/vue-notification/vue-notification.scss" lang="scss"></style>
 <script>
 export default {
   name: 'app',

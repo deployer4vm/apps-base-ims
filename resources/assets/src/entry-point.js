@@ -64,33 +64,6 @@ if (token) {
 //     encrypted: true
 // });
 
-/*
-load all application config
-*/
-window.appconfig = {
-    system: {
-        ...require("../../../app/MainApp/config/system.json"),
-        ...require("../../../app/MainApp/config/systemEnv.json")
-    },
-    client: require("../../../app/MainApp/config/client.json"),
-    packageLocal: {},
-    package: require("../../../app/MainApp/config/package.json"),
-    listener: require("../../../app/MainApp/config/listener.json")
-};
-
-let varPackageLocal = require("../../../app/MainApp/config/packageLocal.json");
-let varPackageLocalEnv = require("../../../app/MainApp/config/packageLocalEnv.json");
-
-_.forEach(window.appconfig.package, (value, index) => {
-    window.appconfig.packageLocal[value.package_namespace] = _.merge(
-        _.merge(
-            window.appconfig.package[value.package_namespace],
-            varPackageLocal[value.package_namespace]
-        ),
-        varPackageLocalEnv[value.package_namespace]
-    );
-});
-
 /**
  * Load Vue.js app
  */

@@ -1,5 +1,5 @@
 <template>
-  <div class="layout-wrapper layout-1">
+  <div class="layout-wrapper layout-2">
     <div class="layout-inner">
       <app-layout-navbar />
 
@@ -11,7 +11,7 @@
             <router-view />
           </div>
 
-          <app-layout-footer />
+          <app-layout-footer v-if="showFooter" />
         </div>
       </div>
     </div>
@@ -20,16 +20,16 @@
 </template>
 
 <script>
-import LayoutNavbar from './adminNavbar'
-import LayoutSidenav from './adminSidenav'
-import LayoutFooter from './adminFooter'
+import navbar from './navbar'
+import sidenav from './sidenav'
+import footer from './footer'
 
 export default {
   name: 'app-admin-1',
   components: {
-    'app-layout-navbar': LayoutNavbar,
-    'app-layout-sidenav': LayoutSidenav,
-    'app-layout-footer': LayoutFooter
+    'app-layout-navbar': navbar,
+    'app-layout-sidenav': sidenav,
+    'app-layout-footer': footer
   },
 
   mounted () {
@@ -41,7 +41,11 @@ export default {
   beforeDestroy () {
     this.layoutHelpers.destroy()
   },
-
+  computed: {
+    showFooter() {
+      return this.$store.getters.isFooterShowed;
+    }
+  },
   methods: {
     closeSidenav () {
       this.layoutHelpers.setCollapsed(true)
