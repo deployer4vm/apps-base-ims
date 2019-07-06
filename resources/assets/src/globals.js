@@ -2,19 +2,17 @@ import layoutHelpers from '@/helpers/layout.js';
 import UserAuth from '@/helpers/userauth.js';
 import Web from '@/helpers/web.js';
 import Trans from '@/helpers/trans.js';
-import appconfig from '@/appconfig.js';
+import AppConfig from '@/appconfig.js';
 
 let web = Web;
-web.endpoint = appconfig.endpoint;
+web.endpoint = AppConfig.endpoint;
 
 /*
 set local Api
 */
 var localapi = new axios.create();
-localapi.defaults.baseURL = appconfig.client.endpoint[appconfig.system.mode]["domain"];
+localapi.defaults.baseURL = AppConfig.client.endpoint[AppConfig.system.mode]["domain"];
 localapi.defaults.headers.get["Accepts"] = "application/json";
-
-console.log('global loaded');
 
 export default function () {
   return {
@@ -25,7 +23,7 @@ export default function () {
     layoutHelpers,
 
     //config app
-    appconfig,
+    AppConfig,
 
     //translation / locale
     Trans,
@@ -52,17 +50,17 @@ export default function () {
 
     // Layout navbar color
     get layoutNavbarBg () {
-      return 'navbar-theme'
+      return this.AppConfig.system.web_admin.navbar_bgcolor;
     },
 
     // Layout sidenav color
     get layoutSidenavBg () {
-      return 'white'
+      return this.AppConfig.system.web_admin.sidenav_bgcolor;
     },
 
     // Layout footer color
     get layoutFooterBg () {
-      return 'footer-theme'
+      return this.AppConfig.system.web_admin.footer_bgcolor;
     },
 
     

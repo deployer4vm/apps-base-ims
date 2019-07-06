@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <router-view/>
+    <alert-modal />
     <notifications group="notifications-default" />
     <notifications group="notifications-top-left" position="top left" />
     <notifications group="notifications-top-center" position="top center" />

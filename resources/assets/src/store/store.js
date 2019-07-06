@@ -20,7 +20,7 @@ const vuexPersist = new VuexPersist({
     reducer: (state) => {
         let newState = {'auth':'auth'};
         //registrasikan vuexPersist jika diaktikan
-        if (globals().appconfig.system.web_state_persistant) {
+        if (globals().AppConfig.system.web_state_persistant) {
             _.forEach(state,(value, index) => {
                 if(index != 'template'){
                     newState[index] = value;
@@ -30,7 +30,7 @@ const vuexPersist = new VuexPersist({
 
         return newState;
     },
-    key: globals().appconfig.client.apps_id,
+    key: globals().AppConfig.client.apps_id,
     storage: localStorage
 });
 vuexConfig.plugins = [vuexPersist.plugin];

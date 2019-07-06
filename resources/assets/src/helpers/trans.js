@@ -29,6 +29,7 @@ export default {
         } catch (err) {
             lang = langKey;
         }
+        if(lang==undefined)lang = langKey;
         _.forEach(replace, (v, k) => {
             lang = lang.replace(":" + k, v);
         });

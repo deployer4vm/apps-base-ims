@@ -12,15 +12,15 @@ abstract class BaseResponse implements Responsable
     /**
      * 
      * 
-     * @param array $data
+     * @param array $output autput dari controller
      * @param mixed $response 
      *      string jika nama view
      *      instance recirect() jika redirect
      * @param int $forceOutput 0 auto, 1 force web, 2 force api
      */
-    public function __construct($data=false,$response='list',$forceOutput=0, $listdataVarName='data')
+    public function __construct($output=false,$response='list',$forceOutput=0, $listdataVarName='data')
     {
-        $this->data = $data;
+        $this->output = $output;
         $this->response = $response;
         $this->forceOutput = $forceOutput;
         $this->listdataVarName = $listdataVarName;
@@ -74,22 +74,22 @@ abstract class BaseResponse implements Responsable
         ];
         //delete semua data selain data khusus api
         foreach ($outputParam as $key => $value) {
-            if(isset($this->data[$key])){
-                $data[$key] = $this->data[$key];
+            if(isset($this->output[$key])){
+                $data[$key] = $this->output[$key];
             }else{
                 $data[$key] = $value;
             }
         }
         
         //jika menyertakan data tambahan untuk view
-        if(isset($this->data['listdata'])&&is_array($this->data['listdata'])){
-            $data['data'] = $this->data['listdata'];
+        if(isset($this->output['listdata'])&&is_array($this->output['listdata'])){
+            $data['data'] = $this->output['listdata'];
         }
         
         //jika error maka kosongkan data
         if(!is_null($data['errors']))$data['data'] = null;
         
-        $this->data = $data;
+        $this->output = $data;
     }
     
     /**
@@ -99,7 +99,7 @@ abstract class BaseResponse implements Responsable
     {
         $this->prepareApi();   
         $this->prepare();
-        return response()->json($this->data, $this->data['status']);
+        return response()->json($this->output, $this->output['status']);
     }
     
     /**
@@ -113,32 +113,32 @@ abstract class BaseResponse implements Responsable
         $this->with = false;
         $this->viewdata = false;
         
-        $dataTmp = $this->data['data'];
+        $dataTmp = $this->output['data'];
         
-        if(isset($this->data['message']) && $this->data['message']){            
+        if(isset($this->output['message']) && $this->output['message']){            
             $this->alert = [
-                'type' => $this->data['message_type'],
-                'message' => $this->data['message']
+                'type' => $this->output['message_type'],
+                'message' => $this->output['message']
             ];
         }
         
-        if(isset($this->data['errors']) && $this->data['errors'] != null && $this->data['errors'] != [true]){
-            $this->errors = $this->data['errors'];
+        if(isset($this->output['errors']) && $this->output['errors'] != null && $this->output['errors'] != [true]){
+            $this->errors = $this->output['errors'];
         }
         
         //jika menyertakan data tambahan untuk view
-        if(isset($this->data['listdata'])&&!is_null($this->data['listdata'])){
-            $dataTmp[$this->listdataVarName] = $this->data['listdata'];
+        if(isset($this->output['listdata'])&&!is_null($this->output['listdata'])){
+            $dataTmp[$this->listdataVarName] = $this->output['listdata'];
         }
         
         //jika menyertakan data tambahan untuk view
-        if(isset($this->data['viewdata'])&&is_array($this->data['viewdata'])){
-            $dataTmp = array_merge($dataTmp,$this->data['viewdata']);
-            $this->viewdata = $this->data['viewdata'];
+        if(isset($this->output['viewdata'])&&is_array($this->output['viewdata'])){
+            $dataTmp = array_merge($dataTmp,$this->output['viewdata']);
+            $this->viewdata = $this->output['viewdata'];
         }
         
         if(!$dataTmp)$dataTmp=[];
-        $this->data = $dataTmp;
+        $this->output = $dataTmp;
     }
     
     /**
@@ -151,11 +151,11 @@ abstract class BaseResponse implements Responsable
         
         //jika string berarti view
         if(is_string($this->response)){
-            $this->response = view($this->response, $this->data);
+            $this->response = view($this->response, $this->output);
         }else{
             //tambahkan get parameter jika menyertakan viewdata
             if($this->viewdata){
-                $redirectUrl = $this->viewResponseProccParam(
+                $redirectUrl = $this->_viewResponseProccParam(
                     $this->response->getTargetUrl(),
                     $this->viewdata
                     );
@@ -169,7 +169,10 @@ abstract class BaseResponse implements Responsable
         return $this->response;
     }
     
-    private function viewResponseProccParam($redirectUrl,$addQuery)
+    /**
+     * 
+     */
+    private function _viewResponseProccParam($redirectUrl,$addQuery)
     {
         $resultUrl = \parse_url($redirectUrl);
         $addQuery = http_build_query($addQuery);

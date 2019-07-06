@@ -19,6 +19,64 @@
   </div>
 </template>
 
+<style>
+.avatar-header-block {
+  height: 22px; width: 22px;
+}
+.avatar-header-block i.ion {
+  padding-top: 5px;
+}
+.sidenav-app-brand {
+    height: 58px;
+}
+.default-style .sidenav .app-brand.sidenav-app-brand {
+    height: 58px;
+}
+.sidenav-button-onhover {
+    font-size: 180%;
+    padding: 0 25px;
+    display: none;
+}
+.layout-sidenav-hover .sidenav-button-onhover,
+.layout-expanded .sidenav-button-onhover {
+    display: none !important;
+}
+.layout-collapsed .sidenav-button-onhover {
+    display: inline;
+}
+
+/* *****************************************************************************
+ * Navbar
+ */
+
+.demo-navbar-messages .dropdown-toggle,
+.demo-navbar-notifications .dropdown-toggle,
+.demo-navbar-user .dropdown-toggle,
+.demo-navbar-messages.b-nav-dropdown .nav-link,
+.demo-navbar-notifications.b-nav-dropdown .nav-link,
+.demo-navbar-user.b-nav-dropdown .nav-link {
+    white-space: nowrap;
+}
+
+.demo-navbar-messages .dropdown-menu,
+.demo-navbar-notifications .dropdown-menu {
+    overflow: hidden;
+    padding: 0;
+}
+
+@media (min-width: 992px) {
+    .demo-navbar-messages .dropdown-menu,
+    .demo-navbar-notifications .dropdown-menu {
+        margin-top: 0.5rem;
+        width: 22rem;
+    }
+
+    .demo-navbar-user .dropdown-menu {
+        margin-top: 0.25rem;
+    }
+}
+</style>
+
 <script>
 import navbar from './navbar'
 import sidenav from './sidenav'

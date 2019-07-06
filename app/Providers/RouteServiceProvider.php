@@ -71,19 +71,13 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function map()
     {
-        $config = $this->app['config']['hpsynapse'];
-        $middleware = $config['protection_middleware'];
-        
-        if(isset($config['protection_middleware'])){
-            $middleware = array_merge($middleware,$config['protection_middleware']);
-        }
         /*
-        language resource for vue apps
+        initiate language resource for vue apps
         get params : *optional
             lang : lang id nya
             item : item nya jika diperlukan
         */
-        Route::get(config('appconfig.system.lang_endpoint'), function (Request $request) {            
+        Route::get(config('AppConfig.system.lang_endpoint'), function (Request $request) {            
             if($request->input('lang')){
                 app()->setLocale($request->input('lang'));
             }
@@ -106,9 +100,12 @@ class RouteServiceProvider extends ServiceProvider
             return response()->json($trans);
         });
 
+        /*
+        initiate route untuk Admin area Vue Frontend
+        */
         //jika route admin autoload, maka langsung load
-        if(config('appconfig.system.web_admin.autoload_router.backend')){
-            $adminEndpoint = config('appconfig.client.endpoint.'.config('appconfig.system.mode').'.admin');
+        // if(config('AppConfig.system.web_admin.autoload_router.backend')){
+            $adminEndpoint = config('AppConfig.client.endpoint.'.config('AppConfig.system.mode').'.admin');
             if($adminEndpoint!='/' && !empty($adminEndpoint)){
                 Route::get($adminEndpoint, function(){
                     return view('layouts.admin.main');
@@ -119,14 +116,23 @@ class RouteServiceProvider extends ServiceProvider
             Route::get($adminEndpoint.'{any}', function(){
                 return view('layouts.admin.main');
             })->where('any', '.*');
-        }
+        // }
 
-        Utilities::listModulePath($config['namespaces'], function($namespace,$pathToModule) use ($middleware){
+        $config = $this->app['config']['hpsynapse'];
+        // $middleware = $config['protection_middleware'];        
+        // if(isset($config['protection_middleware'])){
+        //     $middleware = array_merge($middleware,$config['protection_middleware']);
+        // }
+        Utilities::listModulePath($config['namespaces'], function($namespace,$pathToModule) {
             
             $fileNames = [
                 'routes_api' => true,
                 'routes' => false
             ];
+            
+            $moduleNamespace = explode("\\",trim($namespace,"\\"));
+            $moduleNamespace = array_pop($moduleNamespace);
+
             $namespace .= 'Controllers';
             
             //load seluruh routes yg ada di setiap module
@@ -136,8 +142,8 @@ class RouteServiceProvider extends ServiceProvider
                 if (!file_exists($path)) {
                     continue;
                 }
-
                 Route::middleware($isApi ? ['api'] : ['web'])
+                    ->prefix($isApi && $moduleNamespace != 'moduser' ? config('AppConfig.endpoint.api.'.$moduleNamespace) : '')
                     ->namespace($namespace)
                     ->group($path);
             }

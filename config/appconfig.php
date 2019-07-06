@@ -41,8 +41,8 @@ merge config package & packageLocal menjadi packageLocal, karena package akan di
 load config module & lib
 */
 $moduleList = array_merge(
-    glob(base_path('vendor/hp-synapse/*/packageconfig.json')),
-    glob(base_path('app/MainApp/Modules/*/packageconfig.json'))
+    glob(base_path('app/MainApp/Modules/*/packageconfig.json')),
+    glob(base_path('vendor/hp-synapse/*/packageconfig.json'))
 );
 $package = [];
 foreach ($moduleList as $path) {
@@ -69,6 +69,7 @@ if(file_exists(__DIR__ . '/../app/MainApp/config/packageLocalEnv.json')){
 
 //initiate config ednpoint.json
 $endpoint = [
+    'domain' => $client['endpoint'][$system['mode']]['domain'],
     'admin' => [
         'app' => $client['endpoint'][$system['mode']]['admin'],
         'auth' => ''
@@ -113,7 +114,10 @@ foreach ($package as $item) {
             $newPackageLocalEnv[$item['package_namespace']]
         );
     }
+    
+}
 
+foreach ($package as $item) {
     /*
     generate endpoint masing-masing module
     */
@@ -127,7 +131,7 @@ foreach ($package as $item) {
         }    
         //jika memiliki fitur auth dan module user maka assign auth endpointnya
         if($system['has_auth'] && $packageLocal['moduser']['enable']){
-            $authEndpoint = $packageLocal['moduser']['auth_endpoint'][$system['mode']][$app];
+            $authEndpoint = $packageLocal['moduser']['auth_endpoint'][$system['mode']];
             if($authEndpoint[0]!='/'){
                 $endpoint[$app]['auth'] = $endpoint[$app]['app'].'/'.$authEndpoint;
             }else{
@@ -136,9 +140,7 @@ foreach ($package as $item) {
             
         }
     }
-    
 }
-
 $newPackageLocalString = json_encode($newPackageLocal, JSON_PRETTY_PRINT);
 //save ulang pakcageLocal hanya jika ada perubahan
 if($packageLocalString != $newPackageLocalString){

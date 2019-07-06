@@ -17,8 +17,7 @@ export default {
     return promise
     */
     login(userCredential){
-        return this.store.dispatch('login',userCredential).then((res)=>{
-            
+        return this.store.dispatch('login',userCredential).then((res)=>{            
             return res;
         });
     },

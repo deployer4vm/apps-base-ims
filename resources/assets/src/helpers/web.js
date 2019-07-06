@@ -7,13 +7,14 @@ export default {
     store: null,
     router: null,
     notify: null, //vue-notification
-    endpoint: null, //local full endpoint   
+    endpoint: null, //local full endpoint
+    bvModal: null,
     /*
     Route & Endpoint
     =======================================================================
     */
     get curAppEndpoint() {
-        if(this.isAdminEndpoint()){
+        if (this.isAdminEndpoint()) {
             return this.endpoint.admin.app;
         }
         return this.endpoint.frontend.app;
@@ -21,7 +22,7 @@ export default {
     get adminEndpoint() {
         return this.endpoint.admin.app;
     },
-    getModuleEndpoint(packageNamespace,app = 'admin') {
+    getModuleEndpoint(packageNamespace, app = "admin") {
         return this.endpoint[app][packageNamespace];
     },
     /*
@@ -30,22 +31,20 @@ export default {
     isOnEndpoint(path = null) {
         return this.router.currentRoute.path.indexOf(path) === 0;
     },
-    isAuthEdnpoint(path = null,app='admin') {
+    isAuthEdnpoint(path = null, app = "admin") {
         if (path == null) {
             path = this.router.currentRoute.path;
         }
-        return path.indexOf(this.endpoint[app]['auth']) === 0;
+        return path.indexOf(this.endpoint[app]["auth"]) === 0;
     },
     //cek apakah halaman yang diakses sekarang admin area
-    isAdminEndpoint(path = null,app=null) {
-        if(this.endpoint.admin.app=='')return true;
+    isAdminEndpoint(path = null, app = null) {
+        if (this.endpoint.admin.app == "") return true;
         if (path == null) {
             path = this.router.currentRoute.path;
         }
-        if(app==null){
-            _.forEach(this.endpoint,(v,k)=>{
-
-            });
+        if (app == null) {
+            _.forEach(this.endpoint, (v, k) => {});
         }
         return path.indexOf(this.endpoint.admin.app) === 0;
     },
@@ -74,54 +73,79 @@ export default {
     },
     /*
     tampilkan alert instan
-    styleType :
-        hover
-        standar
+    params :
+        type
+        styleType : berisi 'alert', 'notif' atau 'modal'
+        title
+        text
+        position
+
+        onShow
+        onClose
+        onOk
+
+        modalButtonCancel
+        modalButtonOk
     */
-    showAlert(params={
-        title: 'Alert',
-        text: 'Shome Warning',
-        type: 'info',
-        styleType: 'hover', 
-        position: 'top-center'
-    }) {
+    showAlert(params) {
+        if (!params.type) params.type = "info";
+        if (!params.title) params.title = "Alert";
+        if (!params.text) params.text = "Shome Warning";
+        if (!params.styleType) params.styleType = "hover";
+        if (!params.position) params.position = "top-center";
 
-        if(!params.type)params.type = 'info';
-        if(!params.title)params.title = 'Alert';
-        if(!params.text)params.text = 'Shome Warning';
-        if(!params.styleType)params.styleType = 'hover';
-        if(!params.position)params.position = 'top-center';
+        if (this._showAlert_type[params.type] == undefined)
+            params.type = "info";
+        if (this._showAlert_position[params.position] == undefined)
+            params.position = "top-center";
 
-        if(this._showAlert_type[params.type] == undefined)
-            params.type = 'info';
-        if(this._showAlert_position[params.position] == undefined)
-            params.position = 'top-center';
-
-        this.notify({
-            group: this._showAlert_position[params.position],
-            type: this._showAlert_type[params.type],
-            title: params.title,
-            text: params.text
-        });
+        if (params.styleType == "alert") {
+            this.store.commit("addAlert", {
+                text: params.text,
+                type: params.type
+            });
+        } else if (params.styleType == "modal") {
+            if (!params.onShow) params.onShow = null;
+            if (!params.onCancel) params.onCancel = null;
+            if (!params.onOk) params.onOk = null;
+            if (!params.modalButtonCancel) params.modalButtonCancel = null;
+            if (!params.modalButtonOk) params.modalButtonOk = null;
+            this.store.commit("setModal", {
+                title: params.title,
+                text: params.text,
+                onShow: params.onShow,
+                onClose: params.onClose,
+                onOk: params.onOk,
+                modalButtonCancel: params.modalButtonCancel,
+                modalButtonOk: params.modalButtonOk
+            });
+            this.bvModal.show("alert-modals");
+        } else {
+            this.notify({
+                group: this._showAlert_position[params.position],
+                type: this._showAlert_type[params.type],
+                title: params.title,
+                text: params.text
+            });
+        }
     },
     _showAlert_position: {
-        'top-left': 'notifications-top-left',
-        'top-center': 'notifications-top-center',
-        'default': 'notifications-default',
-        'bottom-left': 'notifications-bottom-left',
-        'bottom-center': 'notifications-bottom-center',
-        'bottom-right': 'notifications-bottom-right'
+        "top-left": "notifications-top-left",
+        "top-center": "notifications-top-center",
+        default: "notifications-default",
+        "bottom-left": "notifications-bottom-left",
+        "bottom-center": "notifications-bottom-center",
+        "bottom-right": "notifications-bottom-right"
     },
     _showAlert_type: {
-        warning: 'bg-warning text-body',
-        success: 'bg-success text-white',
-        info: 'bg-info text-white',
-        danger: 'bg-danger text-white',
-        secondary: 'bg-secondary text-white',
-        dark: 'bg-dark text-white'
+        warning: "bg-warning text-body",
+        success: "bg-success text-white",
+        info: "bg-info text-white",
+        danger: "bg-danger text-white",
+        primary: "bg-primary text-white",
+        secondary: "bg-secondary text-white",
+        dark: "bg-dark text-white"
     },
     //tampilkan alert di halaman selanjutnya
-    showNextAlert() {
-
-    }
+    showNextAlert() {}
 };

@@ -14,41 +14,41 @@ class BaseController extends LaravelBaseController
     use RepoCacheTrait;
     
     //default data parameter untuk responseable
-    protected $data = [
+    protected $output = [
             'status'=>200,
             'message'=>'',
-            'message_type'=>'info',
+                'message_type'=>'info',//khusus warning view (bukan api)
             'data'=>null,
-            'viewdata'=>null,//data yang hanya disertakan di web request
-            'listdata'=>null,//akan jadi 'data'
+                'viewdata'=>null,//data yang hanya disertakan di web request
+                'listdata'=>null,//untuk data berbentuk list array, jadi di view akan jadi output->data['data'] dan di api akan jadi output->data
             'errors'=>null,
         ];
     
     //nama variable list data di view (web request)
-    protected $listdataVarName = 'data';
+    protected $listDataVarName = 'data';
 
 
     //default response paramter untuk
     protected $response = '';
     
     //nama class responseable nya
-    protected $responsableName = '\HPSynapse\APPSCore\Base\DefaultResponse';
+    protected $responsableName = '\App\Base\DefaultResponse';
     
     //force output menjadi api atau web
     private $forceOutput = 0;//0 auto, 1 WEB, 2 API
     
     /**
      * 
-     * @param type $message
+     * @param string $message
      * @param type $error
      * @param type $code
      * @param type $response
      */
     protected function setError($message,$error=false,$code=400,$response=null)
     {        
-        $this->data['status'] = $code;
-        $this->data['message'] = $message;
-        $this->data['errors'] = $error===true||$error===1||$error===false?[true]:$error;
+        $this->output['status'] = $code;
+        $this->output['message'] = $message;
+        $this->output['errors'] = $error===true||$error===1||$error===false?[true]:$error;
         if(!is_null($response)){
             $this->response = 
                 $response===true||$response===1||$response===false?
@@ -58,15 +58,15 @@ class BaseController extends LaravelBaseController
     }
     
     /**
-     * set alert
+     * set alert view
      * 
      * @param string $message
      * @param string $type 'warning','info','warning','danger'
      */
     protected function setAlert($message,$type='info')
     {        
-        $this->data['message'] = $message;
-        $this->data['message_type'] = $type;
+        $this->output['message'] = $message;
+        $this->output['message_type'] = $type;
         
         \Session::put('alert', [
                 'type' => $type,
@@ -120,16 +120,16 @@ class BaseController extends LaravelBaseController
     /**
      * 
      * @param type $response
-     * @return \HPSynapse\APPSCore\Base\responsableName
+     * @return \App\Base\responsableName
      */
     protected function done($response=false)
     {
         if($response)$this->response=$response;
         return new $this->responsableName(
-            $this->data, 
+            $this->output, 
             $this->response, 
             $this->forceOutput, 
-            $this->listdataVarName);
+            $this->listDataVarName);
     }
     
     /*

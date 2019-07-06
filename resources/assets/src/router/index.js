@@ -16,17 +16,14 @@ Vue.use(Router);
 Vue.use(Meta);
 
 let tmpRoutes = [...projectRoutes];
-if (globals().appconfig.system.web_admin.autoload_router.frontend) {
+// if (globals().AppConfig.system.web_admin.autoload_router.frontend) {
     tmpRoutes.push({
         name: "homeadmin",
-        path:
-            globals().appconfig.client.endpoint[globals().appconfig.system.mode][
-                "admin"
-            ],
+        path: globals().AppConfig.endpoint.admin.app,
         component: BlankRouterContainer,
         children: modulesAdminRoutes
     });
-}
+// }
 tmpRoutes.concat(modulesRoutes);
 
 const router = new Router({
@@ -40,8 +37,8 @@ router.afterEach(() => {
     detek dan proteksi halaman admin dengan auth jika diaktifkan di config
     */
     if(
-        globals().appconfig.system.has_auth &&
-        globals().appconfig.system.web_admin.protected_by_auth &&
+        globals().AppConfig.system.has_auth &&
+        globals().AppConfig.system.web_admin.protected_by_auth &&
         globals().Web.isAdminEndpoint()
     ){
         //jika tidak login dan mengakses halaman selain auth maka redire

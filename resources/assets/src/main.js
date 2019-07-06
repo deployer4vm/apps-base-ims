@@ -2,20 +2,17 @@ import Vue from "vue";
 import App from "./App";
 import router from "./router";
 import { store } from "./store/store";
-
+// import { resolve } from 'dns';
 import BootstrapVue from "bootstrap-vue";
-
 import globals from "./globals";
 import Popper from "popper.js";
-
-// import { resolve } from 'dns';
-
 import Vuelidate from 'vuelidate';
 import Notifications from 'vue-notification';
 // import Toasted from 'vue-toasted';
 
 Vue.use(Vuelidate);
 Vue.use(Notifications);
+Vue.use(BootstrapVue);
 // Vue.use(Toasted)
 
 // Required to enable animations on dropdowns/tooltips/popovers
@@ -23,7 +20,6 @@ Popper.Defaults.modifiers.computeStyle.gpuAcceleration = false;
 
 Vue.config.productionTip = false;
 
-Vue.use(BootstrapVue);
 
 // axios.defaults.baseURL = 'https://apiurl'
 // axios.defaults.headers.common['Authorization'] = 'fasfdsa'
@@ -45,22 +41,21 @@ Vue.use(BootstrapVue);
 //     )
 // );
 
-// //register project global vue component
-// const projectVueComponents = require.context(
-//     "../../../app/MainApp/resources/js/components",
-//     true,
-//     /\.vue$/i
-// );
-
-// projectVueComponents.keys().forEach(key => {
-//     Vue.component(
-//         key
-//             .split("/")
-//             .pop()
-//             .split(".")[0],
-//         projectVueComponents(key).default
-//     );
-// });
+//register project global vue component
+const projectVueComponents = require.context(
+    "./component",
+    true,
+    /\.vue$/i
+);
+projectVueComponents.keys().forEach(key => {
+    Vue.component(
+        key
+            .split("/")
+            .pop()
+            .split(".")[0],
+        projectVueComponents(key).default
+    );
+});
 
 // load project main.js init
 require("../../../app/MainApp/resources/js/main");
@@ -88,25 +83,26 @@ var VM = new Vue({
         this.Web.store = this.$store;
         this.Web.router = this.$router;
         this.Web.notify = this.$notify;
-        this.Web.endpoint = this.appconfig.endpoint;      
-
-        //set token LocalApi jika sudah login
-        if(this.UserAuth.isLogin()){
-            this.LocalApi.defaults.headers.common['Authorization'] = 'bearer ' + this.UserAuth.getToken();
-        }
+        this.Web.bvModal = this.$bvModal;
+        this.Web.endpoint = this.AppConfig.endpoint;   
 
         //jika ada fitur auth dan sedang posisi login maka implementAcl
         if(
-            this.appconfig.packageLocal.moduser != undefined
-            && this.appconfig.packageLocal.moduser.enable 
-            && this.appconfig.system.has_auth
+            this.AppConfig.packageLocal.moduser != undefined
+            && this.AppConfig.packageLocal.moduser.enable 
+            && this.AppConfig.system.has_auth
             ) {
 
             //init helper UserAuth
             this.UserAuth.store = this.$store;
             this.UserAuth.router = this.$router;
+            
+            //set token LocalApi jika sudah login
+            if(this.UserAuth.isLogin()){
+                this.LocalApi.defaults.headers.common['Authorization'] = 'Bearer ' + this.UserAuth.getToken();
+            }
 
-            if(this.appconfig.system.has_acl && this.UserAuth.isLogin()){
+            if(this.AppConfig.system.has_acl && this.UserAuth.isLogin()){
                 //set ACL jika memiliki akses ke module user auth 
                 this.UserAuth.implementAcl().then((val)=>{
                     //initialsize vuex template

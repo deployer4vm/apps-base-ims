@@ -40,7 +40,7 @@
           <b-dd-divider />
           <b-dd-item @click="UserAuth.logout()"><i class="ion ion-ios-log-out text-danger"></i> &nbsp; {{ Trans.get('auth.logout') }}</b-dd-item>
 
-          <template v-if="appconfig.system.mode=='dev'">
+          <template v-if="AppConfig.system.mode=='dev'">
             <b-dd-divider />
             <div class="text-center text-muted"><small>Dev Mode Only Action</small></div>
             <b-dd-item @click="Trans.reLoadLang()"><i class="ion ion-md-sync text-lightest"></i> &nbsp; Reload Language</b-dd-item>

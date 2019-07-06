@@ -46,6 +46,29 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
+        $isApi = $request->wantsJson() || $request->ajax();
+                   
+        if ($exception instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
+            if($isApi){ 
+                return response()->json(['status'=>404,'message'=>__('alert.resource_not_found'),'data'=>null,'errors'=>[true]],404);
+            }else{
+                return response()->view('error.generic',['message'=>__('alert.resource_not_found'),'code'=>404]);
+            }
+        }else if($exception instanceof \Illuminate\Auth\AuthenticationException){
+            if($isApi){ 
+                return response()->json(['status'=>401,'message'=>__('alert.invalid_token'),'data'=>null,'errors'=>[true]],401);
+            }else{
+                return response()->view('error.generic',['message'=>__('alert.invalid_token'),'code'=>404]);
+            }
+        }else if($exception instanceof \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException){
+            if($isApi){ 
+                return response()->json(['status'=>404,'message'=>__('alert.resource_not_found'),'data'=>null,'errors'=>[true]],401);
+            }else{
+                return response()->view('error.generic',['message'=>__('alert.resource_not_found'),'code'=>404]);
+            }
+        }
+        
+
         return parent::render($request, $exception);
     }
 }

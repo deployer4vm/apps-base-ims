@@ -23,7 +23,7 @@ const mutations = {
 
 const actions = {
     reloadLang({commit}){
-        return axios.get(globals().appconfig.client.endpoint_main + globals().appconfig.system.lang_endpoint).then((val)=>{
+        return axios.get(globals().AppConfig.endpoint.domain + globals().AppConfig.system.lang_endpoint).then((val)=>{
             commit('setLang',val.data);
             return true;
         }).catch((err)=>{
