@@ -141,8 +141,8 @@ foreach ($package as $item) {
             $endpoint[$app][$item['package_namespace']] = $moduleEndpoint;
         }    
         //jika memiliki fitur auth dan module user maka assign auth endpointnya
-        if($system['has_auth'] && $packageLocal['moduser']['enable']){
-            $authEndpoint = $packageLocal['moduser']['auth_endpoint'][$system['mode']];
+        if($system['has_auth'] && isset($packageLocal['moduser']) && $packageLocal['moduser']['enable']){
+            $authEndpoint = $packageLocal['moduser']['auth_endpoint'][$system['mode']];            
             if($authEndpoint[0]!='/'){
                 $endpoint[$app]['auth'] = $endpoint[$app]['app'].'/'.$authEndpoint;
             }else{
