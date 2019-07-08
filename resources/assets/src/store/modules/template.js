@@ -73,8 +73,8 @@ const getters = {
     //---------------body-------------------
     getBreadcrumb(state) {
         return state.admin.sidenav;
-    },   
-    
+    },
+        
     //---------------footer-------------------
     isFooterShowed(state) {
         return state.admin.footer.show;
@@ -111,8 +111,8 @@ const mutations = {
     //---------------sidenav-------------------
     setSidenavMenu (state) {
         _.forEach(globals().AppConfig.packageLocal, (value, index) => {
-            if(value.access &&  value.enable){
-                state.admin.sidenav[index] = value.access;
+            if(value.access.has_acl == 0 ||(value.access &&  value.enable &&  value.access.has_access)){
+                state.admin.sidenav[index] =value.access;
             }
         });
     },

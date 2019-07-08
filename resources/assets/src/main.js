@@ -20,7 +20,6 @@ Popper.Defaults.modifiers.computeStyle.gpuAcceleration = false;
 
 Vue.config.productionTip = false;
 
-
 // axios.defaults.baseURL = 'https://apiurl'
 // axios.defaults.headers.common['Authorization'] = 'fasfdsa'
 // axios.defaults.headers.get['Accepts'] = 'application/json'
@@ -71,9 +70,7 @@ Vue.mixin({
 var VM = new Vue({
     router,
     store,
-
     created() {
-        console.log('Main instance initated');
         //initiate language helper
         this.Trans.store = this.$store;
         this.Trans.router = this.$router;
@@ -84,7 +81,8 @@ var VM = new Vue({
         this.Web.router = this.$router;
         this.Web.notify = this.$notify;
         this.Web.bvModal = this.$bvModal;
-        this.Web.endpoint = this.AppConfig.endpoint;   
+        this.Web.endpoint = this.AppConfig.endpoint; 
+        this.Web.multitenantConfig = this.AppConfig.system.web_admin.multitenant; 
 
         //jika ada fitur auth dan sedang posisi login maka implementAcl
         if(
@@ -117,6 +115,8 @@ var VM = new Vue({
             //initialsize vuex template
             this.Web.initTemplateState();
         }
+
+
 
     },
     render: h => h(App)

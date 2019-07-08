@@ -25,88 +25,119 @@
     <div class="sidenav-inner" :class="{ 'py-1': orientation !== 'horizontal' }">
       <!-- <div class="sidenav-divider mt-0" v-if="orientation !== 'horizontal'"></div> -->
 
+
+      <!--looping level 1-->
+      
       <template v-for="(menus, packageNamespace) in sidebarMenu">
-        <sidenav-router-link
-          v-if="menus.route"
-          v-bind:key="menus.id"
-          :icon="'ion ' + menus.icon"
-          :to="procRoute(menus.route,packageNamespace)"
-          :exact="true"
-          :active="isMenuActive(Web.getModuleEndpoint(packageNamespace))"
-          :open="isMenuOpen(Web.getModuleEndpoint(packageNamespace))"
-        >
-        {{ menus.caption }}
-        </sidenav-router-link>
-        <sidenav-menu
-          v-else
-          :icon="'ion ' + menus.icon"
-          v-bind:key="menus.id"
-          :active="isMenuActive(Web.getModuleEndpoint(packageNamespace))"
-          :open="isMenuOpen(Web.getModuleEndpoint(packageNamespace))"
-        >
-          <template slot="link-text">{{ menus.caption }}</template>
 
-          <!-- start level 1 -->
-          <template v-for="(menu, aclIdLv1) in menus.children">
-            <template v-if="menu.is_navbar && menu.active_acl.has_access">
-              <template v-if="menu.children == undefined">
-                <sidenav-router-link
-                  :to="procRoute(menu.route,packageNamespace)"
-                  v-bind:key="aclIdLv1"
-                  :exact="true"
-                >{{ menu.caption }}</sidenav-router-link>
-              </template>
-              <template v-else>
-                <!-- start level 2 -->
-                <sidenav-menu
-                  v-bind:key="aclIdLv1"
-                  :active="isMenuActive(procRoute(menu.route,packageNamespace))"
-                  :open="isMenuOpen(procRoute(menu.route,packageNamespace))"
-                >
-                  <template slot="link-text">{{ menu.caption }}</template>
+        <template v-if="menus.has_acl == 0 || (menus.tenant_group_id==0 || isInGroup(menus.tenant_group_id))">
 
-                  <template v-for="(submenu,aclIdLv2) in menu.children">
-                    <template v-if="submenu.is_navbar && submenu.active_acl.has_access">
-                      <template v-if="submenu.children == undefined">
-                        <sidenav-router-link
-                          :to="procRoute(submenu.route,packageNamespace)"
-                          v-bind:key="aclIdLv2"
-                          :exact="true"
-                        >{{ submenu.caption }}</sidenav-router-link>
-                      </template>
-                      <template v-else>
-                        <!-- start level 3 -->
-                        <sidenav-menu
-                          v-bind:key="submenu.aclIdLv2"
-                          :active="isMenuActive(procRoute(submenu.route,packageNamespace))"
-                          :open="isMenuOpen(procRoute(submenu.route,packageNamespace))"
-                        >
-                          <template slot="link-text">{{ submenu.caption }}</template>
+          <sidenav-router-link
+            v-if="menus.route"
+            v-bind:key="menus.id"
+            :icon="'ion ' + menus.icon"
+            :to="menus.route"
+            :exact="true"
+            :active="isMenuActive(Web.getModuleEndpoint(packageNamespace))"
+            :open="isMenuOpen(Web.getModuleEndpoint(packageNamespace))"
+          >
+            {{ menus.caption }}
+          </sidenav-router-link>
+          <sidenav-menu
+            v-else 
+            :icon="'ion ' + menus.icon"
+            v-bind:key="menus.id"
+            :active="isMenuActive(Web.getModuleEndpoint(packageNamespace))"
+            :open="isMenuOpen(Web.getModuleEndpoint(packageNamespace))"
+          >
 
-                          <template v-for="(subsubmenu,aclIdLv3) in submenu.children">
-                            <template
-                              v-if="subsubmenu.is_navbar && subsubmenu.active_acl.has_access"
-                            >
-                              <sidenav-router-link
-                                :to="procRoute(subsubmenu.route,packageNamespace)"
-                                v-bind:key="aclIdLv3"
-                                :exact="true"
-                              >{{ subsubmenu.caption }}</sidenav-router-link>
+            <template slot="link-text">{{ menus.caption }}</template>
+
+            <!-- start level 1 -->
+            <template v-for="(menu, aclIdLv1) in menus.children">
+
+              <template v-if="menus.has_acl == 0 || (menu.is_navbar && menu.active_acl.has_access && (menu.tenant_group_id==0 || isInGroup(menu.tenant_group_id)))">
+
+                <template v-if="menu.children == undefined">
+
+                  <sidenav-router-link
+                    :to="menu.route"
+                    v-bind:key="aclIdLv1"
+                    :exact="true"
+                  >{{ menu.caption }}</sidenav-router-link>
+
+                </template>
+                <template v-else>
+
+                  <!-- start level 2 -->
+                  <sidenav-menu
+                    v-bind:key="aclIdLv1"
+                    :active="isMenuActive(menu.route)"
+                    :open="isMenuOpen(menu.route)"
+                  >
+                    <template slot="link-text">{{ menu.caption }}</template>
+
+                    <template v-for="(submenu,aclIdLv2) in menu.children">
+
+                      <template v-if="menus.has_acl == 0 || (submenu.is_navbar && submenu.active_acl.has_access && (submenu.tenant_group_id==0 || isInGroup(submenu.tenant_group_id)))">
+
+                        <template v-if="submenu.children == undefined">
+
+                          <sidenav-router-link
+                            :to="submenu.route"
+                            v-bind:key="aclIdLv2"
+                            :exact="true"
+                          >{{ submenu.caption }}</sidenav-router-link>
+
+                        </template>
+                        <template v-else>
+
+                          <!-- start level 3 -->
+                          <sidenav-menu
+                            v-bind:key="submenu.aclIdLv2"
+                            :active="isMenuActive(submenu.route)"
+                            :open="isMenuOpen(submenu.route)"
+                          >
+
+                            <template slot="link-text">{{ submenu.caption }}</template>
+
+                            <template v-for="(subsubmenu,aclIdLv3) in submenu.children">
+
+                              <template v-if="menus.has_acl == 0 || (subsubmenu.is_navbar && subsubmenu.active_acl.has_access && (subsubmenu.tenant_group_id==0 || isInGroup(subsubmenu.tenant_group_id)))">
+
+                                <sidenav-router-link
+                                  :to="subsubmenu.route"
+                                  v-bind:key="aclIdLv3"
+                                  :exact="true"
+                                >{{ subsubmenu.caption }}</sidenav-router-link>
+
+                              </template>
+
                             </template>
-                          </template>
-                        </sidenav-menu>
-                        <!-- end level 3 -->
+
+                          </sidenav-menu>
+                          <!-- end level 3 -->
+                        </template>
                       </template>
+
                     </template>
-                  </template>
-                </sidenav-menu>
-                <!-- end level 2 -->
+
+                  </sidenav-menu>
+                  <!-- end level 2 -->
+                </template>
+
               </template>
+
             </template>
-          </template>
-          <!-- end level 1 -->
-        </sidenav-menu>
-      </template>
+            <!-- end level 1 -->
+          </sidenav-menu>
+
+        </template>
+
+      </template>      
+      <!--end - looping level 1-->
+      
+
     </div>
   </sidenav>
 </template>
@@ -142,8 +173,13 @@ export default {
       default: "vertical"
     }
   },
-  created() {},
+  created() {
+    console.log(this.Web.getSidenavMenu());
+  },
   computed: {
+    tenantGroup() {
+      return this.Web.getTenantGoup();
+    },
     title() {
       return this.Web.getAdminTitle();
     },
@@ -174,23 +210,27 @@ export default {
     }
   },
   methods: {
-    //ubah route access di packageLocal menjadi ready
-    procRoute(featureRoute, packageNamespace) {
-      let fullEndpoint = this.Web.getModuleEndpoint(packageNamespace);
-      if (
-        featureRoute.path != undefined &&
-        featureRoute.path.charAt(0) != "/"
-      ) {
-        featureRoute.path = fullEndpoint + "/" + featureRoute.path;
-      }
-      return featureRoute;
+    /*
+    cek apakah curGroup tenant group ada di active group
+    param :
+      curGroup : array
+    */
+    isInGroup(curGroup) {
+      console.log('isInGroup',curGroup,this.tenantGroup);
+      //jika tidak ada group maka tolak
+      if(!this.tenantGroup)return false;
+      console.log('masuk isIngroup');
+      
+      var arr = this.tenantGroup;
+      return curGroup.some(r=>arr.indexOf(r) >= 0);
     },
-    isMenuActive(route) {
-      let routePath = "";
+    isMenuActive(route) {  
+      let routePath = '';    
       if (typeof route == "string") {
         routePath = route;
       } else {
-        routePath = route.path;
+        let routePathObj = this.$router.resolve(route);
+        routePath = routePathObj.route.path;
       }
       return this.Web.isOnEndpoint(routePath);
     },

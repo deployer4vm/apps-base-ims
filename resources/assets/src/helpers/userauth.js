@@ -17,6 +17,7 @@ export default {
     return promise
     */
     login(userCredential){
+        userCredential.group_app = this.router.currentRoute.params.group_app;
         return this.store.dispatch('login',userCredential).then((res)=>{            
             return res;
         });
@@ -43,6 +44,9 @@ export default {
     },
     getToken() {
         return this.store.getters.getAuthToken;
+    },
+    getAuthRole() {
+        return this.store.getters.getAuthRole;
     },
     //----------go to------    
     goToLogin() {

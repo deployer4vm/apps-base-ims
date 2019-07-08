@@ -9,6 +9,8 @@ export default {
     notify: null, //vue-notification
     endpoint: null, //local full endpoint
     bvModal: null,
+    tenantList: null,
+    multitenantConfig: null,
     /*
     Route & Endpoint
     =======================================================================
@@ -29,13 +31,15 @@ export default {
     cek apakah url sekarang adalah path yang diinputkan
     */
     isOnEndpoint(path = null) {
-        return this.router.currentRoute.path.indexOf(path) === 0;
+        let endpoint = path.replace(':group_app',this.router.currentRoute.params.group_app);
+        return this.router.currentRoute.path.indexOf(endpoint) === 0;
     },
     isAuthEdnpoint(path = null, app = "admin") {
         if (path == null) {
             path = this.router.currentRoute.path;
         }
-        return path.indexOf(this.endpoint[app]["auth"]) === 0;
+        let atuhEndpoint = this.endpoint[app]["auth"].replace(':group_app',this.router.currentRoute.params.group_app);
+        return path.indexOf(atuhEndpoint) === 0;
     },
     //cek apakah halaman yang diakses sekarang admin area
     isAdminEndpoint(path = null, app = null) {
@@ -43,18 +47,55 @@ export default {
         if (path == null) {
             path = this.router.currentRoute.path;
         }
-        if (app == null) {
-            _.forEach(this.endpoint, (v, k) => {});
-        }
-        return path.indexOf(this.endpoint.admin.app) === 0;
+        let adminEndpoint = this.endpoint.admin.app.replace(':group_app',this.router.currentRoute.params.group_app);
+        return path.indexOf(adminEndpoint) === 0;
     },
+    //----------go to------    
+    goToDefaultTenant() {
+        this.router.push(this.multitenantConfig.default_route);
+    },   
     /*
     template
     =======================================================================
     */
     //initialize template store vuex
-    initTemplateState() {
+    initTemplateState () {
         return this.store.dispatch("initTemplateState");
+    },    
+    //------tenant--------------------------
+    loadTenant (groupApp) {
+        if(!this.store.getters.isTenantLoaded || groupApp != this.store.getters.getTenantGroupApp){
+            return this.store.dispatch('reloadTenant',groupApp).then((val)=>{
+                if(!val){
+                    return false;
+                }
+                this.tenantList = this.store.getters.getTenantList;
+                return true;
+            });
+        }else{
+            this.tenantList = this.store.getters.getTenantList;
+            return new Promise((resolve,reject)=>{
+                resolve(true);
+            });
+        }
+    },
+    //force reload languange from server
+    reLoadTenant(groupApp) {
+        this.store.dispatch('reloadTenant',groupApp).then((val)=>{
+            this.tenantList = this.store.getters.getTenantList;
+        });       
+    },
+    //get active tenant name
+    getTenantGoup() {
+        return this.store.getters.getTenantGroup;
+    },
+    //get active tenant name
+    getTenantName() {
+        return this.store.getters.getTenantName;
+    },
+    //get active tenant name
+    getTenantGroupApp() {
+        return this.store.getters.getTenantGroupApp;
     },
     //---------------navbar (header)-------------------
     getAdminTitle() {

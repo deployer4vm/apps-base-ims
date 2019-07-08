@@ -8,13 +8,18 @@
       </div>
       <div>
         <template v-for="menu in footerMenu">
-          <router-link
-            tag="a"
-            :to="menu.route"
-            class="footer-link pt-3 ml-4"
-            v-bind:key="menu.caption"
-            v-if="menu.show"
-          >{{ menu.caption }}</router-link>
+          <template v-if="menu.route.length == undefined">
+            <a :href="menu.route" :class="'footer-link pt-3 ml-4' + menu.class" v-if="menu.show">{{ menu.caption }}</a>
+          </template>
+          <template v-else>
+            <router-link
+              tag="a"
+              :to="menu.route"
+              :class="'footer-link pt-3 ml-4' + menu.class"
+              v-bind:key="menu.caption"
+              v-if="menu.show"
+            >{{ menu.caption }}</router-link>
+          </template>
         </template>
       </div>
     </div>

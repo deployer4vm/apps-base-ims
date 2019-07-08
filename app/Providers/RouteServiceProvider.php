@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use App\Services\Utilities;
 use Illuminate\Http\Request;
+use App\Models\Tenant;
+use App\Models\TenantGroupTenant;
 
 class RouteServiceProvider extends ServiceProvider
 {
@@ -70,53 +72,7 @@ class RouteServiceProvider extends ServiceProvider
      * @return void
      */
     public function map()
-    {
-        /*
-        initiate language resource for vue apps
-        get params : *optional
-            lang : lang id nya
-            item : item nya jika diperlukan
-        */
-        Route::get(config('AppConfig.system.lang_endpoint'), function (Request $request) {            
-            if($request->input('lang')){
-                app()->setLocale($request->input('lang'));
-            }
-            if($request->input('item')){
-                return response()->json(trans($request->input('item')));
-            }
-            $lang = app()->getLocale();
-            $trans = [];
-            //get all language namespace
-            foreach ($GLOBALS['LANG_PATH'] as $path) {
-                $langItem = glob($path.DIRECTORY_SEPARATOR.$lang.DIRECTORY_SEPARATOR.'*');                
-                foreach($langItem as $langFile){
-                    $filename = basename($langFile, ".php");
-                    if(!isset($trans[$filename])){
-                        $trans[$filename] = trans($filename);
-                        if(!is_array($trans[$filename]))unset($trans[$filename]);
-                    }
-                }
-            }
-            return response()->json($trans);
-        });
-
-        /*
-        initiate route untuk Admin area Vue Frontend
-        */
-        //jika route admin autoload, maka langsung load
-        // if(config('AppConfig.system.web_admin.autoload_router.backend')){
-            $adminEndpoint = config('AppConfig.client.endpoint.'.config('AppConfig.system.mode').'.admin');
-            if($adminEndpoint!='/' && !empty($adminEndpoint)){
-                Route::get($adminEndpoint, function(){
-                    return view('layouts.admin.main');
-                });
-            }else{
-                $adminEndpoint = '';
-            }
-            Route::get($adminEndpoint.'{any}', function(){
-                return view('layouts.admin.main');
-            })->where('any', '.*');
-        // }
+    {        
 
         $config = $this->app['config']['hpsynapse'];
         // $middleware = $config['protection_middleware'];        
@@ -148,6 +104,83 @@ class RouteServiceProvider extends ServiceProvider
                     ->group($path);
             }
         });
+
+        /*
+        initiate language resource for vue apps
+        get params : *optional
+            lang : lang id nya
+            item : item nya jika diperlukan
+        */
+        Route::get(config('AppConfig.system.lang_endpoint'), function (Request $request) {            
+            if($request->input('lang')){
+                app()->setLocale($request->input('lang'));
+            }
+            if($request->input('item')){
+                return response()->json(trans($request->input('item')));
+            }
+            $lang = app()->getLocale();
+            $trans = [];
+            //get all language namespace
+            foreach ($GLOBALS['LANG_PATH'] as $path) {
+                $langItem = glob($path.DIRECTORY_SEPARATOR.$lang.DIRECTORY_SEPARATOR.'*');                
+                foreach($langItem as $langFile){
+                    $filename = basename($langFile, ".php");
+                    if(!isset($trans[$filename])){
+                        $trans[$filename] = trans($filename);
+                        if(!is_array($trans[$filename]))unset($trans[$filename]);
+                    }
+                }
+            }
+            return response()->json($trans);
+        });
+
+        
+        /*
+        initiate tenant app
+
+        get params : *optional
+            group_app : lang id nya
+
+        return :
+            tenant_list
+            active_tenant
+            active_tenant_group
+        */
+        Route::get(config('AppConfig.system.web_admin.multitenant.api_endpoint'), function (Request $request) { 
+
+            $tenant = ['tenant_list'=>'','active_tenant'=>false,'active_tenant_group'=>false];
+            if($request->input('group_app')){
+                $tenant['active_tenant'] = Tenant::where('group_app',$request->input('group_app'))->first();
+                if($tenant['active_tenant']){
+                    $tenant['active_tenant_group'] = TenantGroupTenant::where('tenant_id',$tenant['active_tenant']->id)->get()->pluck('id');
+                    if($tenant['active_tenant_group']->count()<=0) $tenant['active_tenant_group'] = false;
+                }else{
+                    $tenant['active_tenant'] = false;
+                }
+            }
+
+            $tenant['tenant_list'] = Tenant::all();           
+            
+            return response()->json($tenant);
+        });
+
+        /*
+        initiate route untuk Admin area Vue Frontend
+        */
+        //jika route admin autoload, maka langsung load
+        // if(config('AppConfig.system.web_admin.autoload_router.backend')){
+            $adminEndpoint = config('AppConfig.client.endpoint.'.config('AppConfig.system.mode').'.admin');
+            if($adminEndpoint!='/' && !empty($adminEndpoint)){
+                Route::get($adminEndpoint, function(){
+                    return view('layouts.admin.main');
+                });
+            }else{
+                $adminEndpoint = '';
+            }
+            Route::get($adminEndpoint.'{any}', function(){
+                return view('layouts.admin.main');
+            })->where('any', '.*');
+        // }
 
         // $this->mapApiRoutes();
         // $this->mapWebRoutes();

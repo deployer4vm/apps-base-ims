@@ -3,28 +3,25 @@
 load all application config
 */
 let AppConfig = {
-    system: {
-        ...require("../../../app/MainApp/config/system.json"),
-        ...require("../../../app/MainApp/config/systemEnv.json")
-    },
+    system: require("../../../app/MainApp/config/_system.json"),
     client: require("../../../app/MainApp/config/client.json"),
-    packageLocal: {},
+    packageLocal: require("../../../app/MainApp/config/_packageLocal.json"),
     package: require("../../../app/MainApp/config/package.json"),
     listener: require("../../../app/MainApp/config/listener.json"),
     endpoint: require("../../../app/MainApp/config/endpoint.json")
 };
 
-let varPackageLocal = require("../../../app/MainApp/config/packageLocal.json");
-let varPackageLocalEnv = require("../../../app/MainApp/config/packageLocalEnv.json");
+// let varPackageLocal = require("../../../app/MainApp/config/packageLocal.json");
+// let varPackageLocalEnv = require("../../../app/MainApp/config/packageLocalEnv.json");
 
-_.forEach(AppConfig.package, (value, index) => {
-    AppConfig.packageLocal[value.package_namespace] = _.merge(
-        _.merge(
-            AppConfig.package[value.package_namespace],
-            varPackageLocal[value.package_namespace]
-        ),
-        varPackageLocalEnv[value.package_namespace]
-    );
-});
+// _.forEach(AppConfig.package, (value, index) => {
+//     AppConfig.packageLocal[value.package_namespace] = _.merge(
+//         _.merge(
+//             AppConfig.package[value.package_namespace],
+//             varPackageLocal[value.package_namespace]
+//         ),
+//         varPackageLocalEnv[value.package_namespace]
+//     );
+// });
 
 export default AppConfig;

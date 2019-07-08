@@ -86,6 +86,7 @@ abstract class BaseRepository {
      * @return type
      */
     protected function _filterData($data, $availableColumn = []) {
+        $userData = [];
         foreach ($availableColumn as $value) {
             if (isset($data[$value]))
                 $userData[$value] = $data[$value];

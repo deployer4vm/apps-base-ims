@@ -24,6 +24,10 @@
 
     <b-collapse is-nav id="app-layout-navbar">
 
+      <b-navbar-nav class="align-items-lg-center">
+        <h5 class="font-weight-normal m-0 p-0 navbar-text">{{ tenantName }}</h5>
+      </b-navbar-nav>
+      
       <b-navbar-nav class="align-items-lg-center ml-auto">
         
         <b-nav-item-dropdown :right="!isRTL" class="demo-navbar-user">
@@ -37,7 +41,6 @@
           </template>
 
           <b-dd-item :to="{name: 'myprofile'}"><i class="ion ion-ios-person text-lightest"></i> &nbsp; {{ Trans.get('user.my_profile') }}</b-dd-item>
-          <b-dd-divider />
           <b-dd-item @click="UserAuth.logout()"><i class="ion ion-ios-log-out text-danger"></i> &nbsp; {{ Trans.get('auth.logout') }}</b-dd-item>
 
           <template v-if="AppConfig.system.mode=='dev'">
@@ -59,6 +62,9 @@ export default {
   computed: {
     title() {
       return this.Web.getAdminTitle();
+    },
+    tenantName() {
+      return this.Web.getTenantName();
     }
   },
   name: "app-layout-navbar",

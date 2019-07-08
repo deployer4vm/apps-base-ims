@@ -1,7 +1,7 @@
 import Vue from "vue";
 import Router from "vue-router";
 import Meta from "vue-meta";
-import authAxios from "axios";
+// import authAxios from "axios";
 import BlankRouterContainer from '@/layout/BlankRouterContainer';
 import globals from "@/globals";
 
@@ -32,7 +32,7 @@ const router = new Router({
     routes: tmpRoutes
 });
 
-router.afterEach(() => {
+router.afterEach((to, from,) => {
     /*
     detek dan proteksi halaman admin dengan auth jika diaktifkan di config
     */
@@ -47,7 +47,28 @@ router.afterEach(() => {
         //jika sudah login tapi mengakses halaman auth maka redirect
         }else if( globals().UserAuth.isLogin() && globals().Web.isAuthEdnpoint() ){
             globals().UserAuth.goToDashboard();
-        }        
+        }      
+        
+        //jika berpindah tenant maka logout kan
+        if(
+            globals().UserAuth.isLogin() 
+            && globals().AppConfig.system.web_admin.multitenant.active 
+            && to.params.group_app != globals().Web.getTenantGroupApp()
+        ){
+            globals().UserAuth.logout();
+        }  
+    }
+    
+    if(globals().LocalApi.defaults.headers.common["App-Group"] != to.params.group_app)
+        globals().LocalApi.defaults.headers.common["App-Group"] = to.params.group_app;
+        
+    if(globals().AppConfig.system.web_admin.multitenant.active && to.params.group_app != globals().Web.getTenantGroupApp()){
+        globals().Web.loadTenant(to.params.group_app).then((val)=>{
+            //jika tenang tidak ditemukan
+            if(!val){
+                globals().Web.goToDefaultTenant();
+            }
+        }); 
     }
     
 

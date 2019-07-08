@@ -3,6 +3,7 @@ import UserAuth from '@/helpers/userauth.js';
 import Web from '@/helpers/web.js';
 import Trans from '@/helpers/trans.js';
 import AppConfig from '@/appconfig.js';
+import _default from 'vuex';
 
 let web = Web;
 web.endpoint = AppConfig.endpoint;
@@ -13,6 +14,17 @@ set local Api
 var localapi = new axios.create();
 localapi.defaults.baseURL = AppConfig.client.endpoint[AppConfig.system.mode]["domain"];
 localapi.defaults.headers.get["Accepts"] = "application/json";
+
+/*
+jika multi tenant aktif
+*/
+if(AppConfig.system.web_admin.multitenant.active){
+  var newEndpoint = {};
+  _.forEach(AppConfig.endpoint.admin,(v,i)=>{
+    newEndpoint[i] = "/:group_app" + v;
+  });
+  AppConfig.endpoint.admin = newEndpoint;
+}
 
 export default function () {
   return {

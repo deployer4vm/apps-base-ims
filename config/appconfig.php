@@ -1,5 +1,6 @@
 <?php
-require_once app_path('Helpers/Helper.php');
+require app_path('Helpers/Helper.php');
+
 /**
  * Config utama yang menyimpan semua config aplikasi. Datanya disimpan di app/Module/System/config
  */
@@ -49,7 +50,17 @@ foreach ($moduleList as $path) {
     $tmpPackage = json_decode(file_get_contents($path), true);
     $package[$tmpPackage['package_namespace']] = $tmpPackage;
 }
-file_put_contents(__DIR__ . '/../app/MainApp/config/package.json', json_encode($package, JSON_PRETTY_PRINT));
+
+$packageOld = '';
+if(file_exists(__DIR__ . '/../app/MainApp/config/package.json')){
+    $packageOld = file_get_contents(__DIR__ . '/../app/MainApp/config/package.json');
+}
+
+$packageText = json_encode($package, JSON_PRETTY_PRINT);
+//save hanya jika ada perubahan
+if($packageOld != $packageText) {
+    file_put_contents(__DIR__ . '/../app/MainApp/config/package.json', $packageText);
+}
 
 //merge config package dengan package local
 $packageLocalString = '';
@@ -57,7 +68,7 @@ if(file_exists(__DIR__ . '/../app/MainApp/config/packageLocal.json')){
     $packageLocalString = file_get_contents(__DIR__ . '/../app/MainApp/config/packageLocal.json');
     $tmpPackageLocal = json_decode($packageLocalString, true);
 }else{
-    $tmpPackageLocal = $package;
+    $tmpPackageLocal = [];
 }
 
 if(file_exists(__DIR__ . '/../app/MainApp/config/packageLocalEnv.json')){
@@ -93,11 +104,11 @@ foreach ($package as $item) {
     $newPackageLocal[$item['package_namespace']] =
         isset($tmpPackageLocal[$item['package_namespace']])
         ? $tmpPackageLocal[$item['package_namespace']]
-        : $item;
+        : [];
     $newPackageLocalEnv[$item['package_namespace']] =
         isset($tmpPackageLocalEnv[$item['package_namespace']])
         ? $tmpPackageLocalEnv[$item['package_namespace']]
-        : $item;
+        : [];
 
     //hapus package key config yang tidak boleh diedit
     foreach ($keyConfig['protected_packageLocal_key'] as $value) {
@@ -124,7 +135,7 @@ foreach ($package as $item) {
     $moduleEndpoints = $packageLocal[$item['package_namespace']]['endpoint'][$system['mode']];
     foreach ($moduleEndpoints as $app => $moduleEndpoint) {        
         //jika module endpoint diawal "/" berarti tidak menggunakan apps endpoint
-        if($moduleEndpoint[0]!='/'){
+        if($moduleEndpoint == '' || $moduleEndpoint[0]!='/'){
             $endpoint[$app][$item['package_namespace']] = $endpoint[$app]['app'].'/'.$moduleEndpoint;
         }else{
             $endpoint[$app][$item['package_namespace']] = $moduleEndpoint;
@@ -141,6 +152,7 @@ foreach ($package as $item) {
         }
     }
 }
+
 $newPackageLocalString = json_encode($newPackageLocal, JSON_PRETTY_PRINT);
 //save ulang pakcageLocal hanya jika ada perubahan
 if($packageLocalString != $newPackageLocalString){
@@ -148,6 +160,10 @@ if($packageLocalString != $newPackageLocalString){
 }
 file_put_contents(__DIR__ . '/../app/MainApp/config/packageLocalEnv.json', json_encode($newPackageLocalEnv, JSON_PRETTY_PRINT));
 file_put_contents(__DIR__ . '/../app/MainApp/config/endpoint.json', json_encode($endpoint, JSON_PRETTY_PRINT));
+
+//---generated config
+file_put_contents(__DIR__ . '/../app/MainApp/config/_packageLocal.json', json_encode($packageLocal, JSON_PRETTY_PRINT));
+file_put_contents(__DIR__ . '/../app/MainApp/config/_system.json', json_encode($system, JSON_PRETTY_PRINT));
 
 /*
 package dan module berisi config yang sama persis

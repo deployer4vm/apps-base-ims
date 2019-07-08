@@ -76,7 +76,7 @@ generate config package.json
 ----------------------------------------------------------------------
 */
 var varPackage = JSON.parse(fs.readFileSync("app/MainApp/config/package.json"));
-var packageLocal = JSON.parse(fs.readFileSync("app/MainApp/config/packageLocal.json"));
+var packageLocal = JSON.parse(fs.readFileSync("app/MainApp/config/_packageLocal.json"));
 
 // TIDAK JADI, SEMENTARA DISATUIN DI appconfig.php
 // (glob.sync("vendor/hp-synapse/*/packageconfig.json") || []).forEach(f => {
