@@ -25,7 +25,6 @@
     <div class="sidenav-inner" :class="{ 'py-1': orientation !== 'horizontal' }">
       <!-- <div class="sidenav-divider mt-0" v-if="orientation !== 'horizontal'"></div> -->
 
-
       <!--looping level 1-->
       
       <template v-for="(menus, packageNamespace) in sidebarMenu">
@@ -174,7 +173,7 @@ export default {
     }
   },
   created() {
-    console.log(this.Web.getSidenavMenu());
+    
   },
   computed: {
     tenantGroup() {
@@ -216,11 +215,8 @@ export default {
       curGroup : array
     */
     isInGroup(curGroup) {
-      console.log('isInGroup',curGroup,this.tenantGroup);
-      //jika tidak ada group maka tolak
-      if(!this.tenantGroup)return false;
-      console.log('masuk isIngroup');
-      
+      //jika tidak ada group maka tolak (berarti tidak punya akses)
+      if(!this.tenantGroup)return false;      
       var arr = this.tenantGroup;
       return curGroup.some(r=>arr.indexOf(r) >= 0);
     },
