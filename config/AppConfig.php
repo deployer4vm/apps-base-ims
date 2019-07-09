@@ -57,6 +57,7 @@ if(file_exists(__DIR__ . '/../app/MainApp/config/package.json')){
 }
 
 $packageText = json_encode($package, JSON_PRETTY_PRINT);
+
 //save hanya jika ada perubahan
 if($packageOld != $packageText) {
     file_put_contents(__DIR__ . '/../app/MainApp/config/package.json', $packageText);
