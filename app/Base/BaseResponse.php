@@ -81,10 +81,10 @@ abstract class BaseResponse implements Responsable
             }
         }
         
-        //jika menyertakan data tambahan untuk view
-        if(isset($this->output['listdata'])&&is_array($this->output['listdata'])){
-            $data['data'] = $this->output['listdata'];
-        }
+        //jika menyertakan data tipe listing
+        // if(isset($this->output['listdata'])&&is_array($this->output['listdata'])){
+        //     $data['data'] = $this->output['listdata'];
+        // }
         
         //jika error maka kosongkan data
         if(!is_null($data['errors']))$data['data'] = null;
@@ -126,10 +126,10 @@ abstract class BaseResponse implements Responsable
             $this->errors = $this->output['errors'];
         }
         
-        //jika menyertakan data tambahan untuk view
-        if(isset($this->output['listdata'])&&!is_null($this->output['listdata'])){
-            $dataTmp[$this->listdataVarName] = $this->output['listdata'];
-        }
+        //jika menyertakan data type listing
+        // if(isset($this->output['listdata'])&&!is_null($this->output['listdata'])){
+        //     $dataTmp[$this->listdataVarName] = $this->output['listdata'];
+        // }
         
         //jika menyertakan data tambahan untuk view
         if(isset($this->output['viewdata'])&&is_array($this->output['viewdata'])){

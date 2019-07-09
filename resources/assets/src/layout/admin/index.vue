@@ -1,6 +1,7 @@
 <template>
   <div class="layout-wrapper layout-2">
-    <div class="layout-inner">
+
+    <div class="layout-inner" v-if="showComponent">
       <app-layout-navbar />
 
       <div class="layout-container">
@@ -14,6 +15,9 @@
           <app-layout-footer v-if="showFooter" />
         </div>
       </div>
+    </div>
+    <div class="layout-inner" v-else>
+      <h3 class="font-size-normal text-mutted text-center mt-10">Initialize...</h3>
     </div>
     <div class="layout-overlay" @click="closeSidenav"></div>
   </div>
@@ -102,6 +106,9 @@ export default {
   computed: {
     showFooter() {
       return this.$store.getters.isFooterShowed;
+    },
+    showComponent() {
+      return this.AppConfig.system.has_acl == 0 || this.UserAuth.isLogin() ? true : false;
     }
   },
   methods: {

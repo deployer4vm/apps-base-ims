@@ -114,7 +114,7 @@ if (!function_exists('pagination_format')) {
      * @param type $count
      * @param type $offset
      * @param type $limit
-     * @return array
+     * @return array format
      *      total
      *      per_page
      *      current_page
@@ -138,6 +138,7 @@ if (!function_exists('pagination_format')) {
 
 if (!function_exists('pagination_convert_link')) {    
     /**
+     * convert link pagination default laravel menjadi default system
      * 
      * @param type $count
      * @param type $offset
@@ -162,6 +163,7 @@ if (!function_exists('pagination_convert_link')) {
         return $newUrl;
     }
 }
+
 if (!function_exists('pagination_generate')) {    
     /**
      * 
@@ -171,7 +173,7 @@ if (!function_exists('pagination_generate')) {
      *      offset int
      *      limit int limit perpage
      * @param type $path
-     * @return type
+     * @return pagination pagination object
      */
     function pagination_generate($paginationParam,$path){
         

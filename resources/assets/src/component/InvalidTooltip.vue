@@ -14,16 +14,39 @@ export default {
             'alertItem': {}
         }
     },
-    props:['inputItem','customAlert','fieldName'],
+    props:[
+        'inputItem',//object input vuelidate nya, misal : $v.form.password
+        'customAlert',
+        'fieldName',//text caption nama fieldnya
+        'otherFieldName' //text caption nama field nama field
+        ],
     created() {
         _.forEach(this.inputItem.$params,(v,key)=>{
             if(this.customAlert == undefined || this.customAlert[key]==undefined){
-                this.alertItem[key] = this.Trans.get('validation.' + key, {attribute: this.fieldName});
-                // if(theAlert == 'validation.' + key){
-                //     this.alertItem[key] = Trans.get('validation.' + key, {attribute: fieldName});
-                // }else{
-                //     this.alertItem[key] = theAlert;
-                // }
+                let attr = {attribute: this.fieldName};
+                let langKey = key;
+                switch (key) {
+                    case 'minLength':
+                        langKey = 'min.numeric';
+                        attr.min = v.min;
+                        break;  
+                    case 'maxLength':
+                        langKey = 'max.numeric';
+                        attr.max = v.max;
+                        break;  
+                    case 'sameAs':
+                        langKey = 'same';
+                        attr.other = this.otherFieldName;
+                        break; 
+                    case 'between':
+                        langKey = 'between.numeric';
+                        attr.min = v.min;
+                        attr.max = v.max;
+                        break;                
+                    default:                        
+                        break;
+                }
+                this.alertItem[key] = this.Trans.get('validation.' + langKey, attr);
             }else{
                 this.alertItem[key] = this.customAlert[key];
             }

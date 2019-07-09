@@ -20,7 +20,7 @@ class BaseController extends LaravelBaseController
                 'message_type'=>'info',//khusus warning view (bukan api)
             'data'=>null,
                 'viewdata'=>null,//data yang hanya disertakan di web request
-                'listdata'=>null,//untuk data berbentuk list array, jadi di view akan jadi output->data['data'] dan di api akan jadi output->data
+                // 'listdata'=>null,//untuk data berbentuk list array, jadi di view akan jadi output->data['data'] dan di api akan jadi output->data
             'errors'=>null,
         ];
     
