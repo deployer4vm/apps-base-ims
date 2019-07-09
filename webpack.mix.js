@@ -231,7 +231,10 @@ mix.sass(
     )
     .sass("resources/assets/src/style.scss", "public/dist/css/style.css")
     .copyDirectory("app/MainApp/resources/assets", "public/assets");
-    // .copyDirectory("public/dist", "app/MainApp/resources/dist");
+
+mix.scripts("node_modules/bootstrap/dist/js/bootstrap.js", "public/dist/vendor/libs/bootstrap.js");
+mix.scripts("node_modules/popper.js/dist/popper.js", "public/dist/vendor/libs/popper/popper.js");
+mix.sass("resources/assets/src/vendor/styles/pages/authentication.scss", "public/dist/css/authentication.css");
 
 if (Mix.isUsing("hmr")) {
     mix.disableNotifications();
