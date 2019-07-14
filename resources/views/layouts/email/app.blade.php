@@ -77,7 +77,7 @@
           <![endif]-->
 							<div class="mj-column-per-100 outlook-group-fix"style="font-size:13px;text-align:left;direction:ltr;display:inline-block;vertical-align:bottom;width:100%;">
 								<table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:bottom;" width="100%">
-									@include('layouts.email.auth.header')
+									@include('layouts.email.header')
 									@yield('content')
 								</table>
 							</div>
@@ -101,7 +101,7 @@
         <tr>
           <td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;">
       <![endif]-->
-	  	@include('layouts.email.auth.footer')
+	  	@include('layouts.email.footer')
 		<!--[if mso | IE]>
           </td>
         </tr>

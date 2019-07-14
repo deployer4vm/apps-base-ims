@@ -12,10 +12,6 @@ export default {
         return this.store.dispatch('implementAcl');
     },
     //=================================================
-    /*
-    logoutkan session yg sekarang
-    return promise
-    */
     login(userCredential){
         userCredential.group_app = this.router.currentRoute.params.group_app;
         return this.store.dispatch('login',userCredential).then((res)=>{            
@@ -23,6 +19,7 @@ export default {
         });
     },
     //logoutkan session yg sekarang
+    // return promise
     logout(goToLogin=true){
         this.store.dispatch('logout');
         if(goToLogin){

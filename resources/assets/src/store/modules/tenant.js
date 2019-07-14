@@ -58,6 +58,7 @@ const actions = {
             return false;
         }).catch((err)=>{
             console.log('Tenant config error : ',err);
+            return false;
         });
     }
 };

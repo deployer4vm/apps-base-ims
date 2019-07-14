@@ -17,14 +17,16 @@ class AppGroupCheck
      */
     public function handle($request, Closure $next)
     {
-        $appGroup = $request->header('App-Group');
-        if($appGroup){
-            $tenant = Tenant::where('group_app',$appGroup)->first();
-            if($tenant){
-                $config = app('config');
-                $config->set('tenant',$tenant->toArray());
-            }
-        }        
+        if(config('AppConfig.system.web_admin.multitenant.active')){
+            $appGroup = $request->header('App-Group');
+            if($appGroup){
+                $tenant = Tenant::where('group_app',$appGroup)->first();
+                if($tenant){
+                    $config = app('config');
+                    $config->set('tenant',$tenant->toArray());
+                }
+            }        
+        }
         return $next($request);
     }
 }

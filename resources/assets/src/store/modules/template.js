@@ -110,11 +110,12 @@ const mutations = {
     },    
     //---------------sidenav-------------------
     setSidenavMenu (state) {
-        _.forEach(globals().AppConfig.packageLocal, (value, index) => {
-            if(value.access.has_acl == 0 ||(value.access &&  value.enable &&  value.access.has_access)){
-                state.admin.sidenav[index] =value.access;
-            }
-        });
+        state.admin.sidenav = globals().AppConfig.sidenav;
+        // _.forEach(globals().AppConfig.packageLocal, (value, index) => {
+        //     if(value.access.has_acl == 0 ||(value.access &&  value.enable &&  value.access.has_access)){
+        //         state.admin.sidenav[index] =value.access;
+        //     }
+        // });
     },
     //---------------body-------------------
     addBreadcrumb (state, data) {

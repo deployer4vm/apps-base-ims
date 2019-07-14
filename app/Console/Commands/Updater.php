@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
-class DeployInit extends Command
+class Updater extends Command
 {
 
     /**
@@ -13,15 +13,20 @@ class DeployInit extends Command
      *
      * @var string
      */
-    protected $signature = 'syndeploy:init '
-        . '{mode : prod atau dev, dev jika untuk local symlink path, prod jika untuk gitlab reference}';
+    protected $signature = 'syndeploy:update '
+        . '{scope : all, project, appsBase, module} '
+        . '{--project : [OPTIONAL] update project (app/MainApp)} '
+        . '{--appsBase : [OPTIONAL] update apps-base (laravel project struture nya)} '
+        . '{--appsGenerator : [OPTIONAL] update vendor/hp-synapse/apps-generator (khusus development mode)} '
+        . '{--module= : [OPTIONAL] update package module-module yang dicantumkan, format :  moduleNamespace1,moduleNamespace2} '
+        . '{--syndeploy : [OPTIONAL] update installer syndeploy} ';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Synapse - Environment Mode setter';
+    protected $description = 'Synapse - System Updater';
 
     /**
      * Execute the console command.
@@ -30,7 +35,7 @@ class DeployInit extends Command
      */
     public function handle()
     {
-        $mode = $this->argument('mode')=='dev'?'dev':'prod';        
+        $mode = $this->argument('scope')=='dev'?'dev':'prod';        
         
         $config_dev_package_path = config('synapse.dev_package_path');
         

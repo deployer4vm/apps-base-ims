@@ -8,7 +8,9 @@ let AppConfig = {
     packageLocal: require("../../../app/MainApp/config/_packageLocal.json"),
     package: require("../../../app/MainApp/config/package.json"),
     listener: require("../../../app/MainApp/config/listener.json"),
-    endpoint: require("../../../app/MainApp/config/endpoint.json")
+    endpoint: require("../../../app/MainApp/config/_endpoint.json"),
+    sidenav: require("../../../app/MainApp/config/_sidenav.json"),
+    acl: require("../../../app/MainApp/config/_acl.json")
 };
 
 // let varPackageLocal = require("../../../app/MainApp/config/packageLocal.json");

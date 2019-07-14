@@ -20,7 +20,13 @@ let vuexConfig = {
 const vuexPersist = new VuexPersist({
     //cache semua state kecuali template state
     reducer: (state) => {
-        let newState = {'auth':state.auth,'tenant':state.tenant};
+        let newState = {
+            'auth':state.auth
+            // ,'trans':state.trans
+        };
+        if (globals().AppConfig.system.web_admin.multitenant.active) {
+            newState.tenant = state.tenant;
+        }
         //registrasikan vuexPersist jika diaktikan
         if (globals().AppConfig.system.web_state_persistant) {
             _.forEach(state,(value, index) => {

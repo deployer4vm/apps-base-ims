@@ -11,6 +11,7 @@
   </div>
 </template>
 <style src="@/vendor/libs/vue-notification/vue-notification.scss" lang="scss"></style>
+<style src="@/vendor/libs/spinkit/spinkit.scss" lang="scss"></style>
 <script>
 export default {
   name: 'app',

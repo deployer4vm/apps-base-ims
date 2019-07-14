@@ -134,7 +134,7 @@ export default {
         if (!params.text) params.text = "Shome Warning";
         if (!params.styleType) params.styleType = "hover";
         if (!params.position) params.position = "top-center";
-
+        
         if (this._showAlert_type[params.type] == undefined)
             params.type = "info";
         if (this._showAlert_position[params.position] == undefined)

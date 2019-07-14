@@ -32,7 +32,7 @@ const router = new Router({
     routes: tmpRoutes
 });
 
-router.afterEach((to, from,) => {
+router.afterEach((to, from) => {
     /*
     detek dan proteksi halaman admin dengan auth jika diaktifkan di config
     */
@@ -64,7 +64,7 @@ router.afterEach((to, from,) => {
         
     if(globals().AppConfig.system.web_admin.multitenant.active && to.params.group_app != globals().Web.getTenantGroupApp()){
         globals().Web.loadTenant(to.params.group_app).then((val)=>{
-            //jika tenang tidak ditemukan
+            //jika tenant tidak ditemukan
             if(!val){
                 globals().Web.goToDefaultTenant();
             }

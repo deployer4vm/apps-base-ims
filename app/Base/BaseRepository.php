@@ -86,26 +86,6 @@ abstract class BaseRepository {
     //     return false;
     // }
 
-    /**
-     * TIDAK DIGUNAKAN, DOUBLE SAMA DENGAN _filterField()
-     * filter result data
-     * menghapus semua data berdasarkan key yang tidak ada di $availableColumn
-     * 
-     * @param array         $data data record array yang akan difilter
-     * @param array         $availableColumn array list nama field yang boleh ada
-     * @return array        array record hasil filternya
-     */
-    // protected function _filterData($data, $availableColumn = []) {
-    //     $userData = [];
-    //     foreach ($availableColumn as $value) {
-    //         if (isset($data[$value]))
-    //             $userData[$value] = $data[$value];
-    //     }
-    //     if (isset($userData))
-    //         return $userData;
-    //     return [];
-    // }
-
 
     /**
      * DONE
@@ -127,20 +107,38 @@ abstract class BaseRepository {
 
     /**
      * DONE
+     * filter array hanya berdasarkan key yg diallow nya saja
+     * filter data yang akan di update / output / field, jika ada field yang tidak sesuai dengan
+     * list avaiavailableFieldslable field maka akan dihapus
      * 
-     * filter data yang akan di input / update, jika ada field yang tidak sesuai dengan
-     * list available field maka akan dihapus
-     * 
-     * @param array        $fields      list available field nya
-     * @param array        $inputData   input datanya
-     * @return array                    hasil filter data
+     * @param array        $data                input datanya
+     * @param array        $availableFields     list available field nya
+     * @return array                            hasil filter data
      */
-    protected function _filterField($inputData, $fields = null) {
-        $collection = collect($inputData);
+    protected function _filterAllowField($data, $availableFields = null) {
+        $collection = collect($data);
 
-        return $collection->filter(function ($value, $key) use ($fields) {
-            return in_array($key, $fields);
-        });
+        return $collection->filter(function ($value, $key) use ($availableFields) {
+            return in_array($key, $availableFields);
+        })->toArray();
+    }
+
+    /**
+     * DONE
+     * filter array berdasarkan field yang tidak boleh ada (dihapus)
+     * filter data yang akan di update / output / field, jika ada field yang terdaftar
+     * di rejectedField maka akan dihapus
+     * 
+     * @param array        $data                input datanya
+     * @param array        $rejectedFields      list field yang akan dihapus
+     * @return array                            hasil filter data
+     */
+    protected function _filterField($data, $rejectedFields = null) {
+        $collection = collect($data);
+
+        return $collection->filter(function ($value, $key) use ($rejectedFields) {
+            return !in_array($key, $rejectedFields);
+        })->toArray();
     }
 
     /**
@@ -148,19 +146,29 @@ abstract class BaseRepository {
      * generate basic where function
      * 
      * @param eloquent instance $model
-     * @param array $filter
+     * @param array $filter where format
      * @return eloquent instance 
      */
-    protected function _setFilterWhere($model, $filter) {
-        //jika filter diisi selain array maka asumsikan isinya adalah id table
-        if (!is_array($filter)) {
-            $filter = [['id', $filter]];
+    protected function _where($model, $where) {
+
+        //jika sudah kosong maka langsung kembalikan model nya
+        if(empty($where))return $model;
+
+        //jika where di isi selain array maka asumsikan isinya adalah id table
+        if (!is_array($where)) {
+            $where = [['id', $where]];
+        }
+        if (!is_array($where[0]) && $where[0] != 'or') {
+            $where = [$where];
         }
 
-        foreach ($filter as $value) {
+        foreach ($where as $value) {
+            //jika value[1] tidak ada kemungkinan ada yang keliru input format, maka langsung tolak
+            if(!isset($value[1]))return $model;
+
             //jika sudah tidak nested maka langsung proses
-            if (!is_array($value[1])) {
-                $model = $this->__generateWhere($model, $value);                
+            if (!is_array($value[0]) && $value[0] != 'or') {
+                $model = $this->__where($model, $value);                
             } else {
                 $varWhere = 'where';
                 //detek apakah or
@@ -169,7 +177,7 @@ abstract class BaseRepository {
                     $varWhere = 'orWhere';
                 }
                 $model = $model->$varWhere(function($model) use ($value){
-                    $model = $this->_setFilterWhere($model, $value);
+                    $model = $this->_where($model, $value);
                 });
             }
         }
@@ -179,9 +187,13 @@ abstract class BaseRepository {
 
     /**
      * DONE
-     * helper untuk _setFilterWhere()
+     * helper untuk _where()
+     * 
+     * @param Eloquent $model
+     * @param array $value
      */
-    private function __generateWhere($model, $value){
+    private function __where($model, $value){
+        
         $op = '=';
         $field = $value[0];
         $isOr = false;
@@ -223,7 +235,7 @@ abstract class BaseRepository {
      * @param array $searchField list field yg di search nya
      * @return eloquent instance
      */
-    protected function _setFilterSearch($model, $q, $searchField = false) {
+    protected function _searchString($model, $q, $searchField = false) {
         $model = $model->where(function($query) use ($q, $searchField) {
             foreach ($searchField as $value) {
                 $query = $query->orWhere($value, 'LIKE', '%' . $q . '%');
@@ -240,66 +252,86 @@ abstract class BaseRepository {
      * 
      * @param eloquen instance $model model data yang digunakan
      * @param array $filter filter data jika ada
-     *      filter array filter basic
-     *          q string jika menyertakan ini maka akan dilakuan string filter berdasarkan field $searchField
-     *          ADDITIONAL_PARAM array where untuk default filter
+     *      q string jika menyertakan ini maka akan dilakuan string filter berdasarkan field $searchField     * 
      *      function function($model) filter tambahan jika diperlukan
      *      searchField array list field/column yg termasuk kedalam filter search
-     *      hiddeColumn array list field/column yg di hidde *      
-     *      
+     *      hiddenColumn array list field/column yg di hidde *  
+     *     
+     *      ADDITIONAL_PARAM array where untuk default filter
+     * 
      * @param array $orderBy
      * @param int $offset
      * @param int $limit
      * 
      * @return array
      */
-    protected function _list($model, $filter, $orderBy = false, $offset = 0, $limit = 0) {
+    protected function _list($model, $filter = false, $offset = 0, $limit = 0, $orderBy = false) {
         if ($orderBy) {
             $model = $model->orderBy($orderBy[0], $orderBy[1]);
         }
 
+        $hiddenColumn = false;
+        $qSearch = false;
+        $searchField = false;
+
         if ($filter) {
-            $qSearch = false;
-            if (isset($filter['filter']['q'])) {
-                $qSearch = $filter['filter']['q'];
-                unset($filter['filter']['q']);
+            if(empty($filter['q']))
+                unset($filter['q']);
+            if(empty($filter['hiddenColumn']))
+                unset($filter['hiddenColumn']);
+            if(empty($filter['searchField']))
+                unset($filter['searchField']);
+
+            if (isset($filter['q'])) {
+                $qSearch = $filter['q'];
+                unset($filter['q']);
             }
+            if (isset($filter['searchField'])) {
+                $searchField = $filter['searchField'];
+                unset($filter['searchField']);
+            }
+            
+            if (isset($filter['hiddenColumn'])) {                
+                $hiddenColumn = $filter['hiddenColumn'];
+                unset($filter['hiddenColumn']);
+            }
+
             if (isset($filter['function'])) {
                 $model = $filter['function']($model);
+                unset($filter['function']);
             }
 
-            if (isset($filter['filter'])) {
-                $model = $this->_setFilterWhere($model, $filter['filter']);
+            if (isset($filter)) {
+                $model = $this->_where($model, $filter);
             }
-
+            
             if ($qSearch) {
-                $searchField = isset($filter['searchField']) ? $filter['searchField'] : $this->searchField;
-                $model = $this->_setFilterSearch($model, $qSearch, $searchField);
+                $searchField = $searchField ? $searchField : $this->searchField;
+                $model = $this->_searchString($model, $qSearch, $searchField);
             }
         }
 
         $this->pagination['count'] = $model->count();
         $this->pagination['offset'] = $offset;
         $this->pagination['limit'] = $limit;
-        $this->pagination['curPage'] = 1;
+        $this->pagination['currentPage'] = 1;
         $this->pagination['pageCount'] = 1;
 
         if ($limit){
 
             $model = $model->limit($limit)->offset($offset);
             
-            $this->pagination['curPage'] = floor(($offset+1)/$limit);
-            $this->pagination['pageCount'] = ceil($this->pagination['count']/$limit);
+            $this->pagination['currentPage'] = (int) ceil(($offset+1)/$limit);
+            $this->pagination['pageCount'] = (int) ceil($this->pagination['count']/$limit);
         }
 
         if ($model) {
             $this->pagination['data'] = $model->get()->toArray();
             //jika menyertakan hiddeColumn berarti ada column yg di hide
-            if (isset($filter['hiddeColumn'])) {
-                $hideColumn = $filter['hiddeColumn'];
+            if ($hiddenColumn) {
                 $collection = collect($this->pagination['data']);
-                $collection->transform(function($i) use ($hideColumn) {
-                    foreach ($hideColumn as $value) {
+                $collection->transform(function($i) use ($hiddenColumn) {
+                    foreach ($hiddenColumn as $value) {
                         unset($i[$value]);
                     }
                     return $i;
@@ -358,10 +390,10 @@ abstract class BaseRepository {
     protected function _getOneModel($model, $filter) {
         //jika array berarti berisi filter
         if (!is_array($filter)) {
-            $filter = ['id',$filter];
+            $filter = [['id',$filter]];
         }
 
-        $data = $this->_setFilterWhere($model, $filter);
+        $data = $this->_where($model, $filter);
         $data = $data->first();
         if (!$data)
             return false;
@@ -380,7 +412,7 @@ abstract class BaseRepository {
             $where = ['id',$where];
         }
 
-        $data = $this->_setFilterWhere($model, $where);
+        $data = $this->_where($model, $where);
 
         return $data->exists();
     }
@@ -413,7 +445,7 @@ abstract class BaseRepository {
      */
     protected function _update($model, $where, $data = null) {
         if (!is_array($where)) {
-            $where = ['id', $where];
+            $where = [['id', $where]];
         }
         $model = $this->_getOneModel($model, $where);
         if ($model)
@@ -454,13 +486,13 @@ abstract class BaseRepository {
      * @param type $limit
      * @return type
      */
-    public function getList($filter = false, $orderBy = false, $offset = 0, $limit = 0) {
+    public function getList($filter = false, $offset = 0, $limit = 0, $orderBy = false) {
         $filter = [
             'filter' => $filter,
             'searchField' => $this->searchField
         ];
 
-        return $this->_list($this->model, $filter, $orderBy, $offset, $limit);
+        return $this->_list($this->model, $filter, $offset, $limit, $orderBy);
     }
 
     /**

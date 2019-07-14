@@ -12,11 +12,11 @@
             <div v-html="text"></div>
             
             <template slot="modal-footer" slot-scope="{ ok, cancel }">
-                <b-button size="sm" variant="secondary" @click="cancel()">
-                    {{ modalButtonCancel }}
-                </b-button>
                 <b-button size="sm" variant="primary" @click="ok()">
                     {{ modalButtonOk }}
+                </b-button>
+                <b-button size="sm" variant="secondary" @click="cancel()">
+                    {{ modalButtonCancel }}
                 </b-button>
             </template>
         </b-modal>
