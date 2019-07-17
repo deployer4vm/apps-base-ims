@@ -33,8 +33,6 @@ class TranslationServiceProvider extends BaseTranslationServiceProvider
         );
         $paths[] = app_path('MainApp' . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'lang');
         
-        $GLOBALS['LANG_PATH'] = $paths;
-
         $this->app->singleton('translation.loader', function ($app) use ($paths) {
             return new DistributedFileLoader($app['files'], $paths);
         });

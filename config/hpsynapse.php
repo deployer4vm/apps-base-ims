@@ -1,19 +1,41 @@
 <?php
+use App\Services\Utilities;
 
-return [
-    /*
-     * namespace ke path lokasi module
-     *  NAMESPACE => [path_to_module_group, FILTER PREFIX
-     */
+$config = [
     'namespaces' => [
         'App\\MainApp\\Modules' => [app_path('MainApp' . DIRECTORY_SEPARATOR . 'Modules') . DIRECTORY_SEPARATOR, false],
         'hpsynapse' => [base_path('vendor' . DIRECTORY_SEPARATOR . 'hp-synapse') . DIRECTORY_SEPARATOR, 'mod-']
     ],
+    'language_folder_name' => 'lang',
+    'resource_namespace' => 'resources'
+];
+
+$langPath = Utilities::findNamespaceResources(
+    $config['namespaces'] ,
+    $config['language_folder_name'],
+    $config['resource_namespace']
+);
+
+$langPath = array_merge(
+    [
+        resource_path('lang')
+    ], 
+    $langPath
+);
+$langPath[] = app_path('MainApp' . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'lang');
+
+return [
+    'lang_path' => $langPath,
+    /*
+     * namespace ke path lokasi module
+     *  NAMESPACE => [path_to_module_group, FILTER PREFIX
+     */
+    'namespaces' => $config['namespaces'],
     'lib_namespace' => ['hpsynapse' => [base_path('vendor' . DIRECTORY_SEPARATOR . 'hp-synapse'), 'lib-']],
     
-    'resource_namespace' => 'resources',
+    'resource_namespace' => $config['resource_namespace'],
     
-    'language_folder_name' => 'lang',
+    'language_folder_name' => $config['language_folder_name'],
     
     'view_folder_name' => 'views',
 

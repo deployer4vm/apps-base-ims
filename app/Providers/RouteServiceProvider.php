@@ -111,7 +111,7 @@ class RouteServiceProvider extends ServiceProvider
             lang : lang id nya
             item : item nya jika diperlukan
         */
-        Route::get(config('AppConfig.system.lang_endpoint'), function (Request $request) {            
+        Route::get(config('AppConfig.system.lang_endpoint'), function (Request $request) use($config) {            
             if($request->input('lang')){
                 app()->setLocale($request->input('lang'));
             }
@@ -121,7 +121,7 @@ class RouteServiceProvider extends ServiceProvider
             $lang = app()->getLocale();
             $trans = [];
             //get all language namespace
-            foreach ($GLOBALS['LANG_PATH'] as $path) {
+            foreach ($config['lang_path'] as $path) {
                 $langItem = glob($path.DIRECTORY_SEPARATOR.$lang.DIRECTORY_SEPARATOR.'*');                
                 foreach($langItem as $langFile){
                     $filename = basename($langFile, ".php");
