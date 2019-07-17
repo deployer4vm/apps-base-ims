@@ -123,6 +123,14 @@ abstract class BaseRepository {
         })->toArray();
     }
 
+    protected function _filterEmptyField($data) {
+        $result = [];
+        foreach ($data as $key => $value) {
+            if(!empty($value))$result[$key] = $value;
+        }
+        return $result;
+    }
+
     /**
      * DONE
      * filter array berdasarkan field yang tidak boleh ada (dihapus)

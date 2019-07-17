@@ -11,6 +11,15 @@ export default {
     implementAcl() {
         return this.store.dispatch('implementAcl');
     },
+    hasAccess(key) {
+        let access = 1;
+        try {
+            access = eval("this.store.getters.getAuthRole.rule." + key);
+        } catch (err) {
+            access = 1;
+        }
+        return access==1?true:false;
+    },
     //=================================================
     login(userCredential){
         userCredential.group_app = this.router.currentRoute.params.group_app;
