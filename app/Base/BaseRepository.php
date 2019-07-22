@@ -532,7 +532,7 @@ abstract class BaseRepository {
      * @param string/null $value
      * @return booleadn
      */
-    public function exist($key, $value = null) {
+    public function exists($key, $value = null) {
         return $this->_exists($this->model, $key, $value);
     }
 

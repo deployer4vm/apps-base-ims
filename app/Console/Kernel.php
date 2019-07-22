@@ -31,6 +31,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('queue:work --daemon --tries=3 --queue=verification,email')->everyMinute()->withoutOverlapping();
         $schedule->command('queue:work --daemon --tries=3 --queue=default,low')->everyMinute()->withoutOverlapping();
         
+        if(config('AppConfig')){
+
+        }
     }
 
     /**
