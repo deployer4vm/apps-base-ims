@@ -45,7 +45,7 @@ const mutations = {
 
 const actions = {
     reloadTenant({commit},groupApp){
-        return axios.get(globals().AppConfig.endpoint.domain + globals().AppConfig.system.web_admin.multitenant.api_endpoint,{
+        return axios.get(globals().AppConfig.system.web_admin.multitenant.api_endpoint,{
             params: {
                 group_app: groupApp
             }
