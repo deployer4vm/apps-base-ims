@@ -12,7 +12,7 @@ web.endpoint = AppConfig.endpoint;
 set local Api
 */
 var localapi = new axios.create();
-localapi.defaults.baseURL = AppConfig.client.endpoint[AppConfig.system.mode]["domain"];
+localapi.defaults.baseURL = "/";//AppConfig.client.endpoint[AppConfig.system.mode]["domain"];
 localapi.defaults.headers.get["Accepts"] = "application/json";
 localapi.defaults.headers.common['Content-Type'] = 'multipart/form-data';
 
