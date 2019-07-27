@@ -63,7 +63,7 @@
                     :to="menu.route"
                     v-bind:key="aclIdLv1"
                     :exact="true"
-                  >{{ menu.caption }}</sidenav-router-link>
+                  ><i class="ion ion-ios-arrow-dropright-circle mr-2"></i> {{ menu.caption }}</sidenav-router-link>
 
                 </template>
                 <template v-else>
@@ -74,7 +74,7 @@
                     :active="isMenuActive(menu.route)"
                     :open="isMenuOpen(menu.route)"
                   >
-                    <template slot="link-text">{{ menu.caption }}</template>
+                    <template slot="link-text"><i class="ion ion-ios-arrow-dropright-circle mr-2"></i> {{ menu.caption }}</template>
 
                     <template v-for="(submenu,aclIdLv2) in menu.children">
 
@@ -86,7 +86,7 @@
                             :to="submenu.route"
                             v-bind:key="aclIdLv2"
                             :exact="true"
-                          >{{ submenu.caption }}</sidenav-router-link>
+                          ><i class="ion ion-ios-arrow-dropright-circle mr-2"></i> {{ submenu.caption }}</sidenav-router-link>
 
                         </template>
                         <template v-else>

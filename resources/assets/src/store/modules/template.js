@@ -54,7 +54,8 @@ const state = {
             text: globals().AppConfig.system.template.admin.footer.text,
             menu: globals().AppConfig.system.template.admin.footer.menu
         }
-    }    
+    },
+    showLoading: false
 };
 
 const getters = {
@@ -94,6 +95,9 @@ const mutations = {
     },
     deleteAlert(state, k){
         delete state.alertData[k];
+    },
+    setPageLoading(state, showLoading) {
+        state.showLoading = showLoading;
     },
     setModal(state, v){
         state.alertModal.title = v.title;

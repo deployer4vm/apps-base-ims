@@ -1,5 +1,6 @@
 import Vue from "vue";
 import App from "./App";
+// import NProgress from 'node_modules/nprogress';
 import router from "./router";
 import { store } from "./store/store";
 // import { resolve } from 'dns';
@@ -8,12 +9,13 @@ import globals from "./globals";
 import Popper from "popper.js";
 import Vuelidate from 'vuelidate';
 import Notifications from 'vue-notification';
-// import Toasted from 'vue-toasted';
+import 'node_modules/nprogress/nprogress.css';
+import Toasted from 'vue-toasted';
 
 Vue.use(Vuelidate);
 Vue.use(Notifications);
 Vue.use(BootstrapVue);
-// Vue.use(Toasted)
+Vue.use(Toasted);
 
 // Required to enable animations on dropdowns/tooltips/popovers
 Popper.Defaults.modifiers.computeStyle.gpuAcceleration = false;
