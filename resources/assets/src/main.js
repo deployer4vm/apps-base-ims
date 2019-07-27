@@ -9,7 +9,7 @@ import globals from "./globals";
 import Popper from "popper.js";
 import Vuelidate from 'vuelidate';
 import Notifications from 'vue-notification';
-import 'node_modules/nprogress/nprogress.css';
+// import 'node_modules/nprogress/nprogress.css';
 import Toasted from 'vue-toasted';
 
 Vue.use(Vuelidate);

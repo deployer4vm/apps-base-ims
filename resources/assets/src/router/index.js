@@ -1,6 +1,6 @@
 import Vue from "vue";
 import Router from "vue-router";
-import NProgress from 'node_modules/nprogress';
+// import NProgress from 'node_modules/nprogress';
 import Meta from "vue-meta";
 // import authAxios from "axios";
 import BlankRouterContainer from '@/layout/BlankRouterContainer';
@@ -97,13 +97,13 @@ router.afterEach((to, from) => {
     // Scroll to top of the page
     globals().scrollTop(0, 0);
     globals().Web.setLoadingPage(false);
-    NProgress.done();
+    // NProgress.done();
 });
 
 router.beforeEach((to, from, next) => {
     if (to.name) {
         globals().Web.setLoadingPage(true);
-        NProgress.start();
+        // NProgress.start();
     }
     // Set loading state
     document.body.classList.add("app-loading");
