@@ -7,7 +7,7 @@ seluruh class disini bisa diakses via window dan diinitialize dari vue instace u
 export default {
     store: null,
     router: null,
-    //implement acl
+    //implement acl role user yang online ke navside menu
     implementAcl() {
         return this.store.dispatch('implementAcl');
     },

@@ -7,6 +7,7 @@ const state = {
         id: 0,
         name: '',
         group_app: '',
+        is_main: 0,
     },
     activeGroup: null
 };
@@ -35,7 +36,7 @@ const getters = {
 const mutations = {   
     setTenant(state, data) {
         // state.tenantList = data.tenant_list?data.tenant_list:null;
-        state.activeTenant = data.active_tenant?data.active_tenant:{id: 0,name: '',group_app: '',};
+        state.activeTenant = data.active_tenant?data.active_tenant:{id: 0,name: '',group_app: '',is_main: 0};
         state.activeGroup = data.active_tenant_group?data.active_tenant_group:null;
     },
     setActiveTenant(state) {

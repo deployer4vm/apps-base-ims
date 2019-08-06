@@ -101,6 +101,7 @@ $newPackageLocal = []; //untuk filtered packageLocal.json yang akan disave ulang
 $newPackageLocalEnv = []; //untuk filtered packageLocalEnv.json yang akan disave ulang
 
 $acl = [];
+$tmpSidenav = [];
 $sidenav = [];
 
 
@@ -108,18 +109,24 @@ $sidenav = [];
  * Filter acl
  */
 if (!function_exists('processAcl')) {
-    function processAcl($children){
-        $res = [];
+    function processAcl($acl,$packageName,$aclPrefix,$children){
         foreach ($children as $aclId => $value) {
             if($value['enable'] && $value['acl_config']['show']){
-                $res[$aclId] = $value;
+                $aclPrefixTmp = $aclPrefix.'.'.$aclId;
+
+                $acl[$packageName]['children'][$aclPrefixTmp] = $value['acl_config'];
+                $acl[$packageName]['children'][$aclPrefixTmp]['acl_caption'] = $value['acl_caption'];
+                $acl[$packageName]['children'][$aclPrefixTmp]['acl_description'] = $value['acl_description'];
+                $acl[$packageName]['children'][$aclPrefixTmp]['acl_caption'] = $value['acl_caption'];
+
                 //jika masih ada child nya proses terus
                 if(isset($value['children'])){
-                    $res[$aclId]['children'] = processAcl($res[$aclId]['children']);
+                    unset($acl[$aclPrefixTmp]['children']);
+                    $acl = processAcl($acl,$packageName,$aclPrefixTmp.'.children',$value['children']);
                 }
             }
         }
-        return $res;
+        return $acl;
     }
 }
 /**
@@ -174,20 +181,28 @@ foreach ($package as $item) {
     if($packageLocal[$item['package_namespace']]['enable']){
         //proses _acl.json
         if($packageLocal[$item['package_namespace']]['access']['has_acl']){
-            $acl[$item['package_namespace']] = $packageLocal[$item['package_namespace']]['access'];
-            if(isset($acl[$item['package_namespace']]['children'])){
-                $acl[$item['package_namespace']]['children'] = processAcl($acl[$item['package_namespace']]['children']);
-            }            
+            $acl[$item['package_namespace']] = [
+                'acl_caption' => $packageLocal[$item['package_namespace']]['access']['acl_caption'],
+                'acl_description' => $packageLocal[$item['package_namespace']]['access']['acl_description'],
+            ];
+            if(isset($packageLocal[$item['package_namespace']]['access']['children'])){
+                $acl = processAcl($acl,$item['package_namespace'],$item['package_namespace'].'.children',$packageLocal[$item['package_namespace']]['access']['children']);
+            }
         }
 
+        //proses _sidenav
         if($packageLocal[$item['package_namespace']]['access']['is_navbar']){
-            $sidenav[$item['package_namespace']] = $packageLocal[$item['package_namespace']]['access'];
-            if(isset($sidenav[$item['package_namespace']]['children'])){
-                $sidenav[$item['package_namespace']]['children'] = processSidenav($sidenav[$item['package_namespace']]['children']);
+            $tmpSidenav[ $packageLocal[$item['package_namespace']]['access']['position'] ] = ['package_namespace'=>$item['package_namespace'],$item['package_namespace'] => $packageLocal[$item['package_namespace']]['access']];
+            if(isset($tmpSidenav[$item['package_namespace']]['children'])){
+                $tmpSidenav[$packageLocal[$item['package_namespace']]['access']['position']][$item['package_namespace']]['children'] = processSidenav($sidenav[$item['package_namespace']]['children']);
             }            
         }
     }
     
+}
+ksort($tmpSidenav);
+foreach ($tmpSidenav as $key => $value) {
+    $sidenav[$value['package_namespace']] = $value[$value['package_namespace']];
 }
 
 

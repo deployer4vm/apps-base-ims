@@ -15,9 +15,9 @@ class CreateTenants extends Migration
     {
         Schema::create('tenants', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('group_app');//app code nya
-            $table->string('name')->default('');//aplikasi name
-            $table->tinyInteger('protected')->default(0);//aplikasi name
+            $table->string('group_app')->comment('URL slug akses aplikasi tenant nya');
+            $table->string('name')->default('')->comment('Nama Aplikasi');
+            $table->tinyInteger('protected')->default(0)->comment('1 tidak bisa didelete');
             $table->timestamps();
         });
     }
