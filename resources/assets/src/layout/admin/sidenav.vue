@@ -235,7 +235,6 @@ export default {
         let routePathObj = this.$router.resolve(route);
         routePath = routePathObj.route.path;
       }
-      console.log(route.name,this.Web.isOnEndpoint(routePath),routePath);
       return this.Web.isOnEndpoint(routePath);
     },
     isMenuOpen(route) {
