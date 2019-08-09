@@ -115,14 +115,13 @@ if (!function_exists('processAcl')) {
                 $aclPrefixTmp = $aclPrefix.'.'.$aclId;
 
                 $acl[$packageName]['children'][$aclPrefixTmp] = $value['acl_config'];
-                $acl[$packageName]['children'][$aclPrefixTmp]['acl_caption'] = $value['acl_caption'];
-                $acl[$packageName]['children'][$aclPrefixTmp]['acl_description'] = $value['acl_description'];
-                $acl[$packageName]['children'][$aclPrefixTmp]['acl_caption'] = $value['acl_caption'];
+                $acl[$packageName]['children'][$aclPrefixTmp]['acl_caption'] = isset($value['acl_caption'])?$value['acl_caption']:$value['caption'];
+                $acl[$packageName]['children'][$aclPrefixTmp]['acl_description'] = isset($value['acl_description'])?$value['acl_description']:$value['description'];
 
                 //jika masih ada child nya proses terus
                 if(isset($value['children'])){
                     unset($acl[$aclPrefixTmp]['children']);
-                    $acl = processAcl($acl,$packageName,$aclPrefixTmp.'.children',$value['children']);
+                    $acl = processAcl($acl,$packageName,$aclPrefixTmp,$value['children']);
                 }
             }
         }
@@ -182,11 +181,17 @@ foreach ($package as $item) {
         //proses _acl.json
         if($packageLocal[$item['package_namespace']]['access']['has_acl']){
             $acl[$item['package_namespace']] = [
-                'acl_caption' => $packageLocal[$item['package_namespace']]['access']['acl_caption'],
-                'acl_description' => $packageLocal[$item['package_namespace']]['access']['acl_description'],
+                'acl_caption' => 
+                    isset($packageLocal[$item['package_namespace']]['access']['acl_caption'])?
+                    $packageLocal[$item['package_namespace']]['access']['acl_caption']:
+                    $packageLocal[$item['package_namespace']]['access']['caption'],
+                'acl_description' => 
+                    isset($packageLocal[$item['package_namespace']]['access']['acl_description'])?
+                    $packageLocal[$item['package_namespace']]['access']['acl_description']:
+                    $packageLocal[$item['package_namespace']]['access']['description'],
             ];
             if(isset($packageLocal[$item['package_namespace']]['access']['children'])){
-                $acl = processAcl($acl,$item['package_namespace'],$item['package_namespace'].'.children',$packageLocal[$item['package_namespace']]['access']['children']);
+                $acl = processAcl($acl,$item['package_namespace'],$item['package_namespace'],$packageLocal[$item['package_namespace']]['access']['children']);
             }
         }
 
