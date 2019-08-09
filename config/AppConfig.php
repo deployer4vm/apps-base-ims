@@ -197,10 +197,17 @@ foreach ($package as $item) {
 
         //proses _sidenav
         if($packageLocal[$item['package_namespace']]['access']['is_navbar']){
-            $tmpSidenav[ $packageLocal[$item['package_namespace']]['access']['position'] ] = ['package_namespace'=>$item['package_namespace'],$item['package_namespace'] => $packageLocal[$item['package_namespace']]['access']];
+            $tmpSidenavTmp = ['package_namespace'=>$item['package_namespace'],$item['package_namespace'] => $packageLocal[$item['package_namespace']]['access']];
+            
             if(isset($tmpSidenav[$item['package_namespace']]['children'])){
-                $tmpSidenav[$packageLocal[$item['package_namespace']]['access']['position']][$item['package_namespace']]['children'] = processSidenav($sidenav[$item['package_namespace']]['children']);
-            }            
+                $tmpSidenavTmp[$item['package_namespace']]['children'] = processSidenav($sidenav[$item['package_namespace']]['children']);
+            }    
+            
+            if(isset($packageLocal[$item['package_namespace']]['access']['position'])){
+                $tmpSidenav[ $packageLocal[$item['package_namespace']]['access']['position'] ] = $tmpSidenavTmp;
+            }else{
+                $tmpSidenav[] = $tmpSidenavTmp;
+            }
         }
     }
     
