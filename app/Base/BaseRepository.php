@@ -89,19 +89,17 @@ abstract class BaseRepository {
 
     /**
      * DONE
+     * cek apakah key di $inputData ada semua di $availableFields
      * 
-     * cek apakah seluruh data yang akan digunakan untuk input / update telah sesuai
-     * dengan available list field
-     * 
-     * @param array        $inputData   array input datanya (untuk update atau craate)
-     * @param array        $fields      list available field nya
+     * @param array $inputData          array data
+     * @param array $availableFields    list available field nya
      * @return bolean                   true jika sesuai, false jika tidak sesuai
      */
-    protected function _checkField($inputData, $fields = null) {
+    protected function _checkField($inputData, $availableFields = null) {
         $collection = collect($inputData);
 
-        return $collection->every(function ($value, $key) use ($fields) {
-            return in_array($key, $fields);
+        return $collection->every(function ($value, $key) use ($availableFields) {
+            return in_array($key, $availableFields);
         });
     }
 
@@ -109,11 +107,11 @@ abstract class BaseRepository {
      * DONE
      * filter array hanya berdasarkan key yg diallow nya saja
      * filter data yang akan di update / output / field, jika ada field yang tidak sesuai dengan
-     * list avaiavailableFieldslable field maka akan dihapus
+     * list availableFields field maka akan dihapus
      * 
-     * @param array        $data                input datanya
-     * @param array        $availableFields     list available field nya
-     * @return array                            hasil filter data
+     * @param array $data                input datanya
+     * @param array $availableFields     list available field nya
+     * @return array                     hasil filter data
      */
     protected function _filterAllowField($data, $availableFields = null) {
         $collection = collect($data);
@@ -123,6 +121,13 @@ abstract class BaseRepository {
         })->toArray();
     }
 
+    /**
+     * DONE
+     * hapus semua data yang value nya kosong
+     * 
+     * @param array $data       array data yang difilter
+     * @return array            hasil data yang sudah difilter
+     */
     protected function _filterEmptyField($data) {
         $result = [];
         foreach ($data as $key => $value) {
@@ -166,7 +171,7 @@ abstract class BaseRepository {
         if (!is_array($where)) {
             $where = [['id', $where]];
         }
-        if (!is_array($where[0]) && $where[0] != 'or') {
+        if (isset($where[0]) && !is_array($where[0]) && $where[0] != 'or') {
             $where = [$where];
         }
 

@@ -53,6 +53,9 @@ export default {
     //----------go to------    
     goToDefaultTenant() {
         this.router.push(this.multitenantConfig.default_route);
+    },    
+    goToCurrentTenant() {
+        this.router.push({name: "dashboard",params:{group_app: this.getTenantGroupApp()}});
     },   
     /*
     template
@@ -87,6 +90,13 @@ export default {
         this.store.dispatch('reloadTenant',groupApp).then((val)=>{
             this.tenantList = this.store.getters.getTenantList;
         });       
+    },
+    /**
+     * get defautl tenant route, format :
+     *  {"name":"homeadmin","params":{"group_app":"admin"}}
+     */
+    getDefaultTenantRoute() {
+        return this.multitenantConfig.default_route;
     },
     //get active tenant name
     getTenantGoup() {
