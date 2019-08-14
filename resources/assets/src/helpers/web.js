@@ -102,6 +102,10 @@ export default {
     getTenantGoup() {
         return this.store.getters.getTenantGroup;
     },
+    //get active tenant id
+    getTenantId() {
+        return this.store.getters.getTenantId;
+    },
     //get active tenant name
     getTenantName() {
         return this.store.getters.getTenantName;

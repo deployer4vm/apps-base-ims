@@ -25,6 +25,9 @@ const getters = {
     getTenant(state) {
         return state.activeTenant;
     },
+    getTenantId(state) {
+        return state.activeTenant.id;
+    },
     getTenantName(state) {
         return state.activeTenant.name;
     },
