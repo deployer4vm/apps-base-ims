@@ -11,14 +11,14 @@ export default {
     implementAcl() {
         return this.store.dispatch('implementAcl');
     },
-    hasAccess(key) {
+    hasAccess(key,subkey) {
         let access = 1;
-        try {
-            access = eval("this.store.getters.getAuthRole.rule." + key);
-        } catch (err) {
-            access = 1;
-        }
-        return access==1?true:false;
+        access = this.store.getters.getAuthRole.rule[key];
+        if(access!=undefined)access = access[subkey];
+        return access==1||access==undefined?true:false;
+    },
+    getAccess(key) {
+        return this.store.getters.getAuthRole.rule[key];
     },
     //=================================================
     login(userCredential){
