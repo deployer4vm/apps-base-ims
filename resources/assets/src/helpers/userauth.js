@@ -12,6 +12,7 @@ export default {
         return this.store.dispatch('implementAcl');
     },
     hasAccess(key,subkey) {
+        if(this.store.getters.getAuthRole.rule==null)return true;
         let access = 1;
         access = this.store.getters.getAuthRole.rule[key];
         if(access!=undefined)access = access[subkey];

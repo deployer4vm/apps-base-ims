@@ -12,8 +12,8 @@
 						<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 							<tbody>
 								<tr>
-									<td style="vertical-align:bottom;padding:0;">
-									
+									<td style="vertical-align:bottom;padding:0; text-align: center;">
+									    {{ config('AppConfig.system.template.admin.footer.text') }}
 									</td>
 								</tr>
 							</tbody>
