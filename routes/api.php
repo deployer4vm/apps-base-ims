@@ -1,6 +1,6 @@
 <?php
 
-use Illuminate\Http\Request;
+// use Illuminate\Http\Request;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +13,19 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
+// Route::middleware('auth:api')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
+
+$group = [
+    // 'prefix' => config('AppConfig.endpoint.api.Pengajuan'),
+    'middleware' => 'auth:api'
+];
+Route::group($group,function(){  
+    /**
+     * Config
+     */
+    Route::get(config('AppConfig.system.config_endpoint'), 'ConfigController@readList');
+    //create atau update config
+    Route::post(config('AppConfig.system.config_endpoint'), 'ConfigController@createUpdate');
 });

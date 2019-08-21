@@ -13,6 +13,8 @@ let AppConfig = {
     acl: require("../../../app/MainApp/config/_acl.json")
 };
 
+AppConfig['sidenavOri'] = JSON.parse(JSON.stringify(AppConfig.sidenav));
+
 // let varPackageLocal = require("../../../app/MainApp/config/packageLocal.json");
 // let varPackageLocalEnv = require("../../../app/MainApp/config/packageLocalEnv.json");
 

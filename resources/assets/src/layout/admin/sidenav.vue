@@ -184,13 +184,13 @@ export default {
   },
   computed: {
     tenantGroup() {
-      return this.Web.getTenantGoup();
+      return this.$store.getters.getTenantGroup;
     },
     title() {
-      return this.Web.getAdminTitle();
+      return this.$store.getters.getAdminTitle;
     },
     sidebarMenu() {
-      return this.Web.getSidenavMenu();
+      return this.$store.getters.getSidenavMenu;
     },
     curClasses() {
       let bg = this.layoutSidenavBg;

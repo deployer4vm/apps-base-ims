@@ -3,6 +3,7 @@ import VuexPersist from "vuex-persist";
 import projectStore from "../../../../app/MainApp/resources/js/store/store";
 import templateStore from "./modules/template";
 import transStore from "./modules/trans";
+import configStore from "./modules/config";
 import tenantStore from "./modules/tenant";
 import globals from "@/globals";
 
@@ -10,6 +11,7 @@ window.Vue.use(Vuex);
 
 let vuexConfig = {
     modules: {
+        config: configStore,
         tenant: tenantStore,
         trans: transStore,
         template: templateStore,

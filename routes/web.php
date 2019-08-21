@@ -19,4 +19,14 @@
 
 // Route::get('/home', 'HomeController@index')->name('home');
 
-Route::get('/{any}', 'ApplicationController')->where('any', '.*');
+// Route::get('/{any}', 'ApplicationController')->where('any', '.*');
+
+/**
+ * languange
+ */
+Route::get(config('AppConfig.system.lang_endpoint'),'LangController@readList');
+
+/**
+ * Tenant
+ */
+Route::get(config('AppConfig.system.web_admin.multitenant.api_endpoint'),'TenantController@readList');
