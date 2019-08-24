@@ -12,6 +12,9 @@ import Notifications from 'vue-notification';
 // import 'node_modules/nprogress/nprogress.css';
 import Toasted from 'vue-toasted';
 
+// vue general global event bus
+window.EventBus = new Vue({store});
+
 Vue.use(Vuelidate);
 Vue.use(Notifications);
 Vue.use(BootstrapVue);
