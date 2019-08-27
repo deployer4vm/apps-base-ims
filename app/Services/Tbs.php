@@ -15,7 +15,7 @@ class Tbs
 
         $this->TBS = new \clsTinyButStrong; // new instance of TBS
         $this->TBS->Plugin(TBS_INSTALL, OPENTBS_PLUGIN); // load the OpenTBS plugin
-
+        $this->TBS->NoErr = false;
         $this->TBS->LoadTemplate($templatePath, OPENTBS_ALREADY_UTF8);
     }
 
