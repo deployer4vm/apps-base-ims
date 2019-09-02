@@ -180,12 +180,12 @@ abstract class BaseRepository {
             if(!isset($value[1]))return $model;
 
             //jika sudah tidak nested maka langsung proses
-            if (!is_array($value[0]) && $value[0] != 'or') {
+            if (!is_array($value[0]) && strtolower($value[0]) != 'or') {
                 $model = $this->__where($model, $value);                
             } else {
                 $varWhere = 'where';
                 //detek apakah or
-                if(!is_array($value[0]) && $value[0] == 'or'){
+                if(!is_array($value[0]) && strtolower($value[0]) == 'or'){
                     unset($value[0]);
                     $varWhere = 'orWhere';
                 }
@@ -221,12 +221,11 @@ abstract class BaseRepository {
         }else{
             $dVal = $value[1];
         }
-
         if(is_array($dVal)){
             if($isOr){
-                $model = $model->orWhereIn($field,$op, $dVal);
+                $model = $model->orWhereIn($field,$dVal);
             }else{
-                $model = $model->whereIn($field,$op, $dVal);
+                $model = $model->whereIn($field,$dVal);
             }                    
         }else{
             if($isOr){
@@ -323,7 +322,7 @@ abstract class BaseRepository {
                 $model = $this->_searchString($model, $qSearch, $searchField);
             }
         }
-
+        
         $this->pagination['count'] = $model->count();
         $this->pagination['offset'] = $offset;
         $this->pagination['limit'] = $limit;
@@ -331,13 +330,12 @@ abstract class BaseRepository {
         $this->pagination['pageCount'] = 1;
 
         if ($limit){
-
             $model = $model->limit($limit)->offset($offset);
             
             $this->pagination['currentPage'] = (int) ceil(($offset+1)/$limit);
             $this->pagination['pageCount'] = (int) ceil($this->pagination['count']/$limit);
         }
-
+        
         if ($model) {
             $this->pagination['data'] = $model->get()->toArray();
             //jika menyertakan hiddeColumn berarti ada column yg di hide

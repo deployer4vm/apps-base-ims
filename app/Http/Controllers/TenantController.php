@@ -34,7 +34,11 @@ class TenantController extends BaseController
     public function readList(Request $request)
     {
 
-        $tenant = ['tenant_list'=>'','active_tenant'=>false,'active_tenant_group'=>false];
+        $tenant = [
+            'tenant_list'=>'',
+            'active_tenant'=>false,
+            'active_tenant_group'=>false
+        ];
         if($request->input('group_app')){
             $tenant['active_tenant'] = Tenant::where('group_app',$request->input('group_app'))->first();
             if($tenant['active_tenant']){
@@ -45,7 +49,7 @@ class TenantController extends BaseController
             }
         }
 
-        $tenant['tenant_list'] = Tenant::all();           
+        // $tenant['tenant_list'] = Tenant::all();           
         
         return response()->json($tenant);
     }

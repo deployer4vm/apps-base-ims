@@ -117,6 +117,7 @@ router.afterEach((to, from) => {
     globals().scrollTop(0, 0);
     globals().Web.setLoadingPage(false);
     // NProgress.done();
+    EventBus.$emit('onAfterEach',{to, from});
 });
 
 router.beforeEach((to, from, next) => {
@@ -127,6 +128,7 @@ router.beforeEach((to, from, next) => {
     // Set loading state
     document.body.classList.add("app-loading");
 
+    EventBus.$emit('onBeforeEach',{to, from});
     // Add tiny timeout to finish page transition
     setTimeout(() => next(), 10);
 });

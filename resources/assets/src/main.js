@@ -121,8 +121,7 @@ var VM = new Vue({
             this.Web.initTemplateState();
         }
 
-
-
+        EventBus.$emit('onCreated');
     },
     render: h => h(App)
 }).$mount("#app");
