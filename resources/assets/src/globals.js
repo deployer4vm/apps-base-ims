@@ -112,7 +112,7 @@ export default function () {
         UserAuth,
 
         //formater
-        format: formater,
+        Format: formater,
 
         //downloader
         download: function(path,filename) {    
