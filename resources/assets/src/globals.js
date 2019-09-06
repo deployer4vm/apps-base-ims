@@ -3,7 +3,10 @@ import UserAuth from '@/helpers/userauth.js';
 import Web from '@/helpers/web.js';
 import Trans from '@/helpers/trans.js';
 import AppConfig from '@/appconfig.js';
-import _default from 'vuex';
+// import _default from 'vuex';
+
+import {conformToMask} from 'node_modules/vue-text-mask';
+import * as textMaskAddons from 'node_modules/text-mask-addons/dist/textMaskAddons';
 
 let web = Web;
 web.endpoint = AppConfig.endpoint;
@@ -33,6 +36,61 @@ if(AppConfig.system.web_admin.multitenant.active){
 let downloadVar = {
     path: ''
 }
+
+/**
+ * Formater
+ */
+let formater = {}
+/**
+ * config format
+ */
+formater.config = {
+    currencyMask : {
+        prefix: 'Rp. ',allowDecimal : true, decimalSymbol:',',thousandsSeparatorSymbol: '.'
+    },
+    numberMask : {
+        prefix: '',allowDecimal : true, decimalSymbol:',',thousandsSeparatorSymbol: '.'
+    },
+    formatDate : 'DD-MM-YYYY'
+};
+/**
+ * format config textmaskaddons nya
+ */
+formater.format = {
+    currencyMask: textMaskAddons.createNumberMask(formater.config.currencyMask),        
+    numberMask: textMaskAddons.createNumberMask(formater.config.numberMask)
+};
+/**
+ * format function nya
+ */
+formater.formatPrice =  function(number) {
+    if(this.config.currencyMask.decimalSymbol == ','){
+        number = String(number);
+        number = number.replace('.',',');
+    }
+    return conformToMask(
+            String(number),
+            this.format.currencyMask,
+            {guide: false}
+        ).conformedValue;
+};
+
+formater.formatNumber = function(number) {
+    if(this.config.numberMask.decimalSymbol == ','){
+        number = String(number);
+        number = number.replace('.',',');
+    }
+    return conformToMask(
+            number,
+            this.format.numberMask,
+            {guide: false}
+        ).conformedValue;
+};
+
+formater.formatDate = function(dateString) {
+    return moment(dateString).format(this.config.formatDate);
+}
+
 export default function () {
     return {
         // Public url
@@ -52,6 +110,9 @@ export default function () {
 
         //user auth helper
         UserAuth,
+
+        //formater
+        Format: formater,
 
         //downloader
         download: function(path,filename) {    
