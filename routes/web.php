@@ -24,9 +24,12 @@
 /**
  * languange
  */
+// /getlang/lang.js
 Route::get(config('AppConfig.system.lang_endpoint'),'LangController@readList');
 
 /**
  * Tenant
  */
-Route::get(config('AppConfig.system.web_admin.multitenant.api_endpoint'),'TenantController@readList');
+// /gettenant/tenant.js
+Route::get(config('AppConfig.system.web_admin.multitenant.api_endpoint.tenant'),'TenantController@readList');
+Route::get(config('AppConfig.system.web_admin.multitenant.api_endpoint.tenant_group'),'TenantController@tenantGroupList');

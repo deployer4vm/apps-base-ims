@@ -41,10 +41,14 @@ class LangController extends BaseController
             $langItem = glob($path.DIRECTORY_SEPARATOR.$lang.DIRECTORY_SEPARATOR.'*');                
             foreach($langItem as $langFile){
                 $filename = basename($langFile, ".php");
-                if(!isset($trans[$filename])){
-                    $trans[$filename] = trans($filename);
-                    if(!is_array($trans[$filename]))unset($trans[$filename]);
-                }
+                $var = trans($filename);
+                if(is_array($var)){
+                    if(isset($trans[$filename])){
+                        $trans[$filename] = recuresive_array_merge($trans[$filename],$var);
+                    }else{
+                        $trans[$filename] = $var;
+                    }
+                }                
             }
         }
         return response()->json($trans);

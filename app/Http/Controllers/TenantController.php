@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Models\Tenant;
+use App\Models\TenantGroup;
 use App\Models\TenantGroupTenant;
 
 use App\Base\BaseController;
@@ -27,13 +28,12 @@ class TenantController extends BaseController
      * @param Request $request *semua optional
      *      group_app : apps id / path nya
      * @return array
-     *      tenant_list
-     *      active_tenant
-     *      active_tenant_group
+     *      tenant_list array
+     *      active_tenant array
+     *      active_tenant_group array
      */
     public function readList(Request $request)
     {
-
         $tenant = [
             'tenant_list'=>'',
             'active_tenant'=>false,
@@ -52,6 +52,20 @@ class TenantController extends BaseController
         // $tenant['tenant_list'] = Tenant::all();           
         
         return response()->json($tenant);
+    }
+
+    /**
+     * list tenant group
+     * 
+     * @param Request $request *semua optional
+     *      group_app : apps id / path nya
+     * 
+     * @return array list tenant group
+     */
+    public function tenantGroupList(Request $request)
+    {
+        $data = TenantGroup::get();
+        return response()->json($data);
     }
 
 }

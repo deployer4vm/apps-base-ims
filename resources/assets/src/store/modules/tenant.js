@@ -9,7 +9,9 @@ const state = {
         group_app: '',
         is_main: 0,
     },
-    activeGroup: null
+    activeGroup: null,
+    //tenant group
+    listTenantGroup:[]
 };
 
 const getters = {
@@ -44,12 +46,16 @@ const mutations = {
     },
     setActiveTenant(state) {
         state.isTenantLoaded = 1;
+    },
+    //tenant group
+    setListTenantGroup(state) {
+        state.listTenantGroup = 1;
     }
 };
 
 const actions = {
     reloadTenant({commit},groupApp){
-        return axios.get(globals().AppConfig.system.web_admin.multitenant.api_endpoint,{
+        return axios.get(globals().AppConfig.system.web_admin.multitenant.api_endpoint.tenant,{
             params: {
                 group_app: groupApp
             }
@@ -64,6 +70,18 @@ const actions = {
             console.log('Tenant config error : ',err);
             return false;
         });
+    },
+    listTenantGroup({commit},params={}) {
+        return axios.get(globals().AppConfig.system.web_admin.multitenant.api_endpoint.tenant_group,{
+            params: params
+        }).then((val)=>{
+            commit('setListTenantGroup',val.data);
+            return val.data;
+        }).catch((err)=>{
+            console.log('Tenant group config error : ',err);
+            return false;
+        });
+
     }
 };
 

@@ -16,7 +16,7 @@ export default {
         let access = 1;
         access = this.store.getters.getAuthRole.rule[key];
         if(access!=undefined)access = access[subkey];
-        return access==1||access==undefined?true:false;
+        return access||access==1||access==undefined?true:false;
     },
     getAccess(key) {
         return this.store.getters.getAuthRole.rule[key];
