@@ -57,6 +57,10 @@ export default {
     goToCurrentTenant() {
         this.router.push({name: "dashboard",params:{group_app: this.getTenantGroupApp()}});
     },   
+    goToTenant(groupApp) {
+        console.log('go to tenant : ',groupApp);
+        this.router.push({name: "dashboard",params:{group_app: groupApp}});
+    },   
     /*
     template
     =======================================================================

@@ -11,7 +11,7 @@ export default {
     implementAcl() {
         return this.store.dispatch('implementAcl');
     },
-    hasAccess(key,subkey) {
+    hasAccess(key,subkey='has_access') {
         if(this.store.getters.getAuthRole.rule==null)return true;
         let access = 1;
         access = this.store.getters.getAuthRole.rule[key];
@@ -57,18 +57,18 @@ export default {
     },
     //----------go to------    
     goToLogin() {
-        this.router.push({name: "login"});
+        this.router.push({name: "login", params: {group_app: this.store.getters.getTenantGroupApp}});
     },   
     goToForgotpassword() {
-        this.router.push({name: "forgotpassword"});
+        this.router.push({name: "forgotpassword", params: {group_app: this.store.getters.getTenantGroupApp}});
     },
     goToRegister() {
-        this.router.push({name: "register"});
+        this.router.push({name: "register", params: {group_app: this.store.getters.getTenantGroupApp}});
     },
     goToMyProfile() {
-        this.router.push({name: "myprofile"});
+        this.router.push({name: "myprofile", params: {group_app: this.store.getters.getTenantGroupApp}});
     },
-    goToDashboard() {
-        this.router.push({name: "dashboard"});
+    goToDashboard() {        
+        this.router.push({name: "dashboard", params: {group_app: this.store.getters.getTenantGroupApp}});
     }
 };

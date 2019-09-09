@@ -22,15 +22,23 @@ export default {
         ],
     created() {
         _.forEach(this.inputItem.$params,(v,key)=>{
+            let attr = {attribute: this.fieldName};
             if(this.customAlert == undefined || this.customAlert[key]==undefined){
-                let attr = {attribute: this.fieldName};
                 let langKey = key;
                 switch (key) {
                     case 'minLength':
-                        langKey = 'min.numeric';
+                        langKey = 'min.string';
                         attr.min = v.min;
                         break;  
                     case 'maxLength':
+                        langKey = 'max.string';
+                        attr.max = v.max;
+                        break;                       
+                    case 'minValue':
+                        langKey = 'min.numeric';
+                        attr.min = v.min;
+                        break;  
+                    case 'maxValue':
                         langKey = 'max.numeric';
                         attr.max = v.max;
                         break;  
@@ -48,7 +56,7 @@ export default {
                 }
                 this.alertItem[key] = this.Trans.get('validation.' + langKey, attr);
             }else{
-                this.alertItem[key] = this.customAlert[key];
+                this.alertItem[key] = this.Trans.get(this.customAlert[key], attr);
             }
             
         });
