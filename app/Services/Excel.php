@@ -39,14 +39,52 @@ class Excel
 		
 		$hasil = implode('', $hasil);
 		return $hasil;
-	}
-    public function load($template, $format = 'Xls')
+    }
+    
+    public function load($template, $format = 'Xls', $isTemplate = true)
 	{
-        $filepathTemplate = app_path('MainApp/resources/doc/'.$template);
+        $path = $isTemplate?'MainApp/resources/doc/':'';
+        $filepathTemplate = app_path($path.$template);
         $reader = IOFactory::createReader($format);
         $reader = $reader->load($filepathTemplate);//::createReader("Xlsx")
 
         return $reader;        
+    }
+
+    /**
+     * read semua row cell di 1 worksheet aktif
+     * 
+     * @param Reader Object $reader object PhpSpreadsheet reader
+     * @param Integer $startRow baris dimulai direadnya, mulai 1
+     * 
+     * @return array list data dengan format
+     *      [
+     *          ["A"=>"cell value","B"=>"cell value",...],
+     *          [KOLOM_NAME=>CELL VALUE,...],
+     *          ...
+     *      ]
+     */
+    public function readRow($reader,$startRow=1)
+    {
+        if($startRow<=1)$startRow=1;
+        $result = [];
+        $i=0;
+        foreach ($reader->getActiveSheet()->getRowIterator() as $key =>  $row) {
+            if($key>=$startRow){   
+                $i++;
+                $cellIterator = $row->getCellIterator();    
+                $cellIterator->setIterateOnlyExistingCells(FALSE); // This loops through all cells,
+                                                                    //    even if a cell value is not set.
+                                                                    // By default, only cells that have a value
+                                                                    //    set will be iterated.        
+                $result[$i] = [];
+                foreach ($cellIterator as $key2 => $cell) {
+                    $result[$i][$key2] = $cell->getValue();
+                }
+            }
+               
+        }
+        return $result;
     }
 
     public function setCell($reader,$data){
