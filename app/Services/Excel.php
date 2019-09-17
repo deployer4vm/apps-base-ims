@@ -41,6 +41,9 @@ class Excel
 		return $hasil;
     }
     
+    /**
+     * 
+     */
     public function load($template, $format = 'Xls', $isTemplate = true)
 	{
         $path = $isTemplate?'MainApp/resources/doc/':'';

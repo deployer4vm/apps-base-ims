@@ -6,9 +6,14 @@ use Carbon\Carbon;
 
 trait RepoCacheTrait {    
     
+    /**
+     * data cache yang sudah di load di local variable per eksekusi per class (controller, repo, dll), format
+     * $cacheData[$cacheMainPrefix.$prefix][$id] = $dataCache;
+     */
     protected $cacheData;
     protected $cacheIndex;
-    protected $cacheIndexField=[];
+
+    protected $cacheIndexField=[];//belum beres
     
     /*
      * $_cachedMethod array list nama method berdasarkan prefix (groupdata) nya
@@ -23,10 +28,12 @@ trait RepoCacheTrait {
     protected $skipCache = false;
 
     /**
+     * BELUM SELESAI, TEKNIS INDEXING NYA BELUM DIRAMPUNGKAN
+     * 
      * get nama field dan value yang dijadikan index cache
      * 
-     * @param string            $prefix 
-     * @param mix               $key key filter
+     * @param string            $prefix prefix cache nya
+     * @param mix               $key key cache nya
      * @param mix               $value value filter
      * @return false|array      false jika tidak ada index
      */
@@ -76,18 +83,18 @@ trait RepoCacheTrait {
      * save / update cache
      * 
      * @param string            $prefix sub-prefix
-     * @param string            $key key
+     * @param string            $id key
      * @param string            $data 
      * @param string            $expireDate 
      * @param array             $fields 
      */
-    protected function _saveCache($prefix,$key,$data,$expireDate=false)
+    protected function _saveCache($prefix,$id,$data,$expireDate=false)
     {        
         if($this->skipCache)return false;   
         if(!$this->cacheActive)return false;//$this->_saveCacheOnEngine($prefix,$key,$data,$expireDate);
         
         $fullPrefix = $this->cacheMainPrefix.'.'.$prefix;
-        $fullPrefixKey = $fullPrefix.'.'.$key;
+        $fullPrefixKey = $fullPrefix.'.'.$id;
         
         if($expireDate){
             if(is_string($expireDate))$expireDate = Carbon::parse($expireDate);
@@ -95,7 +102,12 @@ trait RepoCacheTrait {
         }else{
             Cache::store($this->cacheEngine)->forever($fullPrefixKey,$data);
         }        
+        //save di local var
+        $this->cacheData[$fullPrefix][$id] = $data;
         
+        /**
+         * BAGIAN INDEXING NYA MAH BELUM DIGUNAKAN, KARENA BELUM RAMPUNG
+         */
         //load index per prefix nya       
         if(isset($this->cacheIndexField[$prefix])){
             $fields = $this->cacheIndexField[$prefix];
@@ -116,51 +128,78 @@ trait RepoCacheTrait {
             }
         }
         return true;
-//        $fullPrefix = $this->cacheMainPrefix.'.'.$prefix;
-//        
-//        //save cache
-//        $this->cacheData[$fullPrefix][$key] = $data;
-//        
-//        //jika tidak menyertakan fields index maka isi dengan default field yang
-//        //disertakan di setiap repo
-//        if(isset($this->cacheIndexField[$prefix])){
-//            $fields = $this->cacheIndexField[$prefix];
-//        }else{
-//            $fields = [];
-//        }       
-//        
-//        //tambahkan index repo
-//        foreach ($fields as $field) {
-//            if(isset($data[$field]))$this->cacheIndex[$fullPrefix][$field][$data[$field]] = $key;//simpan index
-//        }
-//        
-//        return true;
     }
     
     /**
      * 
      * @param string        $prefix
-     * @param string        $key
+     * @param string        $id id / prefix key per data nya
      * @return mix
      */
-    protected function _getCache($prefix,$key,$defaultValue=null)
+    protected function _getCache($prefix,$id,$defaultValue=null)
     {
         if($this->skipCache)return null;        
         if(!$this->cacheActive)return false;//$this->_getCacheOnEngine($prefix,$key,$defaultValue);
         
         $fullPrefix = $this->cacheMainPrefix.'.'.$prefix;
-        $fullPrefixKey = $fullPrefix.'.'.$key;
+        $fullPrefixKey = $fullPrefix.'.'.$id;
+
+        //jika sudah diload sebelumnya maka ambil dari local var
+        if(isset($this->cacheData[$fullPrefix]) && isset($this->cacheData[$fullPrefix][$id]))
+            return $this->cacheData[$fullPrefix][$id];
         
         if (Cache::store($this->cacheEngine)->has($fullPrefixKey)) {
-            return Cache::store($this->cacheEngine)->get($fullPrefixKey);
+            $this->cacheData[$fullPrefix][$id] = Cache::store($this->cacheEngine)->get($fullPrefixKey);
+            return $this->cacheData[$fullPrefix][$id];
         }
         return $defaultValue;
+    }    
+    
+    /**
+     * 
+     * @param string        $prefix
+     * @param string        $id
+     * @return mix
+     */
+    protected function _hasCache($prefix,$id)
+    {
+        if($this->skipCache)return false;  
+        if(!$this->cacheActive)return false;//$this->_hasCacheOnEngine($prefix,$key);
+        
+        $fullPrefix = $this->cacheMainPrefix.'.'.$prefix.'.'.$id;
+        if(Cache::store($this->cacheEngine)->has($fullPrefix))return true;
+        return false;
 //        $prefix = $this->cacheMainPrefix.'.'.$prefix;
 //        
-//        if(isset($this->cacheData[$prefix][$id]))
-//            return $this->cacheData[$prefix][$key];
-//        return $defaultValue;
-    }    
+//        if(isset($this->cacheData[$prefix][$key]))
+//            return true;
+//        return false;
+    }
+    
+    /**
+     * 
+     * @param type $prefix
+     * @param type $id
+     * @return boolean
+     */
+    protected function _deleteCache($prefix,$id)
+    {
+        if($this->skipCache)return false;  
+        if(!$this->cacheActive)return false;
+        
+        $fullPrefix = $this->cacheMainPrefix.'.'.$prefix;
+        $fullPrefixKey = $fullPrefix.'.'.$id;
+        
+        Cache::store($this->cacheEngine)->forget($fullPrefixKey);
+
+        if(isset($this->cacheData[$fullPrefix]) && isset($this->cacheData[$fullPrefix][$id]))
+            unset($this->cacheData[$fullPrefix][$id]);
+        
+        /**
+         * JIKA FITUR INDEXING SUDAH RAMPUNG MAKA DISINI TAMBAHKAN JUGA 
+         * CODING UNTUK HAPUS INDEXING YG BERSANGKUTAN
+         */
+    }
     
     /**
      * 
@@ -193,44 +232,6 @@ trait RepoCacheTrait {
 //        }
 //        return $defaultValue;
     }    
-    
-    /**
-     * 
-     * @param string        $prefix
-     * @param string        $key
-     * @return mix
-     */
-    protected function _hasCache($prefix,$key)
-    {
-        if($this->skipCache)return false;  
-        if(!$this->cacheActive)return false;//$this->_hasCacheOnEngine($prefix,$key);
-        
-        $fullPrefix = $this->cacheMainPrefix.'.'.$prefix.'.'.$key;
-        if(Cache::store($this->cacheEngine)->has($fullPrefix))return true;
-        return false;
-//        $prefix = $this->cacheMainPrefix.'.'.$prefix;
-//        
-//        if(isset($this->cacheData[$prefix][$key]))
-//            return true;
-//        return false;
-    }
-    
-    /**
-     * 
-     * @param type $prefix
-     * @param type $key
-     * @return boolean
-     */
-    protected function _deleteCache($prefix,$key)
-    {
-        if($this->skipCache)return false;  
-        if(!$this->cacheActive)return false;
-        
-        $fullPrefix = $this->cacheMainPrefix.'.'.$prefix;
-        $fullPrefixKey = $fullPrefix.'.'.$key;
-        
-        Cache::store($this->cacheEngine)->forget($fullPrefixKey);
-    }
     /*
      * CACHE ENGINE
      * -------------------------------------------------------------------------
