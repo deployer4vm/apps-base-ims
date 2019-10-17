@@ -138,27 +138,26 @@ if (!function_exists('pagination_format')) {
 
 if (!function_exists('pagination_convert_link')) {    
     /**
-     * convert link pagination default laravel menjadi default system
+     * convert link pagination default laravel menjadi default system asalnya page ke offset & limit
      * 
-     * @param type $count
-     * @param type $offset
+     * @param type $url
      * @param type $limit
-     * @return array
-     *      total
-     *      per_page
-     *      current_page
-     *      from
-     *      to
+     * @return string 
      */
     function pagination_convert_link($url,$limit){
         $path = parse_url($url);
+
         if(!isset($path['query']))return $url;
         parse_str($path['query'], $queryParams);
         
-        $queryParams['limitStart']=($queryParams['page']-1)*$limit;
+        $queryParams['offset']=($queryParams['page']-1)*$limit;
         $queryParams['limit']=$limit;
         unset($queryParams['page']);
-        $newUrl = $path['scheme'].'://'.$path['host'].$path['path'].'?'.http_build_query($queryParams);
+
+        $domain = $path['scheme'].'://'.$path['host'];
+        if(isset($path['port']))$domain .= ':'.$path['port'];
+
+        $newUrl = $domain.$path['path'].'?'.http_build_query($queryParams);
         
         return $newUrl;
     }
@@ -168,7 +167,7 @@ if (!function_exists('pagination_generate')) {
     /**
      * 
      * @param array $paginationParam
-     *      data array data yg ditampilkannya
+     *      data array data yg ditampilkannya (digunakan untuk generate array dari pagination)
      *      count int 
      *      offset int
      *      limit int limit perpage
@@ -188,7 +187,7 @@ if (!function_exists('pagination_generate')) {
         \Illuminate\Pagination\Paginator::defaultView('pagination');
         
         // set current page
-        $currentPage = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
+        // $currentPage = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
         // set limit 
         $perPage = $paginationParam['limit'];
         
