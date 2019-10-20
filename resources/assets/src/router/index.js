@@ -35,7 +35,7 @@ const router = new Router({
 
 router.afterEach((to, from) => {
     /*
-    jika mengakses halaman admin mkaa detek dan proteksi halaman admin dengan auth (jika fitur auth diaktifkan di config)
+    jika mengakses halaman admin maka detek dan proteksi halaman admin dengan auth (jika fitur auth diaktifkan di config)
     */
     if(
         globals().AppConfig.system.has_auth &&
@@ -44,10 +44,13 @@ router.afterEach((to, from) => {
     ){
         //jika tidak login dan mengakses halaman selain auth maka redirect ke halaman login
         if(!globals().UserAuth.isLogin() && !globals().Web.isAuthEdnpoint() ){
+            console.log('redirect ke login dari route');
             globals().UserAuth.goToLogin();
+            return;
         //jika sudah login tapi mengakses halaman auth maka redirect
         }else if( globals().UserAuth.isLogin() && globals().Web.isAuthEdnpoint() ){
             globals().UserAuth.goToDashboard();
+            return;
         }      
         
         //jika berpindah tenant maka logout kan dahulu, jika hanya mengakses halaman utama maka redirect ke dashboard
@@ -57,6 +60,7 @@ router.afterEach((to, from) => {
             && to.params.group_app != globals().Web.getTenantGroupApp()
         ){
             globals().UserAuth.logout();
+            return;
         }  
     }
     
@@ -65,19 +69,21 @@ router.afterEach((to, from) => {
         
     //jika tenant berubah
     if(globals().AppConfig.system.web_admin.multitenant.active && to.params.group_app != globals().Web.getTenantGroupApp()){
-        
+        console.log('tenant berubah : old=',globals().Web.getTenantGroupApp(),' , new=',to.params.group_app);
         //jika pertama kali akses dan tidak mengakses tenant maka redirect ke default tenant
         if(to.params.group_app==undefined && globals().Web.getTenantGroupApp()==''){
             globals().Web.goToDefaultTenant();
+            return;
 
         //jika tidak mengakses tenant tapi sebelumnya sudah ada tenant yg aktif maka redirect ke tenant tersebut
         }else if(to.params.group_app==undefined){
             globals().Web.goToCurrentTenant();
+            return;
 
         //jika tenant berubah
         }else{
             globals().Web.loadTenant(to.params.group_app).then((val)=>{
-
+                console.log('tenant baru : ',val);
                 //jika tenant tidak ditemukan
                 if(!val){                    
                     //jika tenant yang tidak ditemukan adalah default tenant maka error
@@ -85,6 +91,7 @@ router.afterEach((to, from) => {
                         alert('Tenant Api Error');                    
                     }else{                        
                         globals().Web.goToDefaultTenant();
+                        return;
                     }
                 }
             });

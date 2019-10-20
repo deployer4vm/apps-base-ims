@@ -14,7 +14,7 @@ class AddIsMainColumnOnTenantTable extends Migration
     public function up()
     {
         Schema::table('tenants', function (Blueprint $table) {
-            $table->tinyInteger('is_main')->after('group_app')->default(0);
+            $table->tinyInteger('is_main')->after('group_app')->default(0)->comment('1 jika tenant utama (owner)');
         });
     }
 
