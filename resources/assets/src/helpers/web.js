@@ -48,10 +48,12 @@ export default {
             path = this.router.currentRoute.path;
         }
         let adminEndpoint = this.endpoint.admin.app.replace(':group_app',this.router.currentRoute.params.group_app);
+        console.log('is admin endpoint : path=',path,', endpoint=',adminEndpoint,', result=',path.indexOf(adminEndpoint))
         return path.indexOf(adminEndpoint) === 0;
     },
     //----------go to------    
     goToDefaultTenant() {
+        console.log('go to default tenant : ', this.router.resolve(this.multitenantConfig.default_route).href);
         this.router.push(this.multitenantConfig.default_route);
     },    
     goToCurrentTenant() {

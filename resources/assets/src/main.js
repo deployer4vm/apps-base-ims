@@ -81,6 +81,7 @@ var VM = new Vue({
         this.Trans.router = this.$router;
         this.Trans.loadLang();
 
+        console.log('init store & auth on Web');
         //init helper app web
         this.Web.store = this.$store;
         this.Web.router = this.$router;
@@ -96,6 +97,7 @@ var VM = new Vue({
             && this.AppConfig.system.has_auth
             ) {
 
+            console.log('init store & auth on UserAuth');
             //init helper UserAuth
             this.UserAuth.store = this.$store;
             this.UserAuth.router = this.$router;
