@@ -60,7 +60,7 @@ router.afterEach((to, from) => {
                 //jika tenant tidak ditemukan
                 if(!val){                    
                     //jika tenant yang tidak ditemukan adalah default tenant maka error
-                    if(to.params.group_app != globals().Web.getDefaultTenantRoute().params.group_app){
+                    if(to.params.group_app == globals().Web.getDefaultTenantRoute().params.group_app){
                         alert('Tenant Api Error');                    
                     }else{                        
                         globals().Web.goToDefaultTenant();

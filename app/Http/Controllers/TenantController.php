@@ -43,7 +43,15 @@ class TenantController extends BaseController
             $tenant['active_tenant'] = Tenant::where('group_app',$request->input('group_app'))->first();
             if($tenant['active_tenant']){
                 $tenant['active_tenant_group'] = TenantGroupTenant::where('tenant_id',$tenant['active_tenant']->id)->get()->pluck('tenant_group_id');
-                if($tenant['active_tenant_group']->count()<=0) $tenant['active_tenant_group'] = false;
+                if($tenant['active_tenant_group']->count()<=0) {
+                    $tenant['active_tenant_group'] = false;
+                }else{
+                    $tmpTenantGroupList = [];
+                    foreach ($tenant['active_tenant_group'] as $value) {
+                        $tmpTenantGroupList[] = (int) $value;
+                    }
+	                $tenant['active_tenant_group'] = $tmpTenantGroupList;
+                }
             }else{
                 $tenant['active_tenant'] = false;
             }

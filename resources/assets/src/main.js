@@ -97,7 +97,6 @@ var VM = new Vue({
             && this.AppConfig.system.has_auth
             ) {
 
-            console.log('init store & auth on UserAuth');
             //init helper UserAuth
             this.UserAuth.store = this.$store;
             this.UserAuth.router = this.$router;
