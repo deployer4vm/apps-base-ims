@@ -105,6 +105,7 @@ trait RepoCacheTrait {
         //save di local var
         $this->cacheData[$fullPrefix][$id] = $data;
         
+        return true;
         /**
          * BAGIAN INDEXING NYA MAH BELUM DIGUNAKAN, KARENA BELUM RAMPUNG
          */

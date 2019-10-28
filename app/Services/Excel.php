@@ -42,14 +42,17 @@ class Excel
     }
     
     /**
-     * 
+     * @param string $template path dokumen
+     * @param string $format format excel, "Xls" atau "Xlsx"
      */
     public function load($template, $format = 'Xls', $isTemplate = true)
 	{
-        $path = $isTemplate?'MainApp/resources/doc/':'';
-        $filepathTemplate = app_path($path.$template);
+        $format = ucfirst(strtolower($format))=='Xls'?'Xls':'Xlsx';
+        if($isTemplate){
+            $template = app_path('MainApp/resources/doc/'.$template);
+        }
         $reader = IOFactory::createReader($format);
-        $reader = $reader->load($filepathTemplate);//::createReader("Xlsx")
+        $reader = $reader->load($template);//::createReader("Xlsx")
 
         return $reader;        
     }
