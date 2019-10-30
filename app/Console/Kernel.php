@@ -26,7 +26,7 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')
         //          ->hourly();
-        
+        // * * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
         $schedule->command('queue:work --daemon --tries=3 --queue=high')->everyMinute()->withoutOverlapping();
         $schedule->command('queue:work --daemon --tries=3 --queue=verification,email')->everyMinute()->withoutOverlapping();
         $schedule->command('queue:work --daemon --tries=3 --queue=default,low')->everyMinute()->withoutOverlapping();

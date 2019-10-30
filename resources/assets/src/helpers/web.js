@@ -184,11 +184,16 @@ export default {
             });
             this.bvModal.show("alert-modals");
         } else {
+            let duration = 3000;
+            let newDur = parseInt(params.text.length / 20) * 1000;
+            if(newDur > duration)duration = newDur;
+            
             this.notify({
                 group: this._showAlert_position[params.position],
                 type: this._showAlert_type[params.type],
                 title: params.title,
-                text: params.text
+                text: params.text,
+                duration: duration
             });
         }
     },

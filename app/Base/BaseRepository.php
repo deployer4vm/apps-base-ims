@@ -452,7 +452,8 @@ abstract class BaseRepository {
      * @param eloquent          $model  instance eloquent model yang akan diupdate
      * @param string|array      $where  array where filter atau string/integer id data
      * @param array             $data   array data yang akan update
-     * @return false|array              record table yang diupdatenya atau false jika gagal
+     * 
+     * @return false|integer     effected arrow atau false jika gagal
      */
     protected function _update($model, $where, $data = null) {
         if (!is_array($where)) {
