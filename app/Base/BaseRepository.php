@@ -180,7 +180,7 @@ abstract class BaseRepository {
             if(!isset($value[1]))return $model;
 
             //jika sudah tidak nested maka langsung proses
-            if (!is_array($value[0]) && strtolower($value[0]) != 'or') {
+            if (is_array($value) && !is_array($value[0]) && strtolower($value[0]) != 'or') {
                 $model = $this->__where($model, $value);                
             } else {
                 $varWhere = 'where';
