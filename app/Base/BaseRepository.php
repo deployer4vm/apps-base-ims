@@ -438,8 +438,13 @@ abstract class BaseRepository {
      * @return boolean|array    false jika gagal, atau array record databasenya jika berhasil
      */
     protected function _create($model, $data) {
-        if ($data = $model->create($data)) {
-            return $data->toArray();
+        //get QueryExeption
+        try { 
+            if ($data = $model->create($data)) {
+                return $data->toArray();
+            }
+        }catch (\Illuminate\Database\QueryException $ex){
+            $this->error = $ex->getMessage();
         }
         return false;
     }
@@ -460,8 +465,15 @@ abstract class BaseRepository {
             $where = [['id', $where]];
         }
         $model = $this->_getOneModel($model, $where);
-        if ($model)
-            return $model->update($data);
+        
+        //get QueryExeption
+        try { 
+            if ($model)
+                return $model->update($data);
+        }catch (\Illuminate\Database\QueryException $ex){
+            $this->error = $ex->getMessage();
+        }
+        
         return false;
     }
 
