@@ -64,7 +64,7 @@
 
     <!-- Layout helpers -->
     <script src="{{ asset('/dist/vendor/js/layout-helpers.js') }}"></script>
-    <script src="{{ asset('/dist/app.js') }}"></script>
+    <script src="{{ mix('/dist/app.js') }}"></script>
 
 </body>
 </html>

@@ -41,7 +41,7 @@ mix.webpackConfig({
         }
     },
     output: {
-        chunkFilename: "dist/chunks/[name].js"
+        chunkFilename: "dist/chunks/[name].[contenthash].js"
     }
 });
 
@@ -204,7 +204,7 @@ generate loader store, router, routerAdmin dan init.js untuk package
  | Entry point
  |--------------------------------------------------------------------------
  */
-mix.js("resources/assets/src/entry-point.js", "public/dist/app.js");
+mix.js("resources/assets/src/entry-point.js", "public/dist/app.js").version();
 let systemVar = JSON.parse(fs.readFileSync("app/MainApp/config/system.json"));
 
 mix.sass(
