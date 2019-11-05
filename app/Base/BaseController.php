@@ -17,10 +17,10 @@ class BaseController extends LaravelBaseController
     protected $output = [
             'status'=>200,
             'message'=>'',
-                'message_type'=>'info',//khusus warning view (bukan api)
+            'message_type'=>'info',//khusus warning view (bukan api)
             'data'=>null,
-                'viewdata'=>null,//data yang hanya disertakan di web request
-                // 'listdata'=>null,//untuk data berbentuk list array, jadi di view akan jadi output->data['data'] dan di api akan jadi output->data
+            'viewdata'=>null,//data yang hanya disertakan di web request
+            // 'listdata'=>null,//untuk data berbentuk list array, jadi di view akan jadi output->output['data'][VAR_NAME] dan di api akan jadi output->output['data']
             'errors'=>null,
         ];
     
@@ -47,7 +47,8 @@ class BaseController extends LaravelBaseController
     protected function setError($message,$error=false,$code=400,$response=null)
     {        
         $this->output['status'] = $code;
-        $this->output['message'] = $message;
+        $this->output['message'] = $message;        
+        $this->output['message_type'] = 'danger';
         $this->output['errors'] = $error===true||$error===1||$error===false?[true]:$error;
         if(!is_null($response)){
             $this->response = 
@@ -99,6 +100,15 @@ class BaseController extends LaravelBaseController
     protected function isAjaxCall()
     {
         return request()->ajax()?true:false;
+    }
+    
+    /**
+     * cek apakah request WEB
+     * @return boolean
+     */
+    protected function isWebCall()
+    {
+        return !(request()->ajax()||request()->wantsJson())?true:false;
     }
     
     /**
