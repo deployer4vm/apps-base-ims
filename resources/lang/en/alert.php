@@ -11,5 +11,6 @@ return [
     // AUTH
     'auth_failed' => 'Authentificaion Failed',//error saat login gagal
     'auth_success' => 'Authentificaion Success',
-    'invalid_token' => 'Invalid Token'
+    'invalid_token' => 'Invalid Token',
+    'session_expired' => 'Session Expired'
 ];

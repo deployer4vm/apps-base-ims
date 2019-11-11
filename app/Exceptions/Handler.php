@@ -56,15 +56,15 @@ class Handler extends ExceptionHandler
             }
         }else if($exception instanceof \Illuminate\Auth\AuthenticationException){
             if($isApi){ 
-                return response()->json(['status'=>401,'message'=>__('alert.invalid_token'),'data'=>null,'errors'=>[true]],401);
+                return response()->json(['status'=>401,'message'=>__('alert.invalid_token'),'data'=>null,'errors'=>[true]],401);//khusus token/auth failed
             }else{
-                return response()->view('error.generic',['message'=>__('alert.invalid_token'),'code'=>404]);
+                return response()->view('error.generic',['message'=>__('alert.invalid_token'),'code'=>401]);
             }
         }else if($exception instanceof \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException){
             if($isApi){ 
-                return response()->json(['status'=>404,'message'=>__('alert.resource_not_found'),'data'=>null,'errors'=>[true]],401);
+                return response()->json(['status'=>405,'message'=>__('alert.resource_not_found'),'data'=>null,'errors'=>[true]],405);
             }else{
-                return response()->view('error.generic',['message'=>__('alert.resource_not_found'),'code'=>404]);
+                return response()->view('error.generic',['message'=>__('alert.resource_not_found'),'code'=>405]);
             }
         }
         

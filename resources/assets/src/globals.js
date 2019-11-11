@@ -3,6 +3,8 @@ import UserAuth from '@/helpers/userauth.js';
 import Web from '@/helpers/web.js';
 import Trans from '@/helpers/trans.js';
 import AppConfig from '@/appconfig.js';
+import Helper from '@/helpers/helper.js';
+
 // import _default from 'vuex';
 
 import {conformToMask} from 'node_modules/vue-text-mask';
@@ -15,9 +17,49 @@ web.endpoint = AppConfig.endpoint;
 set local Api
 */
 var localapi = new axios.create();
+/**
+ * parsing error local api
+ * @param object res response axios
+ **/
+localapi.parseError = function (errResponse) {
+    
+    let err = { status: 400, message: "request error" , errors: []};
+    //jika error server
+    if (!errResponse.data) {
+        err.message = errResponse.message;
+    } else {
+        err.message = errResponse.data.message;
+        err.status = errResponse.data.status;
+
+        if(errResponse.data.errors){
+            err.errors = errResponse.data.errors;
+            _.forEach(errResponse.data.errors,(v,i)=>{
+                if(v!=true)err.message += "<br> - " + v;
+            });
+        }
+    }
+
+    return err;
+};
+
 localapi.defaults.baseURL = "/";//AppConfig.client.endpoint[AppConfig.system.mode]["domain"];
 localapi.defaults.headers.get["Accepts"] = "application/json";
 localapi.defaults.headers.common['Content-Type'] = 'multipart/form-data';
+localapi.interceptors.response.use((response) => response, (error) => {
+    let err = localapi.parseError(error.response);
+    //jika error token expired/auth gagal maka logoutkan
+    if(err.status == 401){
+        Web.showAlert({
+            type: "warning",
+            // title: "Session Expired",// this.Trans.get("alert.form_must_complete_title"),
+            text: his.Trans.get("alert.session_expired")
+        });
+        UserAuth.logout();
+    }else{
+        err.errClass = error;
+        throw err;
+    }
+});
 
 /*
 jika multi tenant aktif
@@ -104,6 +146,9 @@ export default function () {
 
         //translation / locale
         Trans,
+
+        //general helper
+        Helper,
 
         //local api
         LocalApi: localapi,

@@ -42,6 +42,7 @@ class Kernel extends HttpKernel
             'throttle:60,1',
             'bindings',
             \App\Http\Middleware\AppGroupCheck::class,
+            \App\Http\Middleware\TokenExpireCheck::class,
         ],
     ];
 
