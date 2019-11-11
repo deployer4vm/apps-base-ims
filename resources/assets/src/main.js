@@ -25,6 +25,10 @@ Popper.Defaults.modifiers.computeStyle.gpuAcceleration = false;
 
 Vue.config.productionTip = false;
 
+
+// load general helper
+require("./helper.js");
+
 // axios.defaults.baseURL = 'https://apiurl'
 // axios.defaults.headers.common['Authorization'] = 'fasfdsa'
 // axios.defaults.headers.get['Accepts'] = 'application/json'
