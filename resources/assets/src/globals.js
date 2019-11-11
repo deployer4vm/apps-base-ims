@@ -41,7 +41,10 @@ localapi.parseError = function (errResponse) {
 
     return err;
 };
-
+localapi.errAlertText = {
+    title: "Alert",
+    text: "Session Expired"
+}
 localapi.defaults.baseURL = "/";//AppConfig.client.endpoint[AppConfig.system.mode]["domain"];
 localapi.defaults.headers.get["Accepts"] = "application/json";
 localapi.defaults.headers.common['Content-Type'] = 'multipart/form-data';
@@ -51,8 +54,8 @@ localapi.interceptors.response.use((response) => response, (error) => {
     if(err.status == 401){
         Web.showAlert({
             type: "warning",
-            // title: "Session Expired",// this.Trans.get("alert.form_must_complete_title"),
-            text: his.Trans.get("alert.session_expired")
+            title: localapi.errAlertText.title,// Trans.get("alert.form_must_complete_title"),
+            text: localapi.errAlertText.text//Trans.get("alert.session_expired")
         });
         UserAuth.logout();
     }else{

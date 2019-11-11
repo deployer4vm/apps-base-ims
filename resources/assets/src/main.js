@@ -81,7 +81,13 @@ var VM = new Vue({
         this.Trans.router = this.$router;
         this.Trans.loadLang();
 
-        console.log('init store & auth on Web');
+        //set bahasa untuk alert token invalid
+        setTimeout(()=>{
+            if(this.Trans.get("alert.session_expired")!='alert.session_expired')
+                this.LocalApi.errAlertText.text = this.Trans.get("alert.session_expired");
+        },300);
+        
+
         //init helper app web
         this.Web.store = this.$store;
         this.Web.router = this.$router;
