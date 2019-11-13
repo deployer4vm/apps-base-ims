@@ -15,5 +15,8 @@ return [
 
     'previous' => '&laquo; Previous',
     'next' => 'Next &raquo;',
+    'page' => 'Page',
+    'page_of' => 'Page :curPage of :totalPages',
+    'per_page' => 'Per page'
 
 ];

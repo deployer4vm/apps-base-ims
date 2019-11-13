@@ -16,7 +16,8 @@ class DatabaseSeeder extends Seeder
             $pathToModule .= DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'SeedList.php';
             if(file_exists($pathToModule)){
                 return $pathToModule;
-            }
+                $this->call(JabatanTableSeeder::class);
+    }
         });
         
         $projectSeeds = include(app_path('MainApp/database/SeedList.php'));
