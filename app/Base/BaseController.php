@@ -40,22 +40,52 @@ class BaseController extends LaravelBaseController
     /**
      * 
      * @param string $message
-     * @param type $error
-     * @param type $code
-     * @param type $response
+     * @param string $type 'warning','info','warning','danger'
+     * @param integer $code http response code
+     * @param mix $error
+     * @param mix $response
      */
-    protected function setError($message,$error=false,$code=400,$response=null)
+    protected function setWarning($message,$type='warning',$code=400,$error=false,$response=null)
     {        
         $this->output['status'] = $code;
-        $this->output['message'] = $message;        
-        $this->output['message_type'] = 'danger';
+        $this->output['message'] = $message;
+        $this->output['message_type'] = $type;
         $this->output['errors'] = $error===true||$error===1||$error===false?[true]:$error;
+
         if(!is_null($response)){
             $this->response = 
                 $response===true||$response===1||$response===false?
                 redirect(url()->previous())->withInput():
                 $response;
         }
+
+        if($this->isWebCall() && $this->forceOutput != 2)
+            \Session::put('alert', [
+                    'type' => $type,
+                    'message' => $message
+                ]);
+    }
+    /**
+     * 
+     * @param string $message
+     * @param mix $error
+     * @param integer $code
+     * @param type $response
+     */
+    protected function setError($message,$error=false,$code=400,$response=null)
+    {        
+        $this->setWarning($message,'danger',$code,$error,$response);
+
+        // $this->output['status'] = $code;
+        // $this->output['message'] = $message;
+        // $this->output['message_type'] = 'danger';
+        // $this->output['errors'] = $error===true||$error===1||$error===false?[true]:$error;
+        // if(!is_null($response)){
+        //     $this->response = 
+        //         $response===true||$response===1||$response===false?
+        //         redirect(url()->previous())->withInput():
+        //         $response;
+        // }
     }
     
     /**
@@ -66,13 +96,15 @@ class BaseController extends LaravelBaseController
      */
     protected function setAlert($message,$type='info')
     {        
-        $this->output['message'] = $message;
-        $this->output['message_type'] = $type;
-        
-        \Session::put('alert', [
-                'type' => $type,
-                'message' => $message
-            ]);
+        $this->setWarning($message,$type,'200');
+
+        // $this->output['message'] = $message;
+        // $this->output['message_type'] = $type;
+        // if($this->isWebCall() && $this->forceOutput != 2)
+        //     \Session::put('alert', [
+        //             'type' => $type,
+        //             'message' => $message
+        //         ]);
     }
     
     /**
