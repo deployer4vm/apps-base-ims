@@ -34,7 +34,15 @@ localapi.parseError = function (errResponse) {
         if(errResponse.data.errors){
             err.errors = errResponse.data.errors;
             _.forEach(errResponse.data.errors,(v,i)=>{
-                if(v!=true)err.message += "<br> - " + v;
+                if(v!=true){
+                    if(v instanceof Object){
+                        _.forEach(v,(v2,i2)=>{
+                            err.message += "<br> - " + v2;
+                        });
+                    }else{
+                        err.message += "<br> - " + v;
+                    }
+                }
             });
         }
     }
@@ -48,19 +56,23 @@ localapi.errAlertText = {
 localapi.defaults.baseURL = "/";//AppConfig.client.endpoint[AppConfig.system.mode]["domain"];
 localapi.defaults.headers.get["Accepts"] = "application/json";
 localapi.defaults.headers.common['Content-Type'] = 'multipart/form-data';
-localapi.interceptors.response.use((response) => response, (error) => {
-    let err = localapi.parseError(error.response);
-    //jika error token expired/auth gagal maka logoutkan
-    if(err.status == 401){
-        Web.showAlert({
-            type: "warning",
-            title: localapi.errAlertText.title,// Trans.get("alert.form_must_complete_title"),
-            text: localapi.errAlertText.text//Trans.get("alert.session_expired")
-        });
-        UserAuth.logout();
+localapi.interceptors.response.use((response) => response, (error) => {    
+    if(error.response.data && error.response.data.message && error.response.data.errors && error.response.data.status) {
+        let err = localapi.parseError(error.response);
+        //jika error token expired/auth gagal maka logoutkan
+        if(err.status == 401){
+            Web.showAlert({
+                type: "warning",
+                title: localapi.errAlertText.title,// Trans.get("alert.form_must_complete_title"),
+                text: localapi.errAlertText.text//Trans.get("alert.session_expired")
+            });
+            UserAuth.logout();
+        }else{
+            err.errClass = error;
+            throw err;
+        }
     }else{
-        err.errClass = error;
-        throw err;
+        throw error;
     }
 });
 

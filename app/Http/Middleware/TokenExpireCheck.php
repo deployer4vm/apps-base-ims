@@ -21,16 +21,30 @@ class TokenExpireCheck
      */
     public function handle($request, Closure $next)
     {
-        if (Auth::check() && ($request->expectsJson() || $request->wantsJson() || $request->ajax())) {
-            $lastAccess = (new Carbon(Auth::user()->updated_at))->addMinute(config('session.lifetime'));            
+        if (Auth::check()) {
+            $isWebReq = true;
+            if(($request->expectsJson() || $request->wantsJson() || $request->ajax())) {
+                $isWebReq = false;
+                $updatedAt = Auth::user()->updated_at;
+                $token = Auth::user()->api_token;
+            }else{
+                $updatedAt = UserAuth::getSessionLastUpdate();
+                $token = UserAuth::getToken('api_token');
+            }
+
+            $lastAccess = (new Carbon($updatedAt))->addMinute(config('session.lifetime'));
+
             if($lastAccess->lessThan(now())){
-                ApiToken::where('api_token',Auth::user()->api_token)->delete();
-                throw new \Illuminate\Auth\AuthenticationException();
+                ApiToken::where('api_token',$token)->delete();
+                if($isWebReq){
+                    Auth::logout();
+                }else{
+                    throw new \Illuminate\Auth\AuthenticationException();
+                }
                 return;
             }else{
-                ApiToken::where('api_token',Auth::user()->api_token)->update(['updated_at'=>now()]);
-            }
-            
+                ApiToken::where('api_token',$token)->update(['updated_at'=>now()]);
+            }            
         }
         return $next($request);
     }

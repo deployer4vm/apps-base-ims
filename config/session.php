@@ -2,6 +2,12 @@
 
 use Illuminate\Support\Str;
 
+if(env('SESSION_LIFETIME',false)){
+    $lifetime = config('AppConfig.packageLocal.moduser.session_lifetime');
+}else{
+    $lifetime = env('SESSION_LIFETIME');
+}
+
 return [
 
     /*
@@ -31,7 +37,7 @@ return [
     |
     */
 
-    'lifetime' => env('SESSION_LIFETIME', 120),
+    'lifetime' => env('SESSION_LIFETIME', $lifetime),
 
     'expire_on_close' => false,
 
