@@ -6,6 +6,7 @@ export default {
     store: null,
     router: null,
     allLang: null,
+    lang: null,
     //load language file from cache if exist, reload from server if not exist
     loadLang() {
         if(!this.store.getters.isLangSet){
@@ -17,10 +18,20 @@ export default {
         }
     },
     //force reload languange from server
-    reLoadLang() {
-        this.store.dispatch('reloadLang').then((val)=>{
+    reLoadLang(newLang=null) {
+        this.store.dispatch('reloadLang',newLang).then((val)=>{
             this.allLang = this.store.getters.getLang;
         });       
+    },
+    getLocale() {
+        return this.store.getters.getLocale;
+    },
+    /**
+     * pilih salah satu item sesuai lang yg aktif
+     */
+    chose(langFile){
+        if(langFile[this.store.getters.getLocale] != undefined)return langFile[this.store.getters.getLocale];
+        return langFile;
     },
     get(langKey, replace = {}) {
         let lang = "";

@@ -40,7 +40,7 @@
             :active="isMenuActive(Web.getModuleEndpoint(packageNamespace))"
             :open="isMenuOpen(Web.getModuleEndpoint(packageNamespace))"
           >
-            {{ menus.caption }}
+            {{ Trans.chose(menus.caption) }}
           </sidenav-router-link>
           <sidenav-menu
             v-else 
@@ -51,7 +51,7 @@
             :open="isMenuOpen(Web.getModuleEndpoint(packageNamespace))"
           >
 
-            <template slot="link-text">{{ menus.caption }}</template>
+            <template slot="link-text">{{ Trans.chose(menus.caption) }}</template>
 
             <!-- looping level 2 -->
             <template v-for="(menu, aclIdLv1) in menus.children">
@@ -65,7 +65,7 @@
                     :class="menu.class?menu.class:''"
                     v-bind:key="aclIdLv1"
                     :exact="true"
-                  ><i :class="'sidenav-icon ' + menu.icon" v-if="menu.icon"></i> {{ menu.caption }}</sidenav-router-link>
+                  ><i :class="'sidenav-icon ' + menu.icon" v-if="menu.icon"></i> {{ Trans.chose(menu.caption) }}</sidenav-router-link>
 
                 </template>
                 <template v-else>
@@ -77,7 +77,7 @@
                     :active="isMenuActive(menu.route)"
                     :open="isMenuOpen(menu.route)"
                   >
-                    <template slot="link-text"><i :class="'sidenav-icon ' + menu.icon" v-if="menu.icon"></i> {{ menu.caption }}</template>
+                    <template slot="link-text"><i :class="'sidenav-icon ' + menu.icon" v-if="menu.icon"></i> {{ Trans.chose(menu.caption) }}</template>
 
                     <template v-for="(submenu,aclIdLv2) in menu.children">
 
@@ -90,7 +90,7 @@
                             :class="submenu.class?submenu.class:''"
                             v-bind:key="aclIdLv2"
                             :exact="true"
-                          ><i :class="'sidenav-icon ' + submenu.icon" v-if="submenu.icon"></i> {{ submenu.caption }}</sidenav-router-link>
+                          ><i :class="'sidenav-icon ' + submenu.icon" v-if="submenu.icon"></i> {{ Trans.chose(submenu.caption) }}</sidenav-router-link>
 
                         </template>
                         <template v-else>
@@ -103,7 +103,7 @@
                             :open="isMenuOpen(submenu.route)"
                           >
 
-                            <template slot="link-text"><i :class="'sidenav-icon ' + submenu.icon" v-if="submenu.icon"></i> {{ submenu.caption }}</template>
+                            <template slot="link-text"><i :class="'sidenav-icon ' + submenu.icon" v-if="submenu.icon"></i> {{ Trans.chose(submenu.caption) }}</template>
 
                             <template v-for="(subsubmenu,aclIdLv3) in submenu.children">
 
@@ -114,7 +114,7 @@
                                   :class="subsubmenu.class?subsubmenu.class:''"
                                   v-bind:key="aclIdLv3"
                                   :exact="true"
-                                ><i :class="'sidenav-icon ' + subsubmenu.icon" v-if="subsubmenu.icon"></i> {{ subsubmenu.caption }}</sidenav-router-link>
+                                ><i :class="'sidenav-icon ' + subsubmenu.icon" v-if="subsubmenu.icon"></i> {{ Trans.chose(subsubmenu.caption) }}</sidenav-router-link>
 
                               </template>
 

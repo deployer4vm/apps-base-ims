@@ -3,7 +3,8 @@ import globals from "@/globals";
 const state = {
     allLang: {},
     isLangSet: null,
-    lastReload: null
+    lastReload: null,
+    lang: null
 };
 
 const getters = {
@@ -12,6 +13,9 @@ const getters = {
     },
     getLang(state) {
         return state.allLang;
+    },
+    getLocale(state) {
+        return state.lang;
     }
 };
 
@@ -22,12 +26,24 @@ const mutations = {
         // const now = new Date()
         // const expirationDate = new Date(now.getTime() + res.data.expiresIn * 1000)
         state.lastReload = new Date();
+    },
+    setLocale(state, lang) {
+        state.lang = lang;
     }
 };
 
 const actions = {
-    reloadLang({commit}){
-        return axios.get(globals().AppConfig.system.lang_endpoint).then((val)=>{
+    reloadLang({commit,state},newLang=null){
+        var params = {lang: null};
+        params.lang = state.lang;
+        if(newLang!=null)
+            params.lang = newLang;
+        if(state.lang == null && newLang == null)
+            params.lang = globals().AppConfig.system.fallback_locale;
+        if(state.lang != params.lang)
+            commit('setLocale',params.lang);        
+
+        return axios.get(globals().AppConfig.system.lang_endpoint,{params: params}).then((val)=>{
             commit('setLang',val.data);            
             return true;
         }).catch((err)=>{
