@@ -28,6 +28,11 @@ export default {
             return res;
         });
     },
+    changeRole(roleCode){
+        return this.store.dispatch('changeRole',roleCode).then((res)=>{            
+            return res;
+        });
+    },
     //logoutkan session yg sekarang
     // return promise
     logout(goToLogin=true){
@@ -52,8 +57,17 @@ export default {
     getToken() {
         return this.store.getters.getAuthToken;
     },
+    //get active role
     getAuthRole() {
         return this.store.getters.getAuthRole;
+    },
+    //get list active role
+    getAuthRoleList() {
+        return this.store.getters.getAuthRoleList;
+    },
+    //get active role
+    getAuthRoleCount() {
+        return this.store.getters.roleCount;
     },
     //----------go to------    
     goToLogin() {
