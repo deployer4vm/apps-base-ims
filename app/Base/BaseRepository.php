@@ -549,7 +549,7 @@ abstract class BaseRepository {
      * @return booleadn
      */
     public function exists($where = null) {
-        return $this->_exists($this->model, $where;
+        return $this->_exists($this->model, $where);
     }
 
     /**
