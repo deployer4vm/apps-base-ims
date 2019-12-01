@@ -17,15 +17,19 @@
 //     return $request->user();
 // });
 
+//db config
 $group = [
-    // 'prefix' => config('AppConfig.endpoint.api.Pengajuan'),
+    'prefix' => config('AppConfig.system.config_endpoint'),
     'middleware' => 'auth:api'
 ];
 Route::group($group,function(){  
     /**
      * Config
      */
-    Route::get(config('AppConfig.system.config_endpoint'), 'ConfigController@readList');
+    Route::get('/', 'ConfigController@readList');
     //create atau update config
-    Route::post(config('AppConfig.system.config_endpoint'), 'ConfigController@createUpdate');
+    Route::post('/', 'ConfigController@createUpdate');
 });
+
+//access config
+Route::get('/getconfig/access', 'ConfigController@accessConfig');

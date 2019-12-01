@@ -37,13 +37,15 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\TokenExpireCheck::class,
+            \App\Http\Middleware\AcceesConfigCheck::class,
         ],
 
         'api' => [
-            'throttle:60,1',
+            'throttle:600,1',
             'bindings',
             \App\Http\Middleware\AppGroupCheck::class,
             \App\Http\Middleware\TokenExpireCheck::class,
+            \App\Http\Middleware\AcceesConfigCheck::class,
         ],
     ];
 

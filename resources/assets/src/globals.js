@@ -103,10 +103,13 @@ let formater = {}
  */
 formater.config = {
     currencyMask : {
-        prefix: 'Rp. ',allowDecimal : true, decimalSymbol:',',thousandsSeparatorSymbol: '.'
+        prefix: 'Rp. ',allowDecimal : true, decimalSymbol:',',thousandsSeparatorSymbol: '.',decimalLimit: 2
     },
     numberMask : {
-        prefix: '',allowDecimal : true, decimalSymbol:',',thousandsSeparatorSymbol: '.'
+        prefix: '',allowDecimal : false, thousandsSeparatorSymbol: '.'
+    },
+    decimalMask : {
+        prefix: '',allowDecimal : true, decimalSymbol:',',thousandsSeparatorSymbol: '.',decimalLimit: 2
     },
     formatDate : 'DD-MM-YYYY'
 };
@@ -114,38 +117,75 @@ formater.config = {
  * format config textmaskaddons nya
  */
 formater.format = {
+    setDecimalLimit(limit) {
+        formater.config.currencyMask.decimalLimit = limit;
+        formater.config.decimalMask.decimalLimit = limit;
+        formater.format.currencyMask = textMaskAddons.createNumberMask(formater.config.currencyMask);
+        formater.format.decimalMask = textMaskAddons.createNumberMask(formater.config.decimalMask);
+    },
+    setThousandsSeparatorSymbol(simbol) {
+        formater.config.currencyMask.thousandsSeparatorSymbol = simbol;
+        formater.config.numberMask.thousandsSeparatorSymbol = simbol;
+        formater.config.decimalMask.thousandsSeparatorSymbol = simbol;
+        formater.format.currencyMask = textMaskAddons.createNumberMask(formater.config.currencyMask);
+        formater.format.numberMask = textMaskAddons.createNumberMask(formater.config.numberMask);
+        formater.format.decimalMask = textMaskAddons.createNumberMask(formater.config.decimalMask);
+    },
+    setDecimalSymbol(simbol) {
+        formater.config.currencyMask.decimalSymbol = simbol;
+        formater.config.decimalMask.decimalSymbol = simbol;
+        formater.format.currencyMask = textMaskAddons.createNumberMask(formater.config.currencyMask);
+        formater.format.decimalMask = textMaskAddons.createNumberMask(formater.config.decimalMask);
+    },
     currencyMask: textMaskAddons.createNumberMask(formater.config.currencyMask),        
-    numberMask: textMaskAddons.createNumberMask(formater.config.numberMask)
+    numberMask: textMaskAddons.createNumberMask(formater.config.numberMask),//mask without decimal
+    decimalMask: textMaskAddons.createNumberMask(formater.config.numberMask)//mask with decimal
 };
 /**
  * format function nya
  */
-formater.formatPrice =  function(number) {
-    if(this.config.currencyMask.decimalSymbol == ','){
+formater.formatPrice = function(number) {
+    if(formater.config.currencyMask.decimalSymbol == ','){
         number = String(number);
         number = number.replace('.',',');
+    }else{
+        number = String(number);
     }
     return conformToMask(
-            String(number),
-            this.format.currencyMask,
+            number,
+            formater.format.currencyMask,
             {guide: false}
         ).conformedValue;
 };
 
 formater.formatNumber = function(number) {
-    if(this.config.numberMask.decimalSymbol == ','){
+    // if(formater.config.numberMask.decimalSymbol == ','){
+    //     number = String(number);
+    //     number = number.replace('.',',');
+    // }
+    return conformToMask(
+            String(number),
+            formater.format.numberMask,
+            {guide: false}
+        ).conformedValue;
+};
+
+formater.formatDecimal = function(number) {
+    if(formater.config.decimalMask.decimalSymbol == ','){
         number = String(number);
         number = number.replace('.',',');
+    }else{
+        number = String(number);
     }
     return conformToMask(
             number,
-            this.format.numberMask,
+            formater.format.decimalMask,
             {guide: false}
         ).conformedValue;
 };
 
 formater.formatDate = function(dateString) {
-    return moment(dateString).format(this.config.formatDate);
+    return moment(dateString).format(formater.config.formatDate);
 }
 
 export default function () {

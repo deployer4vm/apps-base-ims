@@ -10,6 +10,7 @@ use App\Base\BaseController;
 
 class ConfigController extends BaseController
 {
+    protected $cacheActive = true;
     /**
      * Create a new controller instance.
      *
@@ -21,7 +22,7 @@ class ConfigController extends BaseController
     }
 
     /**
-     * GET - api list config
+     * GET - api list config (config yang disimpan didatabase)
      * 
      * @param Request $request
      *      group *optional
@@ -77,5 +78,24 @@ class ConfigController extends BaseController
 
         return response()->json(MConfig::get());
     }
+
+    /**
+     * manage access config
+     */
+
+     public function accessConfig(Request $request)
+     {
+        if(!($config = $this->_getCache('generalconfig','accesss'))){
+            $config = [
+                'allow_login' => 1,
+                'allow_login_exept' => [],
+                'allow_login_only' => []
+            ];           
+            $this->_saveCache('generalconfig','accesss',$config); 
+        }
+
+         $this->output['data'] = $config;
+         return $this->done();
+     }
 
 }

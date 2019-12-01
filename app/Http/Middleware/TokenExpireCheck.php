@@ -29,7 +29,7 @@ class TokenExpireCheck
                 $token = Auth::user()->api_token;
             }else{
                 $updatedAt = UserAuth::getSessionLastUpdate();
-                $token = UserAuth::getToken('api_token');
+                $token = UserAuth::getToken();
             }
 
             $lastAccess = (new Carbon($updatedAt))->addMinute(config('session.lifetime'));
