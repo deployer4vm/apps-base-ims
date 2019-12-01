@@ -26,7 +26,7 @@ class Backup extends BaseRepository
         $backup = BModel::orderBy('id','ASC')->first();
 
         //delete file
-        exec("rm -rf '".$backup->path."'");
+        exec('rm -rf "'.$backup->path.'"');
 
         $backup->delete();
     }
