@@ -7,6 +7,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Facades\App\Services\Backup;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -60,12 +61,13 @@ class RestoreBackup implements ShouldQueue
         //drop semua table
         $tables = DB::select('SHOW TABLES');
         foreach($tables as $table){
-            Schema::drop($table->Tables_in_pos);
+            Schema::drop($table->{'Tables_in_'.$dbName});
         } 
         //restore semua database
         exec('cd "'.$newBackupPath.'" && mysql -u '.$userName.' -p"'.$password.'" $dbName < db.sql');
         //delete semua file 
         exec("rm -rf '".$newBackupPath."'");
         UserAuth::unlockLogin();
+        Backup::update([['backup_date',$this->tanggalBackup],['status',2]],['status'=>1]);
     }
 }
