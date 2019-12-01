@@ -30,4 +30,15 @@ class Backup extends BaseRepository
 
         $backup->delete();
     }
+    
+    //delete backup yang terlama
+    public function delete($where)
+    {
+        $backup = $this->_getOne($this->model, $where);
+        if($backup){
+            $this->_delete($this->model, $where);
+            //delete file
+            exec("rm -rf '".$backup['']."'");
+        }
+    }
 }

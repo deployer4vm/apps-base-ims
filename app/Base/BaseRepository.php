@@ -381,11 +381,11 @@ abstract class BaseRepository {
      * fungsi utama untuk get 1 record data
      * 
      * @param eloquen instance $model
-     * @param array $filter where array filter
+     * @param array $where where array where
      * @return boolean|array            false jika gagal, array record jika ada
      */
-    protected function _getOne($model, $filter) {
-        $data = $this->_getOneModel($model, $filter);
+    protected function _getOne($model, $where) {
+        $data = $this->_getOneModel($model, $where);
         return $data ? $data->toArray() : false;
     }
 
@@ -537,8 +537,8 @@ abstract class BaseRepository {
      * @param string/null $value
      * @return array / false
      */
-    public function getOne($key, $value = null) {
-        return $this->_getOne($this->model, $key, $value);
+    public function getOne($where) {
+        return $this->_getOne($this->model, $where);
     }
 
     /**
@@ -548,8 +548,8 @@ abstract class BaseRepository {
      * @param string/null $value
      * @return booleadn
      */
-    public function exists($key, $value = null) {
-        return $this->_exists($this->model, $key, $value);
+    public function exists($where = null) {
+        return $this->_exists($this->model, $where;
     }
 
     /**
@@ -569,12 +569,12 @@ abstract class BaseRepository {
      * @param array/null $data
      * @return array/false
      */
-    public function update($key, $value, $data = null) {
-        return $this->_update($this->model, $key, $value, $data);
+    public function update($where, $data = null) {
+        return $this->_update($this->model, $where, $data);
     }
 
-    public function delete($key, $value = null) {
-        return $this->_delete($this->model, $key, $value);
+    public function delete($where = null) {
+        return $this->_delete($this->model, $where);
     }
 
 }
