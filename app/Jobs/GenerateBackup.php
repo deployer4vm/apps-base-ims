@@ -47,7 +47,7 @@ class GenerateBackup implements ShouldQueue
         }
 
         //backup database
-        exec('cd "'.$newBackupPath.'" && mysqldump -u $userName -p"'.$password.'" '.$dbName.' > db.sql');
+        exec('cd "'.$newBackupPath.'" && mysqldump -u '.$userName.' -p"'.$password.'" '.$dbName.' > db.sql');
         // exec('cd "'.$newBackupPath.'" && touch db.sql');
         //compress file upload
         exec('cd "'.$newBackupPath.'" && tar -C "'.$uploadPath.'" -zcvf upload.tar.gz .');
