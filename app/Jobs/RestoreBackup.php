@@ -57,13 +57,13 @@ class RestoreBackup implements ShouldQueue
         //extract file backup upload
         exec('cd "'.$newBackupPath.'" && tar -zxvf upload.tar.gz -C "'.$uploadPath.'"');
 
-        // //drop semua table
-        // $tables = DB::select('SHOW TABLES');
-        // foreach($tables as $table){
-        //     Schema::drop($table->Tables_in_pos);
-        // } 
-        // //restore semua database
-        // exec('cd "'.$newBackupPath.'" && mysql -u '.$userName.' -p"'.$password.'" $dbName < db.sql');
+        //drop semua table
+        $tables = DB::select('SHOW TABLES');
+        foreach($tables as $table){
+            Schema::drop($table->Tables_in_pos);
+        } 
+        //restore semua database
+        exec('cd "'.$newBackupPath.'" && mysql -u '.$userName.' -p"'.$password.'" $dbName < db.sql');
         //delete semua file 
         exec("rm -rf '".$newBackupPath."'");
         UserAuth::unlockLogin();
