@@ -548,7 +548,7 @@ abstract class BaseRepository {
      * @param string/null $value
      * @return booleadn
      */
-    public function exists($where = null) {
+    public function exists($where) {
         return $this->_exists($this->model, $where);
     }
 
@@ -573,7 +573,7 @@ abstract class BaseRepository {
         return $this->_update($this->model, $where, $data);
     }
 
-    public function delete($where = null) {
+    public function delete($where) {
         return $this->_delete($this->model, $where);
     }
 
