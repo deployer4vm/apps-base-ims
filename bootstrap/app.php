@@ -1,7 +1,7 @@
 <?php
 $config = [];
-if(file_exists(__DIR__.'/../MainApp/config/config.php')){
-    $config = require __DIR__.'/../MainApp/config/config.php';
+if(file_exists(__DIR__.'/../app/MainApp/config/config.php')){
+    $config = require __DIR__.'/../app/MainApp/config/config.php';
 }
 /*
 |--------------------------------------------------------------------------
