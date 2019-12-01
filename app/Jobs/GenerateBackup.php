@@ -57,7 +57,7 @@ class GenerateBackup implements ShouldQueue
         exec('rm -rf "'.$newBackupPath.'"');
         Backup::create([
             'backup_date'=>$now,
-            'path'=>$backupPath.DIRECTORY_SEPARATOR.$now.'tar.gz',
+            'path'=>$backupPath.DIRECTORY_SEPARATOR.$now.'.tar.gz',
             'status'=>1
         ]);
 
