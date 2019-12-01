@@ -170,6 +170,11 @@ formater.formatNumber = function(number) {
         ).conformedValue;
 };
 
+formater.resetNumber = function(number) {
+    number = String(number);
+    return number.replace(/[^0-9,]/g, "").replace(',','.');
+};
+
 formater.formatDecimal = function(number) {
     if(formater.config.decimalMask.decimalSymbol == ','){
         number = String(number);
