@@ -30,7 +30,7 @@ class Backup extends BaseRepository
 
         $backup->delete();
     }
-    
+
     //delete backup yang terlama
     public function delete($where)
     {
@@ -38,7 +38,7 @@ class Backup extends BaseRepository
         if($backup){
             $this->_delete($this->model, $where);
             //delete file
-            exec("rm -rf '".$backup['']."'");
+            exec('rm -rf "'.$backup['path'].'"');
         }
     }
 }
