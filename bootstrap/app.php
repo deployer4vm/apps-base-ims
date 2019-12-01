@@ -55,7 +55,7 @@ $app->singleton(
 |
 */
 if(isset($config['public_path']) && $config['public_path'] != ''){
-    $app->bind('path.public', function() {
+    $app->bind('path.public', function() use ($config) {
         return realpath(__DIR__.$config['public_path']);
     });
 }
