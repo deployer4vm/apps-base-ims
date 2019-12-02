@@ -145,6 +145,7 @@ formater.format = {
  * format function nya
  */
 formater.formatPrice = function(number) {
+    if(isNaN(number))number = formater.resetNumber(number);
     if(formater.config.currencyMask.decimalSymbol == ','){
         number = String(number);
         number = number.replace('.',',');
@@ -159,10 +160,7 @@ formater.formatPrice = function(number) {
 };
 
 formater.formatNumber = function(number) {
-    // if(formater.config.numberMask.decimalSymbol == ','){
-    //     number = String(number);
-    //     number = number.replace('.',',');
-    // }
+    if(isNaN(number))number = formater.resetNumber(number);
     return conformToMask(
             String(number),
             formater.format.numberMask,
@@ -172,7 +170,7 @@ formater.formatNumber = function(number) {
 
 formater.resetNumber = function(number) {
     number = String(number);
-    return number.replace(/[^0-9,]/g, "").replace(',','.');
+    return parseFloat(number.replace(/[^0-9,]/g, "").replace(',','.'));
 };
 
 formater.formatDecimal = function(number) {
