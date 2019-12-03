@@ -1,7 +1,7 @@
 const mix = require("laravel-mix");
 const glob = require("glob");
 const path = require("path");
-const forEach = require("lodash/forEach");
+// const forEach = require("lodash/forEach");
 const fs = require("fs");
 
 /*
@@ -45,6 +45,7 @@ mix.webpackConfig({
     }
 });
 
+let systemVar = JSON.parse(fs.readFileSync("app/MainApp/config/system.json"));
 /*
  |--------------------------------------------------------------------------
  | Vendor assets
@@ -64,19 +65,35 @@ const sassOptions = {
 };
 
 // Core javascripts
-mixAssetsDir("vendor/js/**/*.js", (src, dest) => mix.scripts(src, dest));
+if(systemVar.web_admin.web || systemVar.web_admin.full_vue)
+    mixAssetsDir("vendor/js/**/*.js", (src, dest) => mix.scripts(src, dest));//web & full vue
+if(systemVar.web_admin.web)
+    mixAssetsDir("vendor/webjs/**/*.js", (src, dest) => mix.scripts(src, dest));//web
+
+// Web Libs
+if(systemVar.web_admin.web){
+    mixAssetsDir(
+        'vendor/weblibs/**/*.js', 
+        (src, dest) => mix.scripts(src, dest));//web
+    mixAssetsDir(
+        'vendor/weblibs/**/!(_)*.scss', 
+        (src, dest) => mix.sass(src, dest.replace(/\.scss$/, '.css'), sassOptions));//web
+
+}
 
 // Fonts
-mixAssetsDir("vendor/fonts/*.css", (src, dest) => mix.copy(src, dest));
-mixAssetsDir("vendor/fonts/*/*", (src, dest) => mix.copy(src, dest));
+if(systemVar.web_admin.web || systemVar.web_admin.full_vue) {
+    mixAssetsDir("vendor/fonts/*.css", (src, dest) => mix.copy(src, dest));
+    mixAssetsDir("vendor/fonts/*/*", (src, dest) => mix.copy(src, dest));
+}
 
 /*
 ----------------------------------------------------------------------
 generate config package.json
 ----------------------------------------------------------------------
 */
-var varPackage = JSON.parse(fs.readFileSync("app/MainApp/config/package.json"));
-var packageLocal = JSON.parse(fs.readFileSync("app/MainApp/config/_packageLocal.json"));
+// var varPackage = JSON.parse(fs.readFileSync("app/MainApp/config/package.json"));
+// var packageLocal = JSON.parse(fs.readFileSync("app/MainApp/config/_packageLocal.json"));
 
 // TIDAK JADI, SEMENTARA DISATUIN DI appconfig.php
 // (glob.sync("vendor/hp-synapse/*/packageconfig.json") || []).forEach(f => {
@@ -204,38 +221,47 @@ generate loader store, router, routerAdmin dan init.js untuk package
  | Entry point
  |--------------------------------------------------------------------------
  */
-mix.js("resources/assets/src/entry-point.js", "public/dist/app.js").version();
-let systemVar = JSON.parse(fs.readFileSync("app/MainApp/config/system.json"));
 
+if(systemVar.web_admin.full_vue)
+    mix.js("resources/assets/src/entry-point.js", "public/dist/app.js").version();//full vue
+
+if(systemVar.web_admin.web)
+    mix.js("resources/assets/src/web-entry-point.js", "public/dist/webapp.js").version();//web
+
+// Core Stylesheets
+
+if(systemVar.web_admin.web || systemVar.web_admin.full_vue) {
 mix.sass(
-    "resources/assets/src/vendor/styles/theme-" +
+        "resources/assets/src/vendor/styles/theme-" +
         systemVar.web_admin.theme +
         ".scss",
-    "public/dist/css/theme-app.css"
-    )
+        "public/dist/css/theme-app.css"
+    )//web & full vue
     .sass(
         "resources/assets/src/vendor/styles/bootstrap.scss",
         "public/dist/css/bootstrap.css"
-    )
+    )//web & full vue
     .sass(
         "resources/assets/src/vendor/styles/appwork.scss",
         "public/dist/css/appwork.css"
-    )
+    )//web & full vue
     .sass(
         "resources/assets/src/vendor/styles/colors.scss",
         "public/dist/css/colors.css"
-    )
+    )//web & full vue
     .sass(
         "resources/assets/src/vendor/styles/uikit.scss",
         "public/dist/css/uikit.css"
-    )
-    .sass("resources/assets/src/style.scss", "public/dist/css/style.css")
-    .copyDirectory("app/MainApp/resources/assets", "public/assets");
+    )//web & full vue
+    .copyDirectory("app/MainApp/resources/assets", "public/assets");//web & full vue
+}
 
-mix.scripts("node_modules/bootstrap/dist/js/bootstrap.js", "public/dist/vendor/libs/bootstrap.js");
-mix.scripts("node_modules/popper.js/dist/popper.js", "public/dist/vendor/libs/popper/popper.js");
-mix.sass("resources/assets/src/vendor/styles/pages/authentication.scss", "public/dist/css/authentication.css");
-
+if(systemVar.web_admin.full_vue){
+    mix.sass("resources/assets/src/style.scss", "public/dist/css/style.css")//full vue
+    mix.scripts("node_modules/bootstrap/dist/js/bootstrap.js", "public/dist/vendor/libs/bootstrap.js");//full vue
+    mix.scripts("node_modules/popper.js/dist/popper.js", "public/dist/vendor/libs/popper/popper.js");//full vue
+    mix.sass("resources/assets/src/vendor/styles/pages/authentication.scss", "public/dist/css/authentication.css");//full vue
+}
 if (Mix.isUsing("hmr")) {
     mix.disableNotifications();
 } else {

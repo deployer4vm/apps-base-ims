@@ -114,13 +114,13 @@ class RouteServiceProvider extends ServiceProvider
             $adminEndpoint = config('AppConfig.client.endpoint.'.config('AppConfig.system.mode').'.admin');
             if($adminEndpoint!='/' && !empty($adminEndpoint)){
                 Route::get($adminEndpoint, function(){
-                    return view('layouts.admin.main');
+                    return view('layouts.full_vue.main');
                 });
             }else{
                 $adminEndpoint = '';
             }
             Route::get($adminEndpoint.'{any}', function(){
-                return view('layouts.admin.main');
+                return view('layouts.full_vue.main');
             })->where('any', '.*');
         // }
 
