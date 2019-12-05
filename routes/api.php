@@ -17,15 +17,16 @@
 //     return $request->user();
 // });
 
+/**
+ * Config
+ * ------------------------------------------
+ */
 //db config
 $group = [
     'prefix' => config('AppConfig.system.config_endpoint'),
     'middleware' => 'auth:api'
 ];
 Route::group($group,function(){  
-    /**
-     * Config
-     */
     Route::get('/', 'ConfigController@readList');
     //create atau update config
     Route::post('/', 'ConfigController@createUpdate');
@@ -33,3 +34,18 @@ Route::group($group,function(){
 
 //access config
 Route::get('/getconfig/access', 'ConfigController@accessConfig');
+
+
+/**
+ * tenant api related
+ * ------------------------------------------
+ */
+//db config
+$group = [
+    'prefix' => 'sys/tenant',
+    // 'middleware' => 'auth:api'
+];
+Route::group($group,function(){  
+    //list tenant
+    Route::get('/','TenantController@listTenant');
+});

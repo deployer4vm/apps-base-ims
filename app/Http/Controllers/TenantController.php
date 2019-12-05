@@ -76,4 +76,18 @@ class TenantController extends BaseController
         return response()->json($data);
     }
 
+    /**
+     * list tenant group
+     * 
+     * @param Request $request *semua optional
+     *      group_app : apps id / path nya
+     * 
+     * @return array list tenant
+     */
+    public function listTenant(Request $request)
+    {
+        $this->output['data'] = Tenant::all();
+        return $this->done();
+    }
+
 }

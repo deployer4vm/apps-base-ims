@@ -124,6 +124,7 @@ formater.format = {
         formater.format.decimalMask = textMaskAddons.createNumberMask(formater.config.decimalMask);
     },
     setThousandsSeparatorSymbol(simbol) {
+        simbol=simbol==','?',':'.';
         formater.config.currencyMask.thousandsSeparatorSymbol = simbol;
         formater.config.numberMask.thousandsSeparatorSymbol = simbol;
         formater.config.decimalMask.thousandsSeparatorSymbol = simbol;
@@ -132,6 +133,7 @@ formater.format = {
         formater.format.decimalMask = textMaskAddons.createNumberMask(formater.config.decimalMask);
     },
     setDecimalSymbol(simbol) {
+        simbol=simbol==','?',':'.';
         formater.config.currencyMask.decimalSymbol = simbol;
         formater.config.decimalMask.decimalSymbol = simbol;
         formater.format.currencyMask = textMaskAddons.createNumberMask(formater.config.currencyMask);
@@ -139,13 +141,16 @@ formater.format = {
     },
     currencyMask: textMaskAddons.createNumberMask(formater.config.currencyMask),        
     numberMask: textMaskAddons.createNumberMask(formater.config.numberMask),//mask without decimal
-    decimalMask: textMaskAddons.createNumberMask(formater.config.numberMask)//mask with decimal
+    decimalMask: textMaskAddons.createNumberMask(formater.config.decimalMask)//mask with decimal
 };
+
 /**
  * format function nya
  */
+
 formater.formatPrice = function(number) {
     if(isNaN(number))number = formater.resetNumber(number);
+
     if(formater.config.currencyMask.decimalSymbol == ','){
         number = String(number);
         number = number.replace('.',',');
@@ -168,14 +173,11 @@ formater.formatNumber = function(number) {
         ).conformedValue;
 };
 
-formater.resetNumber = function(number) {
-    number = String(number);
-    return parseFloat(number.replace(/[^0-9,]/g, "").replace(',','.'));
-};
-
 formater.formatDecimal = function(number) {
+    if(isNaN(number))number = formater.resetNumber(number);
+
     if(formater.config.decimalMask.decimalSymbol == ','){
-        number = String(number);
+        number = String(parseFloat(number));
         number = number.replace('.',',');
     }else{
         number = String(number);
@@ -189,7 +191,19 @@ formater.formatDecimal = function(number) {
 
 formater.formatDate = function(dateString) {
     return moment(dateString).format(formater.config.formatDate);
-}
+};
+
+formater.resetNumber = function(number) {
+    number = String(number);
+    number = number.replace(/[^0-9],./g, "");
+
+    if(formater.config.decimalMask.decimalSymbol == ','){
+        number = number.replace('.', "").replace(',','.');
+    }else{
+        number = number.replace(',', "");
+    }
+    return parseFloat(number);
+};
 
 export default function () {
     return {
