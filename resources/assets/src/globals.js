@@ -153,7 +153,7 @@ formater.formatPrice = function(number) {
 
     if(formater.config.currencyMask.decimalSymbol == ','){
         number = String(number);
-        number = number.replace('.',',');
+        number = number.replace(/\./g,',');
     }else{
         number = String(number);
     }
@@ -178,7 +178,7 @@ formater.formatDecimal = function(number) {
 
     if(formater.config.decimalMask.decimalSymbol == ','){
         number = String(parseFloat(number));
-        number = number.replace('.',',');
+        number = number.replace(/\./g,',');
     }else{
         number = String(number);
     }
@@ -195,12 +195,13 @@ formater.formatDate = function(dateString) {
 
 formater.resetNumber = function(number) {
     number = String(number);
-    number = number.replace(/[^0-9],./g, "");
+    number = number.replace(formater.config.currencyMask.prefix, "");
+    number = number.replace(/[^0-9,.]/g, "");
 
     if(formater.config.decimalMask.decimalSymbol == ','){
-        number = number.replace('.', "").replace(',','.');
+        number = number.replace(/\./g, "").replace(/,/g,'.');
     }else{
-        number = number.replace(',', "");
+        number = number.replace(/,/g, "");
     }
     return parseFloat(number);
 };
