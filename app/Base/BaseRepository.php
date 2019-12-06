@@ -410,7 +410,7 @@ abstract class BaseRepository {
             return false;
         return $data;
     }
-
+    
     /**
      * DONE
      * detect
@@ -487,7 +487,7 @@ abstract class BaseRepository {
      * @return boolean
      */
     protected function _delete($model, $where) {
-        $model = $this->_getOneModel($model, $where);
+        $model = $this->_where($model, $where);
         if ($model != false) {
             if ($model->delete()) {
                 return true;
