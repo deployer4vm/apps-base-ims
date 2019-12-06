@@ -8,6 +8,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Facades\App\Services\Backup;
+use Exception;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -29,6 +30,18 @@ class RestoreBackup implements ShouldQueue
     public function __construct($tanggalBackup)
     {
         $this->tanggalBackup = $tanggalBackup;
+    }
+    
+    /**
+     * The job failed to process.
+     *
+     * @param  Exception  $exception
+     * @return void
+     */
+    public function failed(Exception $exception)
+    {        
+        UserAuth::unlockLogin();
+        report($exception);          
     }
 
     /**
