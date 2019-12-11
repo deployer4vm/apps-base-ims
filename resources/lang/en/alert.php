@@ -9,6 +9,7 @@ return [
     'modal_ok_caption' => 'Ok',
     'modal_cancel_caption' => 'Close',
     // AUTH
+    'access_denied' => 'Access Denied !',
     'auth_failed' => 'Authentificaion Failed',//error saat login gagal
     'auth_success' => 'Authentificaion Success',
     'invalid_token' => 'Invalid Token',

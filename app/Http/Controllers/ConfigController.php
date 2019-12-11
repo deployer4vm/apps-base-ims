@@ -94,7 +94,19 @@ class ConfigController extends BaseController
             $this->_saveCache('generalconfig','accesss',$config); 
         }
 
-         $this->output['data'] = $config;
+        $this->output['data'] = $config;//UserAuth::getAccessConfig();
+         return $this->done();
+     }
+
+     /**
+      * Reset locking
+      */
+     public function unlockAccess(Request $request)
+     {        
+         $this->forceApiOutput();
+ 
+         UserAuth::unlockLogin();
+         // $this->output['data'] = ;
          return $this->done();
      }
 

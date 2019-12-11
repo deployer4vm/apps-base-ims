@@ -106,9 +106,10 @@ class RouteServiceProvider extends ServiceProvider
         $this->mapApiRoutes();
         $this->mapWebRoutes();
 
-        /*
-        initiate route untuk Admin area Vue Frontend
-        */
+        /**
+         * initiate route untuk Admin area Vue Frontend
+         */
+        
         //jika route admin autoload, maka langsung load
         // if(config('AppConfig.system.web_admin.autoload_router.backend')){
             $adminEndpoint = config('AppConfig.client.endpoint.'.config('AppConfig.system.mode').'.admin');

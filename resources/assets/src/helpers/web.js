@@ -63,17 +63,9 @@ export default {
         this.router.push({name: "dashboard",params:{group_app: groupApp}});
     },   
     /*
-    template
+    tenant
     =======================================================================
     */
-    //initialize template store vuex
-    initTemplateState () {
-        return this.store.dispatch("initTemplateState");
-    },    
-    setLoadingPage(showLoading=false) {
-        if(this.store!=null) this.store.commit("setPageLoading",showLoading);
-    },
-    //------tenant--------------------------
     loadTenant (groupApp) {
         if(!this.store.getters.isTenantLoaded || groupApp != this.store.getters.getTenantGroupApp){
             return this.store.dispatch('reloadTenant',groupApp).then((val)=>{
@@ -103,6 +95,10 @@ export default {
     getDefaultTenantRoute() {
         return this.multitenantConfig.default_route;
     },
+    //get active tenant
+    get getTenant() {
+        return this.store.getters.getTenant;
+    },
     //get active tenant name
     getTenantGoup() {
         return this.store.getters.getTenantGroup;
@@ -115,9 +111,20 @@ export default {
     getTenantName() {
         return this.store.getters.getTenantName;
     },
-    //get active tenant name
+    //get active tenant group_app
     getTenantGroupApp() {
         return this.store.getters.getTenantGroupApp;
+    },
+    /*
+    template
+    =======================================================================
+    */
+    //initialize template store vuex
+    initTemplateState () {
+        return this.store.dispatch("initTemplateState");
+    },    
+    setLoadingPage(showLoading=false) {
+        if(this.store!=null) this.store.commit("setPageLoading",showLoading);
     },
     //---------------navbar (header)-------------------
     getAdminTitle() {

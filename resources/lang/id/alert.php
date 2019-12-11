@@ -8,7 +8,8 @@ return [
     //alert modal
     'modal_ok_caption' => 'Ok',
     'modal_cancel_caption' => 'Tutup',
-    // AUTH
+    // AUTH,
+    'access_denied' => 'Akses Ditolak !',
     'auth_failed' => 'Autentifikasi Gagal',//error saat login gagal
     'auth_success' => 'Autentifikasi Berhasil',
     'invalid_token' => 'Token Keliru',

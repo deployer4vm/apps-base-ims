@@ -19,33 +19,55 @@
 
 /**
  * Config
- * ------------------------------------------
+ * -------------------------------------------------
  */
-//db config
+
 $group = [
     'prefix' => config('AppConfig.system.config_endpoint'),
-    'middleware' => 'auth:api'
 ];
-Route::group($group,function(){  
-    Route::get('/', 'ConfigController@readList');
-    //create atau update config
-    Route::post('/', 'ConfigController@createUpdate');
+
+Route::group($group,function(){
+    //access config
+    Route::group(['prefix' => 'access'],function(){
+        Route::get('/', 'ConfigController@accessConfig');
+        Route::get('/unlock', 'ConfigController@unlockAccess');
+        Route::middleware('auth:api')->put('/', 'ConfigController@unlockAccess');
+    });
+
+    //db config
+    //BELUM DIGUNAKAN DAN BELUM SELESAI
+    Route::group([
+            'prefix' => 'db',
+            'middleware' => 'auth:api'
+        ],function(){  
+        Route::get('/', 'ConfigController@readList');
+        //create atau update config
+        Route::post('/', 'ConfigController@createUpdate');
+    });
 });
 
-//access config
-Route::get('/getconfig/access', 'ConfigController@accessConfig');
-
-
 /**
- * tenant api related
- * ------------------------------------------
+ * Tenant
+ * -------------------------------------------------
  */
-//db config
+
 $group = [
     'prefix' => 'sys/tenant',
     // 'middleware' => 'auth:api'
 ];
 Route::group($group,function(){  
-    //list tenant
+    // /api/sys/tenant/active
+    Route::get(config('AppConfig.system.web_admin.multitenant.api_endpoint.tenant_active'),'TenantController@activeTenant');    
+    // /api/sys/tenant/group
+    Route::get(config('AppConfig.system.web_admin.multitenant.api_endpoint.tenant_group'),'TenantController@tenantGroupList');
+    //----read tenant resource
+    //list tenant - /api/sys/tenant
     Route::get('/','TenantController@listTenant');
 });
+
+/**
+ * languange
+ * -------------------------------------------------
+ */
+// /api/sys/lang
+Route::get(config('AppConfig.system.lang_endpoint'),'LangController@readList');

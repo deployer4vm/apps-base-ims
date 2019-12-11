@@ -22,7 +22,7 @@ class UpdateTenantGroupConcept extends Migration
         Schema::table('tenant_groups', function (Blueprint $table) {
             $table->tinyInteger('is_main')->default(0)->after('protected')->comment('1: main group');
             $table->unsignedInteger('default_role_id')->default(0)->comment('default id role saat tenant pertama kali di-create');
-            $table->string('default_role_code')->default('')->comment('default role code (sama seperti role id) saat tenant pertama kali di-create');
+            $table->string('default_role_code')->default('')->comment('default role code (sama seperti default role id) saat tenant pertama kali di-create');
         });
     }
 

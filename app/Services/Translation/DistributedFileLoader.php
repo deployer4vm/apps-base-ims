@@ -34,9 +34,8 @@ class DistributedFileLoader extends FileLoader
     {
         $result = [];
         foreach ($this->paths as $path) {
-            $result = array_merge($result, parent::loadPath($path, $locale, $group));
+            $result = recuresive_array_merge($result, parent::loadPath($path, $locale, $group));
         }
-
         return $result;
     }
 }

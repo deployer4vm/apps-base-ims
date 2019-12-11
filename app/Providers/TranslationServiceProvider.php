@@ -28,9 +28,10 @@ class TranslationServiceProvider extends BaseTranslationServiceProvider
         $paths = array_merge(
             [
                 resource_path('lang')
-            ], 
+            ],
             $paths
         );
+
         $paths[] = app_path('MainApp' . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'lang');
         
         $this->app->singleton('translation.loader', function ($app) use ($paths) {

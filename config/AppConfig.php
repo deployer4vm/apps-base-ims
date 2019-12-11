@@ -2,7 +2,7 @@
 require app_path('Helpers/Helper.php');
 
 /**
- * Config utama yang menyimpan semua config aplikasi. Datanya disimpan di app/Module/System/config
+ * Config utama yang menyimpan semua config aplikasi. Datanya disimpan di app/MainApp/config
  */
 $client = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/client.json'), true);
 $listener = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/listener.json'), true);
@@ -115,6 +115,8 @@ if (!function_exists('processAcl')) {
                 $aclPrefixTmp = $aclPrefix.'.'.$aclId;
 
                 $acl[$packageName]['children'][$aclPrefixTmp] = $value['acl_config'];
+                $acl[$packageName]['children'][$aclPrefixTmp]['parent'] = $aclPrefix;
+                $acl[$packageName]['children'][$aclPrefixTmp]['tenant_group_id'] = isset($value['tenant_group_id'])?$value['tenant_group_id']:0;
                 $acl[$packageName]['children'][$aclPrefixTmp]['acl_caption'] = isset($value['acl_caption'])?$value['acl_caption']:$value['caption'];
                 $acl[$packageName]['children'][$aclPrefixTmp]['acl_description'] = isset($value['acl_description'])?$value['acl_description']:$value['description'];
 
@@ -189,6 +191,9 @@ foreach ($package as $item) {
                     isset($packageLocal[$item['package_namespace']]['access']['acl_description'])?
                     $packageLocal[$item['package_namespace']]['access']['acl_description']:
                     $packageLocal[$item['package_namespace']]['access']['description'],
+                'tenant_group_id' =>
+                    isset($packageLocal[$item['package_namespace']]['access']['tenant_group_id'])?
+                    $packageLocal[$item['package_namespace']]['access']['tenant_group_id']:0,
             ];
             if(isset($packageLocal[$item['package_namespace']]['access']['children'])){
                 $acl = processAcl($acl,$item['package_namespace'],$item['package_namespace'],$packageLocal[$item['package_namespace']]['access']['children']);
@@ -351,5 +356,5 @@ return [
     'package' => $package, //config2 default dari module dan lib
     'listener' => $listener,
     'sidenav' => $sidenav,
-    'acl' => $acl
+    'acl' => $acl //_acl.json
 ];

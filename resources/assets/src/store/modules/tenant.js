@@ -55,7 +55,11 @@ const mutations = {
 
 const actions = {
     reloadTenant({commit},groupApp){
-        return axios.get(globals().AppConfig.system.web_admin.multitenant.api_endpoint.tenant,{
+        var apiPath = 
+            globals().AppConfig.endpoint.api.app + 
+            globals().AppConfig.system.web_admin.multitenant.api_endpoint.tenant + 
+            globals().AppConfig.system.web_admin.multitenant.api_endpoint.tenant_active;
+        return axios.get(apiPath,{
             params: {
                 group_app: groupApp
             }
@@ -72,7 +76,11 @@ const actions = {
         });
     },
     listTenantGroup({commit},params={}) {
-        return axios.get(globals().AppConfig.system.web_admin.multitenant.api_endpoint.tenant_group,{
+        var apiPath = 
+            globals().AppConfig.endpoint.api.app + 
+            globals().AppConfig.system.web_admin.multitenant.api_endpoint.tenant + 
+            globals().AppConfig.system.web_admin.multitenant.api_endpoint.tenant_group;
+        return axios.get(apiPath,{
             params: params
         }).then((val)=>{
             commit('setListTenantGroup',val.data);

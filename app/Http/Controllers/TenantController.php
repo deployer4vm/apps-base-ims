@@ -32,7 +32,7 @@ class TenantController extends BaseController
      *      active_tenant array
      *      active_tenant_group array
      */
-    public function readList(Request $request)
+    public function activeTenant(Request $request)
     {
         $tenant = [
             'tenant_list'=>'',

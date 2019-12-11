@@ -22,7 +22,7 @@ const getters = {
 const mutations = {   
     setLang(state, allLang) {
         state.allLang = allLang;
-        state.isLangSet = true;        
+        state.isLangSet = true;
         // const now = new Date()
         // const expirationDate = new Date(now.getTime() + res.data.expiresIn * 1000)
         state.lastReload = new Date();
@@ -35,6 +35,10 @@ const mutations = {
 const actions = {
     reloadLang({commit,state},newLang=null){
         var params = {lang: null};
+        var apiPath = 
+            globals().AppConfig.endpoint.api.app + 
+            globals().AppConfig.system.lang_endpoint;
+
         params.lang = state.lang;
         if(newLang!=null)
             params.lang = newLang;
@@ -43,7 +47,7 @@ const actions = {
         if(state.lang != params.lang)
             commit('setLocale',params.lang);        
 
-        return axios.get(globals().AppConfig.system.lang_endpoint,{params: params}).then((val)=>{
+        return axios.get(apiPath,{params: params}).then((val)=>{
             commit('setLang',val.data);            
             return true;
         }).catch((err)=>{

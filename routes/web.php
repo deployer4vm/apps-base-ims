@@ -24,12 +24,14 @@
 /**
  * languange
  */
-// /getlang/lang.js
-Route::get(config('AppConfig.system.lang_endpoint'),'LangController@readList');
+// /sys/lang
+// Route::get(config('AppConfig.system.lang_endpoint'),'LangController@readList');
 
 /**
  * Tenant
  */
-// /gettenant/tenant.js
-Route::get(config('AppConfig.system.web_admin.multitenant.api_endpoint.tenant'),'TenantController@readList');
-Route::get(config('AppConfig.system.web_admin.multitenant.api_endpoint.tenant_group'),'TenantController@tenantGroupList');
+// /sys/tenant
+// Route::get(config('AppConfig.system.web_admin.multitenant.api_endpoint.tenant'),'TenantController@activeTenant');
+
+// /sys/tenant_group
+// Route::get(config('AppConfig.system.web_admin.multitenant.api_endpoint.tenant_group'),'TenantController@tenantGroupList');
