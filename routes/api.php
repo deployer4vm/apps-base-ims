@@ -71,3 +71,4 @@ Route::group($group,function(){
  */
 // /api/sys/lang
 Route::get(config('AppConfig.system.lang_endpoint'),'LangController@readList');
+Route::get('sys/lang','LangController@readList');
