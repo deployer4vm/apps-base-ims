@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('AppConfig.system.title') }}</title>
+    <title>{{ config('AppConfig.system.template.admin.title') }}</title>
 
     <!-- Main font -->
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i,900" rel="stylesheet">
@@ -43,14 +43,76 @@
     @endforeach
     @endif
 
+    <style>
+    .app-splash-screen {
+      background: #fff;
+      position: fixed;
+      display: block;
+      z-index: 99999999;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      opacity: 1;
+      transition: opacity .3s;
+    }
+
+    .app-splash-screen-content {
+        text-align: center;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        -webkit-animation: appSplashScreenAnimation 1.2s ease-in-out 0s infinite;
+        animation: appSplashScreenAnimation 1.2s ease-in-out 0s infinite;
+    }
+
+    .app-splash-screen-content .logo {
+        max-width: 70px; max-height: 70px;
+    }
+
+    @-webkit-keyframes appSplashScreenAnimation {
+      0%,
+      20% {
+        -webkit-transform: translate(-50%, -50%) rotateY(0);
+        transform: translate(-50%, -50%) rotateY(0);
+      }
+      50% {
+        -webkit-transform: translate(-50%, -50%) rotateY(180deg);
+        transform: translate(-50%, -50%) rotateY(180deg);
+      }
+      80%,
+      100% {
+        -webkit-transform: translate(-50%, -50%) rotateY(360deg);
+        transform: translate(-50%, -50%) rotateY(360deg);
+      }
+    }
+
+    @keyframes appSplashScreenAnimation {
+      0%,
+      20% {
+        -webkit-transform: translate(-50%, -50%) rotateY(0);
+        transform: translate(-50%, -50%) rotateY(0);
+      }
+      50% {
+        -webkit-transform: translate(-50%, -50%) rotateY(180deg);
+        transform: translate(-50%, -50%) rotateY(180deg);
+      }
+      80%,
+      100% {
+        -webkit-transform: translate(-50%, -50%) rotateY(360deg);
+        transform: translate(-50%, -50%) rotateY(360deg);
+      }
+    }
+  </style>
 </head>
 <body>
 
     <!-- Splash screen -->
-    <div class="app-splash-screen" style="background: #fff; position: fixed; z-index: 99999999; top: 0; right: 0; bottom: 0; left: 0; opacity: 1; -webkit-transition: opacity .3s; transition: opacity .3s;">
-      <div class="app-splash-screen-content" style="position: absolute; top: 50%; left: 50%; -webkit-transform: translate(-50%, -50%); transform: translate(-50%, -50%);">
-        <span class="text-large font-weight-bolder">{{ config('AppConfig.system.title') }}</span>
-      </div>
+    <div class="app-splash-screen">
+        <div class="app-splash-screen-content">
+            @if(config('AppConfig.system.template.logo'))<img class="logo" src="{{asset(config('AppConfig.system.template.logo'))}}">@endif
+            <div class="text-large font-weight-bolder">{{ config('AppConfig.system.template.admin.title') }}</div>
+        </div>
     </div>
     <!-- / Splash screen -->
 

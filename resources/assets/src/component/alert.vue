@@ -14,7 +14,7 @@ export default {
             return this.$store.state.template.alertData;
         }
     },
-    methode: {
+    methods: {
         dismissAlert(k) {
             this.$store.commit('deleteAlert',k);
         }

@@ -55,10 +55,14 @@ const state = {
             menu: globals().AppConfig.system.template.admin.footer.menu
         }
     },
-    showLoading: false
+    showLoading: false,
+    messageLoading: 'wekdut'
 };
 
-const getters = {
+const getters = {    
+    getMessageLoading(state) {
+        return state.messageLoading;
+    },
     //---------------navbar (header-------------------
     getAdminTitle(state) {
         return state.admin.title;
@@ -98,6 +102,9 @@ const mutations = {
     },
     setPageLoading(state, showLoading) {
         state.showLoading = showLoading;
+    },
+    setMessagePageLoading(state, message='') {
+        state.messageLoading = message;
     },
     setModal(state, v){
         state.alertModal.title = v.title;

@@ -123,8 +123,11 @@ export default {
     initTemplateState () {
         return this.store.dispatch("initTemplateState");
     },    
-    setLoadingPage(showLoading=false) {
-        if(this.store!=null) this.store.commit("setPageLoading",showLoading);
+    setLoadingPage(showLoading=false,message='') {
+        if(this.store!=null) {
+            this.store.commit("setMessagePageLoading",message);
+            this.store.commit("setPageLoading",showLoading);
+        }
     },
     //---------------navbar (header)-------------------
     getAdminTitle() {

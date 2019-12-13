@@ -106,15 +106,19 @@ router.afterEach((to, from) => {
     
 
     // Remove initial splash screen
-    const splashScreen = document.querySelector(".app-splash-screen");
-    if (splashScreen) {
-        splashScreen.style.opacity = 0;
-        setTimeout(
-            () =>
-                splashScreen &&
-                splashScreen.parentNode.removeChild(splashScreen),
-            300
-        );
+    var splashScreen = document.querySelector(".app-splash-screen");
+    if (splashScreen) {     
+        var op = 1;  
+        var timer = setInterval(function () {
+            if (op <= 0.1){
+                clearInterval(timer);
+                splashScreen.style.opacity = 0; 
+                splashScreen.parentNode.removeChild(splashScreen);
+            }
+            splashScreen.style.opacity = op;
+            splashScreen.style.filter = 'alpha(opacity=' + op * 100 + ")";
+            op -= op * 0.1;
+        }, 50);
     }
 
     // On small screens collapse sidenav
