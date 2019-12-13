@@ -150,7 +150,7 @@
                             warning.classList.remove('hide');
                             warning.classList.add('show');
                         }
-                    }, 30000);
+                    }, 60000);
                 </script>
             </div>
         </div>
