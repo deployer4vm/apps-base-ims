@@ -62,47 +62,52 @@
         position: absolute;
         top: 50%;
         left: 50%;
-        -webkit-animation: appSplashScreenAnimation 1.2s ease-in-out 0s infinite;
-        animation: appSplashScreenAnimation 1.2s ease-in-out 0s infinite;
     }
+    .app-splash-screen-content-inner {
+        position: relative;
+        top: -100px;
+        left: -50%;
 
+    }
     .app-splash-screen-content .logo {
         max-width: 70px; max-height: 70px;
     }
-
-    @-webkit-keyframes appSplashScreenAnimation {
-      0%,
-      20% {
-        -webkit-transform: translate(-50%, -50%) rotateY(0);
-        transform: translate(-50%, -50%) rotateY(0);
-      }
-      50% {
-        -webkit-transform: translate(-50%, -50%) rotateY(180deg);
-        transform: translate(-50%, -50%) rotateY(180deg);
-      }
-      80%,
-      100% {
-        -webkit-transform: translate(-50%, -50%) rotateY(360deg);
-        transform: translate(-50%, -50%) rotateY(360deg);
-      }
+    .lds-ring {
+        display: inline-block;
+        position: relative;
+        width: 80px;
+        height: 80px;
+    }
+    .lds-ring div {
+        box-sizing: border-box;
+        display: block;
+        position: absolute;
+        width: 64px;
+        height: 64px;
+        margin: 8px;
+        border: 8px solid rgba(0,0,0,0.5);
+        border-radius: 50%;
+        animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+        border-color: rgba(0,0,0,0.5) transparent transparent transparent;
+    }
+    .lds-ring div:nth-child(1) {
+        animation-delay: -0.45s;
+    }
+    .lds-ring div:nth-child(2) {
+        animation-delay: -0.3s;
+    }
+    .lds-ring div:nth-child(3) {
+        animation-delay: -0.15s;
+    }
+    @keyframes lds-ring {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
     }
 
-    @keyframes appSplashScreenAnimation {
-      0%,
-      20% {
-        -webkit-transform: translate(-50%, -50%) rotateY(0);
-        transform: translate(-50%, -50%) rotateY(0);
-      }
-      50% {
-        -webkit-transform: translate(-50%, -50%) rotateY(180deg);
-        transform: translate(-50%, -50%) rotateY(180deg);
-      }
-      80%,
-      100% {
-        -webkit-transform: translate(-50%, -50%) rotateY(360deg);
-        transform: translate(-50%, -50%) rotateY(360deg);
-      }
-    }
   </style>
 </head>
 <body>
@@ -110,8 +115,17 @@
     <!-- Splash screen -->
     <div class="app-splash-screen">
         <div class="app-splash-screen-content">
-            @if(config('AppConfig.system.template.logo'))<img class="logo" src="{{asset(config('AppConfig.system.template.logo'))}}">@endif
-            <div class="text-large font-weight-bolder">{{ config('AppConfig.system.template.admin.title') }}</div>
+            <div class="app-splash-screen-content-inner">
+                @if(config('AppConfig.system.template.logo'))<img class="logo" src="{{asset(config('AppConfig.system.template.logo'))}}">@endif
+                <div class="text-large font-weight-bolder">{{ config('AppConfig.system.template.admin.title') }}</div>
+                <div>{{ config('AppConfig.system.template.admin.footer.text') }}</div>
+                <hr>
+                <div>
+                    <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+
+                </div>
+                <small class="text-light">Loading application data...</small>
+            </div>
         </div>
     </div>
     <!-- / Splash screen -->
@@ -125,7 +139,7 @@
     @endif
 
     <!-- Layout helpers -->
-    <script src="{{ asset('/dist/vendor/js/layout-helpers.js') }}"></script>
+    <script src="{{ asset('/dist/vendor/js/layout-helpers.js') }}"></script> -->
     <script src="{{ mix('/dist/app.js') }}"></script>
 
 </body>
