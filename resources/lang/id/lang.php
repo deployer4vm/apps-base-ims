@@ -15,5 +15,8 @@ return [
     'delete' => 'Delete',
     'edit' => 'Edit',
     'search' => 'Cari',
-    'view_all' => 'Tampilkan Semua'
+    'view_all' => 'Tampilkan Semua',
+    //home template    
+    'system_app_loading_text' => 'Loading application data...',
+    'system_app_load_button_text' => 'Reload',
 ];

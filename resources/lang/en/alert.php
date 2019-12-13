@@ -1,5 +1,7 @@
 <?php 
 return [
+    'system_app_load_fail_title' => 'Application failed.',
+    'system_app_load_fail_text' => 'Application not loded properly, please try to reload the page.',
     // GENERAL
     'form_must_complete_title' => 'Input form error',//genera
     'form_must_complete_text' => 'Please fix the error',

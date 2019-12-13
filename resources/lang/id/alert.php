@@ -1,5 +1,7 @@
 <?php 
 return [
+    'system_app_load_fail_title' => 'Aplikasi gagal dimuat',
+    'system_app_load_fail_text' => 'Memuat aplikasi gagal, silahkan coba memuat ulang halaman ini.',
     // GENERAL
     'form_must_complete_title' => 'Input form error',//general
     'form_must_complete_text' => 'Silahkan perbaiki kesalahannya',

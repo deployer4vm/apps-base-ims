@@ -56,7 +56,6 @@
       opacity: 1;
       transition: opacity .3s;
     }
-
     .app-splash-screen-content {
         text-align: center;
         position: absolute;
@@ -108,7 +107,14 @@
         }
     }
 
-  </style>
+    #warningbox.hide {
+        display: none;
+    }
+    
+    #warningbox.show {
+        display: block;
+    }
+    </style>
 </head>
 <body>
 
@@ -122,11 +128,33 @@
                 <hr>
                 <div>
                     <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
-
                 </div>
-                <small class="text-light">Loading application data...</small>
+                <small class="text-light">{{__('lang.system_app_loading_text')}}</small>
+                
+                <div id="warningbox" class="card bg-warning hide" style="position: absolute; top:0; left:0;">
+                    <div class="card-body">
+                        <h5 class="card-title">{{__('alert.system_app_load_fail_title')}}</h5>
+                        <p class="card-text">{{__('alert.system_app_load_fail_text')}}</p>
+                        <a href="{{url('/')}}" class="btn btn-danger">{{__('lang.system_app_load_button_text')}}</a>
+                    </div>
+                </div>
+
+                <script>        
+                    // Remove initial splash screen
+                    var splashScreen;    
+                    setTimeout(function () {
+                        splashScreen = document.querySelector(".app-splash-screen");
+                        var warning = document.getElementById('warningbox');
+                        //jika splashscreen masih ada berarti error
+                        if (splashScreen) { 
+                            warning.classList.remove('hide');
+                            warning.classList.add('show');
+                        }
+                    }, 30000);
+                </script>
             </div>
         </div>
+
     </div>
     <!-- / Splash screen -->
 
@@ -139,7 +167,7 @@
     @endif
 
     <!-- Layout helpers -->
-    <script src="{{ asset('/dist/vendor/js/layout-helpers.js') }}"></script> -->
+    <script src="{{ asset('/dist/vendor/js/layout-helpers.js') }}"></script>
     <script src="{{ mix('/dist/app.js') }}"></script>
 
 </body>
