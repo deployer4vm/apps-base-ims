@@ -27,6 +27,15 @@ $group = [
 ];
 
 Route::group($group,function(){
+    //db config
+    Route::group([
+            'middleware' => 'auth:api'
+        ],function(){  
+        Route::get('/', 'ConfigController@readList');
+        //create atau update config
+        Route::post('/', 'ConfigController@createUpdate');
+    });
+
     //access config
     Route::group(['prefix' => 'access'],function(){
         Route::get('/', 'ConfigController@accessConfig');
@@ -34,16 +43,6 @@ Route::group($group,function(){
         Route::middleware('auth:api')->put('/', 'ConfigController@unlockAccess');
     });
 
-    //db config
-    //BELUM DIGUNAKAN DAN BELUM SELESAI
-    Route::group([
-            'prefix' => 'db',
-            'middleware' => 'auth:api'
-        ],function(){  
-        Route::get('/', 'ConfigController@readList');
-        //create atau update config
-        Route::post('/', 'ConfigController@createUpdate');
-    });
 });
 
 /**

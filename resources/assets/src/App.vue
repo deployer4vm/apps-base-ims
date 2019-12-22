@@ -19,11 +19,17 @@
 <style src="@/vendor/libs/spinkit/spinkit.scss" lang="scss"></style>
 <style>
     .loading-container .loading-backdrop {
-        opacity: 0.1 !important;
+        opacity: 0.3 !important;
     }
     .loading-container .loading {
         box-shadow: none !important;
         background-color: transparent !important;
+    }
+    .loading-container .loading-label {
+        font-weight: bold;
+        background: rgba(255,255,255,0.4);
+        border-radius: 5px;
+        padding: 0 10px;
     }
 
     .v-fade-enter-active, .v-fade-leave-active {
