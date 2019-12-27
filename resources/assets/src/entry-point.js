@@ -2,6 +2,7 @@ window._ = {};
 window._.merge = require("lodash/merge");
 window._.forEach = require("lodash/forEach");
 window.moment = require('moment');
+window.$ = require('jquery');
 
 // Polyfills
 require("core-js/modules/es6.array.fill");
