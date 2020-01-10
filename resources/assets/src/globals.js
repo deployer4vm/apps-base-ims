@@ -57,7 +57,7 @@ localapi.defaults.baseURL = "/";//AppConfig.client.endpoint[AppConfig.system.mod
 localapi.defaults.headers.get["Accepts"] = "application/json";
 localapi.defaults.headers.common['Content-Type'] = 'multipart/form-data';
 localapi.interceptors.response.use((response) => response, (error) => {    
-    if(error.response.data && error.response.data.message && error.response.data.errors && error.response.data.status) {
+    if(error.response && error.response.data && error.response.data.message && error.response.data.errors && error.response.data.status) {
         let err = localapi.parseError(error.response);
         //jika error token expired/auth gagal maka logoutkan
         if(err.status == 401){
