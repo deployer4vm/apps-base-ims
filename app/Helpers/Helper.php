@@ -196,3 +196,41 @@ if (!function_exists('pagination_generate')) {
         return $results->withPath($path);
     }
 }
+
+if (!function_exists('is_decimal')) {    
+    /**
+     *  mengecek apakah sebuah nilai angka mengandung decimal atau tidak
+     * 
+     * @param type $value yang akan dicek (float/double)
+     * @return boolean 
+     */
+    function is_decimal($value){        
+        // return ((float) $value !== floor($value));
+        return is_numeric( $value ) && floor( $value ) != $value;
+    }
+}
+
+if (!function_exists('clean_number_format')) {    
+    /**
+     * number_format sekaligus menghilangkan decimal yg tidak perlu misal
+     *  1.500,00  --> 1.500
+     *  1.500,02  --> 1.500,02
+     * @param type $value yang akan diformat
+     * @param type $precision jumlah decimal yang diinginkan muncul
+     * @param type $decimalSeparator separator desimal, default ','
+     * @param type $thousandSeparator separator ribuan, default '.'
+     * @return boolean 
+     */
+    function clean_number_format($value,$precision=0,$decimalSeparator=',',$thousandSeparator='.'){        
+    //    return $value;
+        if ($value =="")
+			return "0";
+		else {
+			if (!is_decimal(trim($value)))
+				return (number_format($value,0,$decimalSeparator,$thousandSeparator));
+			else
+			
+			return (number_format($value,$precision,$decimalSeparator,$thousandSeparator));
+		}
+    }
+}
