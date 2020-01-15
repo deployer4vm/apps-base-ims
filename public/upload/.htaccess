@@ -1,0 +1,10 @@
+# BEGIN Disable Upload Directory Code Execution
+<IfModule mod_php5.c>
+php_flag engine 0
+</IfModule>
+<IfModule mod_php7.c>
+php_flag engine 0
+</IfModule>
+AddHandler cgi-script .php .phtml .php3 .pl .py .jsp .asp .htm .shtml .sh .cgi
+Options -ExecCGI
+# //END Disable Upload Directory Code Execution

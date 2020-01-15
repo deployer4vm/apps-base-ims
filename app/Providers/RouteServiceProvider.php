@@ -110,8 +110,8 @@ class RouteServiceProvider extends ServiceProvider
          * initiate route untuk Admin area Vue Frontend
          */
         
-        //jika route admin autoload, maka langsung load
-        // if(config('AppConfig.system.web_admin.autoload_router.backend')){
+        //jika full_vue aktif maka load route config nya
+        if(config('AppConfig.system.web_admin.full_vue')){
             $adminEndpoint = config('AppConfig.client.endpoint.'.config('AppConfig.system.mode').'.admin');
             if($adminEndpoint!='/' && !empty($adminEndpoint)){
                 Route::get($adminEndpoint, function(){
@@ -123,7 +123,7 @@ class RouteServiceProvider extends ServiceProvider
             Route::get($adminEndpoint.'{any}', function(){
                 return view('layouts.full_vue.main');
             })->where('any', '.*');
-        // }
+        }
 
     }
 
