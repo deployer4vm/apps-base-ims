@@ -13,9 +13,6 @@ class UpdateTenantGroupConcept extends Migration
      */
     public function up()
     {
-        Schema::table('roles', function (Blueprint $table) {
-            $table->tinyInteger('tenant_group_id')->default(0)->after('id')->comment('0: all tenant, else id main tenant group');
-        });
         Schema::table('tenants', function (Blueprint $table) {
             $table->tinyInteger('tenant_group_id')->default(0)->after('protected')->comment('0: all tenant, else id main tenant group');
         });
@@ -33,9 +30,6 @@ class UpdateTenantGroupConcept extends Migration
      */
     public function down()
     {
-        Schema::table('roles', function (Blueprint $table) {
-            $table->dropColumn('tenant_group_id');
-        });
         Schema::table('tenants', function (Blueprint $table) {
             $table->dropColumn('tenant_group_id');
         });
