@@ -7,7 +7,8 @@
         "web_pushnotif",
         "locale",
         "fallback_locale",
-        "lang_endpoint"
+        "lang_endpoint",
+        "binding"
     ],
     "protected_packageLocal_key": [
         "name",

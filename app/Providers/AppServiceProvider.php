@@ -14,7 +14,43 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        
+        //bind interface global
+        foreach(config('AppConfig.binding.interface',[]) as $contract => $service){
+            $this->app->bind(
+                $contract,
+                $service
+            );
+        }
+        
+        //bind controller rebind global
+        foreach(config('AppConfig.binding.controller',[]) as $controller => $newController){
+            $this->app->extend($controller, function ($service, $app) use ($newController) {
+                return new $newController($service);
+            });
+        }
+
+        // bind config binding per tenant
+        // if(config('AppConfig.system.web_admin.multitenant.active')){
+            $this->app->bind('bindTenant', function ($app,$params) {           
+                
+                //bind interface global
+                foreach(config('AppConfig.system.binding.tenant.'.$params['tenant_id'].'.interface',[]) as $contract => $service){
+                    $this->app->bind(
+                        $contract,
+                        $service
+                    );
+                }
+                
+                //bind controller rebind global
+                foreach(config('AppConfig.system.binding.tenant.'.$params['tenant_id'].'.controller',[]) as $controller => $newController){
+                    $this->app->extend($controller, function ($service, $app) use ($newController) {
+                        return new $newController($service);
+                    });
+                }
+            });
+        // }
+
     }
 
     /**

@@ -43,12 +43,16 @@ class Utilities
     public static function listModulePath(array $namespaces,$func)
     {
         $return = [];
+
+        //$path[0] = path ke namespace
+        //$path[1] = prefix directory yang ada di path bersangkutan, false jika tanpa prefix
         foreach ($namespaces as $namespace => $path) {
             $tmp = glob(sprintf('%s*', $path[0]),GLOB_ONLYDIR);
             foreach ($tmp as $modulePath){                
                 //$component : nama/folder module nya
                 $component = substr($modulePath, strrpos($modulePath, DIRECTORY_SEPARATOR) + 1);
                 
+                //cek jika ada prefix maka hanya ambil path yg sesuai prefix nya saja
                 if($path[1]){
                     if(strpos($component, $path[1]) !== 0)    
                         continue;
@@ -57,6 +61,7 @@ class Utilities
                 if($namespace=='hpsynapse'){
                     $modulePath .= DIRECTORY_SEPARATOR.'src';
                 }
+                
                 //$newNamespace : namespace ke folder per modulenya App/Modules/NAMAMODULE
                 $newNamespace = sprintf(
                     '%s\\%s\\',

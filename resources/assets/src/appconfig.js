@@ -4,6 +4,7 @@ load all application config
 */
 let AppConfig = {
     system: require("../../../app/MainApp/config/_system.json"),
+    binding: require("../../../app/MainApp/config/_binding.json"),
     client: require("../../../app/MainApp/config/client.json"),
     packageLocal: require("../../../app/MainApp/config/_packageLocal.json"),
     package: require("../../../app/MainApp/config/package.json"),

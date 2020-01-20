@@ -93,9 +93,21 @@ class RouteServiceProvider extends ServiceProvider
             foreach ($fileNames as $fileName => $isApi) {
                 $path = sprintf('%s/%s.php', $pathToModule, $fileName);
 
+                //load general route tambahan jika ada
+                if($pathBinding = config('AppConfig.binding.route.'.$moduleNamespace.'.'.($isApi?'api':'web'),false)){
+                    $pathBinding = app_path('MainApp' . DIRECTORY_SEPARATOR . $pathBinding);
+                    if (file_exists($pathBinding)) {
+                        Route::middleware($isApi ? ['api'] : ['web'])
+                            ->prefix($isApi && $moduleNamespace != 'moduser' ? config('AppConfig.endpoint.api.'.$moduleNamespace) : '')
+                            ->namespace($namespace)
+                            ->group($pathBinding);
+                    }
+                }
+
                 if (!file_exists($path)) {
                     continue;
                 }
+
                 Route::middleware($isApi ? ['api'] : ['web'])
                     ->prefix($isApi && $moduleNamespace != 'moduser' ? config('AppConfig.endpoint.api.'.$moduleNamespace) : '')
                     ->namespace($namespace)

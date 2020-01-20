@@ -1,8 +1,4 @@
 <?php
-$config = [];
-if(file_exists(__DIR__.'/../app/MainApp/config/config.php')){
-    $config = require __DIR__.'/../app/MainApp/config/config.php';
-}
 /*
 |--------------------------------------------------------------------------
 | Create The Application
@@ -54,9 +50,4 @@ $app->singleton(
 | from the actual running of the application and sending responses.
 |
 */
-if(isset($config['public_path']) && $config['public_path'] != ''){
-    $app->bind('path.public', function() use ($config) {
-        return realpath(__DIR__.$config['public_path']);
-    });
-}
 return $app;

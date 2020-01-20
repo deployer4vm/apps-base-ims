@@ -103,6 +103,11 @@ $newPackageLocalEnv = []; //untuk filtered packageLocalEnv.json yang akan disave
 $acl = [];
 $tmpSidenav = [];
 $sidenav = [];
+$binding = [
+    'controller'=>[],
+    'interface'=>[],
+    'route'=>[]
+];
 
 
 /**
@@ -255,6 +260,17 @@ $moduleRouterAdminNamespace = [];
 
 foreach ($package as $item) {
     /*
+    generate binding masing-masing module
+    ----------------------------
+    */
+    //binding interface
+    if(isset($item['binding']) && isset($item['binding']['interface'])){
+        foreach($item['binding']['interface'] as $contract => $service){
+            $binding['interface'][$contract] = $service;
+        }        
+    }
+
+    /*
     generate endpoint masing-masing module
     ----------------------------
     */
@@ -333,6 +349,29 @@ $system['path'] = [
     'basePath'=>base_path('')
 ];
 
+//---merge binding per module dengan binding utama (system)
+//binding interface
+if(isset($system['binding']) && isset($system['binding']['interface'])){
+    foreach($system['binding']['interface'] as $contract => $service){
+        if(!isset($binding['interface'][$contract]))
+            $binding['interface'][$contract] = $service;
+    }        
+}
+//binding controller
+if(isset($system['binding']) && isset($system['binding']['controller'])){
+    foreach($system['binding']['controller'] as $contract => $service){
+        if(!isset($binding['controller'][$contract]))
+            $binding['controller'][$contract] = $service;
+    }        
+}
+//binding route
+if(isset($system['binding']) && isset($system['binding']['route'])){
+    foreach($system['binding']['route'] as $contract => $service){
+        if(!isset($binding['route'][$contract]))
+            $binding['route'][$contract] = $service;
+    }        
+}
+
 //---generated config
 file_put_contents(__DIR__ . '/../app/MainApp/resources/js/modules.js', implode('',$moduleMainJs));
 file_put_contents(__DIR__ . '/../app/MainApp/resources/js/store/modules.js', implode('',$moduleStore)."\nconst store = {\n".implode(",\n",$moduleStoreNamespace)."\n};\n\nexport default store;" );
@@ -340,6 +379,7 @@ file_put_contents(__DIR__ . '/../app/MainApp/resources/js/router/modules.js', im
 file_put_contents(__DIR__ . '/../app/MainApp/resources/js/router/modulesAdmin.js', implode('',$moduleRouterAdmin)."\nconst routes = []\n".implode("\n",$moduleRouterAdminNamespace).";\n\nexport default routes;" );
 
 //---generated config
+file_put_contents(__DIR__ . '/../app/MainApp/config/_binding.json', json_encode($binding, JSON_PRETTY_PRINT));
 file_put_contents(__DIR__ . '/../app/MainApp/config/_packageLocal.json', json_encode($packageLocal, JSON_PRETTY_PRINT));
 file_put_contents(__DIR__ . '/../app/MainApp/config/_system.json', json_encode($system, JSON_PRETTY_PRINT));
 file_put_contents(__DIR__ . '/../app/MainApp/config/_acl.json', json_encode($acl, JSON_PRETTY_PRINT));
@@ -351,6 +391,7 @@ package dan module berisi config yang sama persis
 return [
     'client' => $client,
     'system' => $system,
+    'binding' => $binding,
     'endpoint' => $endpoint,
     'packageLocal' => $packageLocal, //config2 dari module dan lib yang sudah diedit per project
     'package' => $package, //config2 default dari module dan lib
