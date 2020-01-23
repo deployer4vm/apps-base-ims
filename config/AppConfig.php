@@ -5,6 +5,17 @@ require app_path('Helpers/Helper.php');
  * Config utama yang menyimpan semua config aplikasi. Datanya disimpan di app/MainApp/config
  */
 $client = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/client.json'), true);
+
+if(file_exists(__DIR__ . '/../app/MainApp/config/clientEnv.json')){
+    $tmpEnvClient = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/clientEnv.json'), true);
+}else{
+    file_put_contents(__DIR__ . '/../app/MainApp/config/clientEnv.json', json_encode($client, JSON_PRETTY_PRINT));
+    $tmpEnvClient = $client;
+}
+//save ulang config pastikan tidak mengandung key yang tidak boleh diedit
+file_put_contents(__DIR__ . '/../app/MainApp/config/clientEnv.json', json_encode($tmpEnvClient, JSON_PRETTY_PRINT));
+$client = recuresive_array_merge($client, $tmpEnvClient);
+
 $listener = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/listener.json'), true);
 
 $keyConfig = json_decode(file_get_contents(__DIR__ . '/../resources/assets/src/config.json'), true);
@@ -382,6 +393,7 @@ file_put_contents(__DIR__ . '/../app/MainApp/resources/js/router/modulesAdmin.js
 file_put_contents(__DIR__ . '/../app/MainApp/config/_binding.json', json_encode($binding, JSON_PRETTY_PRINT));
 file_put_contents(__DIR__ . '/../app/MainApp/config/_packageLocal.json', json_encode($packageLocal, JSON_PRETTY_PRINT));
 file_put_contents(__DIR__ . '/../app/MainApp/config/_system.json', json_encode($system, JSON_PRETTY_PRINT));
+file_put_contents(__DIR__ . '/../app/MainApp/config/_client.json', json_encode($client, JSON_PRETTY_PRINT));
 file_put_contents(__DIR__ . '/../app/MainApp/config/_acl.json', json_encode($acl, JSON_PRETTY_PRINT));
 file_put_contents(__DIR__ . '/../app/MainApp/config/_sidenav.json', json_encode($sidenav, JSON_PRETTY_PRINT));
 
