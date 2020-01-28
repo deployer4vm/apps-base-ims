@@ -197,7 +197,6 @@ export default {
             let duration = 3000;
             let newDur = parseInt(params.text.length / 20) * 1000;
             if(newDur > duration)duration = newDur;
-            
             this.notify({
                 group: this._showAlert_position[params.position],
                 type: this._showAlert_type[params.type],
@@ -216,10 +215,10 @@ export default {
         "bottom-right": "notifications-bottom-right"
     },
     _showAlert_type: {
-        warning: "bg-warning text-body",
-        success: "bg-success text-white",
+        warning: "bg-warning warn text-body",
+        success: "bg-success success text-white",
         info: "bg-info text-white",
-        danger: "bg-danger text-white",
+        danger: "bg-danger error text-white",
         primary: "bg-primary text-white",
         secondary: "bg-secondary text-white",
         dark: "bg-dark text-white"
