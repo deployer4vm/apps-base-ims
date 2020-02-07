@@ -72,12 +72,15 @@ class RouteServiceProvider extends ServiceProvider
     public function map()
     {        
 
+        $homeSlug = trim(config('AppConfig.client.endpoint.'.config('AppConfig.system.mode').'.home_slug',''),'/');
+        if($homeSlug) $homeSlug = '/'.$homeSlug;
+
         $config = $this->app['config']['hpsynapse'];
         // $middleware = $config['protection_middleware'];        
         // if(isset($config['protection_middleware'])){
         //     $middleware = array_merge($middleware,$config['protection_middleware']);
         // }
-        Utilities::listModulePath($config['namespaces'], function($namespace,$pathToModule) {
+        Utilities::listModulePath($config['namespaces'], function($namespace,$pathToModule) use ($homeSlug) {
             
             $fileNames = [
                 'routes_api' => true,
@@ -98,7 +101,7 @@ class RouteServiceProvider extends ServiceProvider
                     $pathBinding = app_path('MainApp' . DIRECTORY_SEPARATOR . $pathBinding);
                     if (file_exists($pathBinding)) {
                         Route::middleware($isApi ? ['api'] : ['web'])
-                            ->prefix($isApi && $moduleNamespace != 'moduser' ? config('AppConfig.endpoint.api.'.$moduleNamespace) : '')
+                            ->prefix($isApi && $moduleNamespace != 'moduser' ? str_replace($homeSlug,'',config('AppConfig.endpoint.api.'.$moduleNamespace)) : '')
                             ->namespace($namespace)
                             ->group($pathBinding);
                     }
@@ -109,7 +112,7 @@ class RouteServiceProvider extends ServiceProvider
                 }
 
                 Route::middleware($isApi ? ['api'] : ['web'])
-                    ->prefix($isApi && $moduleNamespace != 'moduser' ? config('AppConfig.endpoint.api.'.$moduleNamespace) : '')
+                    ->prefix($isApi && $moduleNamespace != 'moduser' ? str_replace($homeSlug,'',config('AppConfig.endpoint.api.'.$moduleNamespace)) : '')
                     ->namespace($namespace)
                     ->group($path);
             }

@@ -90,20 +90,22 @@ if(file_exists(__DIR__ . '/../app/MainApp/config/packageLocalEnv.json')){
     $tmpPackageLocalEnv = $tmpPackageLocal;
 }
 
+$homeSlug = isset($client['endpoint'][$system['mode']]['home_slug'])?$client['endpoint'][$system['mode']]['home_slug']:'';
+$homeSlug = $homeSlug?('/'.trim($homeSlug,'/').'/'):'';
 //initiate config ednpoint.json
 $endpoint = [
     'domain' => $client['endpoint'][$system['mode']]['domain'],
     'admin' => [
-        'app' => $client['endpoint'][$system['mode']]['admin'],
-        'auth' => ''
+        'app' => $homeSlug.$client['endpoint'][$system['mode']]['admin'],
+        'auth' => $homeSlug
     ],
     'frontend' => [
-        'app' => $client['endpoint'][$system['mode']]['frontend'],
-        'auth' => ''
+        'app' => $homeSlug.$client['endpoint'][$system['mode']]['frontend'],
+        'auth' => $homeSlug
     ],
     'api' => [
-        'app' => $client['endpoint'][$system['mode']]['api'],
-        'auth' => ''
+        'app' => $homeSlug.$client['endpoint'][$system['mode']]['api'],
+        'auth' => $homeSlug
     ],
     
 ];
@@ -291,7 +293,7 @@ foreach ($package as $item) {
         if($moduleEndpoint == '' || $moduleEndpoint[0]!='/'){
             $endpoint[$app][$item['package_namespace']] = $endpoint[$app]['app'].'/'.$moduleEndpoint;
         }else{
-            $endpoint[$app][$item['package_namespace']] = $moduleEndpoint;
+            $endpoint[$app][$item['package_namespace']] = $homeSlug.$moduleEndpoint;
         }    
         //jika memiliki fitur auth dan module user maka assign auth endpointnya
         if($system['has_auth'] && isset($packageLocal['moduser']) && $packageLocal['moduser']['enable']){
@@ -299,7 +301,7 @@ foreach ($package as $item) {
             if($authEndpoint[0]!='/'){
                 $endpoint[$app]['auth'] = $endpoint[$app]['app'].'/'.$authEndpoint;
             }else{
-                $endpoint[$app]['auth'] = $authEndpoint;
+                $endpoint[$app]['auth'] = $homeSlug.$authEndpoint;
             }
             
         }
