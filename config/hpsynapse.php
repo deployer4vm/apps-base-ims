@@ -4,7 +4,7 @@ use App\Services\Utilities;
 $config = [
     'namespaces' => [
         'App\\MainApp\\Modules' => [app_path('MainApp' . DIRECTORY_SEPARATOR . 'Modules') . DIRECTORY_SEPARATOR, false],
-        'hpsynapse' => [base_path('vendor' . DIRECTORY_SEPARATOR . 'hp-synapse') . DIRECTORY_SEPARATOR, 'mod-']
+        'hpsynapse' => [base_path('vendor' . DIRECTORY_SEPARATOR . 'hp-synapse') . DIRECTORY_SEPARATOR, ['mod-','apps-']]
     ],
     'language_folder_name' => 'lang',
     'resource_namespace' => 'resources'

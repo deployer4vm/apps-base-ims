@@ -13,9 +13,14 @@ class Utilities
             $paths = array_map(function ($component) use ($resourceNamespace, $resourceFolderName, $modulePrefix, $isModuleOk) {
                 
                 if($modulePrefix){
-                    $moduleName = substr($component, strrpos($component, DIRECTORY_SEPARATOR) + 1);                    
-                    if(strpos($moduleName, $modulePrefix) !== 0)    
-                        return false;    
+                    $moduleName = substr($component, strrpos($component, DIRECTORY_SEPARATOR) + 1);       
+                    
+                    if(!is_array($modulePrefix))$modulePrefix = [$modulePrefix];
+
+                    foreach ($modulePrefix as $val) {
+                        if(strpos($moduleName, $val) !== 0)    
+                            return false;
+                    }   
                     
                     $component .= DIRECTORY_SEPARATOR.'src';
                 }
@@ -54,7 +59,13 @@ class Utilities
                 
                 //cek jika ada prefix maka hanya ambil path yg sesuai prefix nya saja
                 if($path[1]){
-                    if(strpos($component, $path[1]) !== 0)    
+                    if(!is_array($path[1]))$path[1] = [$path[1]];
+                    $skipModule = false;
+                    foreach ($path[1] as $val) {
+                        if(strpos($component, $val) !== 0)    
+                            $skipModule = true;
+                    }
+                    if($skipModule)    
                         continue;
                 }
                 

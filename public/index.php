@@ -55,9 +55,9 @@ $response = $kernel->handle(
     $request = Illuminate\Http\Request::capture()
 );
 
-if(config('AppConfig.System.public_path')){
+if(config('AppConfig.system.public_path')){
     $app->bind('path.public', function() {
-        return realpath(__DIR__.config('AppConfig.System.public_path'));
+        return realpath(__DIR__.config('AppConfig.system.public_path'));
     });
 }
 
