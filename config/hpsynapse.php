@@ -25,6 +25,13 @@ $langPath = array_merge(
 $langPath[] = app_path('MainApp' . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'lang');
 
 return [
+    'bindings' => [
+        'controller'=>[],
+        'interface'=>[
+            'App\\Contracts\\Excel'=>'App\\Services\\Excel'
+        ],
+        'route'=>[]
+    ],
     'lang_path' => $langPath,
     /*
      * namespace ke path lokasi module

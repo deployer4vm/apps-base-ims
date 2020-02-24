@@ -3,24 +3,47 @@
 namespace App\Base;
 
 use Illuminate\Support\Facades\Cache;
+use App\Base\Traits\ResCacheTrait;
 
 abstract class BaseRepository {
 
-    use RepoCacheTrait;
+    use ResCacheTrait;
 
     //default model
     protected $model;
 
     //list field yg dimasukan untuk search
     protected $searchField = ['name'];
+    protected $tenantId = 0;
 
-    /*
-     * cache var
-     * -------------------------------------------------------------------------
-     */
     protected $error = '';//error strinng
     protected $errorCode = 0;//error code
 
+    /**
+     * BLOCK CLASS DEPENDENCY
+     */
+    
+    protected $dependencyLoaded = [];
+    protected $dependency = [
+        // 'jurnal' => 'App\MainApp\Modules\Pembukuan\Contracts\Jurnal' --> list array dependency
+    ];
+
+    //load dependency
+	public function __get($name) {
+        if(isset($this->dependency[$name])){
+            if(!isset($this->dependencyLoaded[$name])){
+                $this->dependencyLoaded[$name] = resolve($this->dependency[$name]);
+                if(method_exists($this->dependencyLoaded[$name],'setTenantId'))
+                    $this->dependencyLoaded[$name]->setTenantId($this->tenantId);
+            }
+            return $this->dependencyLoaded[$name];
+        }
+    }  
+
+    public function setTenantId(int $tenantId=0)
+    {
+        $this->tenantId = $tenantId;
+    } 
     /**
      * DONE
      * get error string
@@ -337,6 +360,8 @@ abstract class BaseRepository {
         }
         
         if ($model) {
+            // $this->pagination['query'] = $model->toSql();
+            // $this->pagination['queryBindings'] = $model->getBindings();
             $this->pagination['data'] = $model->get()->toArray();
             //jika menyertakan hiddeColumn berarti ada column yg di hide
             if ($hiddenColumn) {

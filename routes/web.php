@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Http\Request;
+use App\Services\Utilities;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -10,28 +13,12 @@
 | contains the "web" middleware group. Now create something great!
 |
 */
-
-// Route::get('/', function () {
-//     return view('welcome');
-// });
-
-// Auth::routes();
-
-// Route::get('/home', 'HomeController@index')->name('home');
-
-// Route::get('/{any}', 'ApplicationController')->where('any', '.*');
-
-/**
- * languange
- */
-// /sys/lang
-// Route::get(config('AppConfig.system.lang_endpoint'),'LangController@readList');
-
-/**
- * Tenant
- */
-// /sys/tenant
-// Route::get(config('AppConfig.system.web_admin.multitenant.api_endpoint.tenant'),'TenantController@activeTenant');
-
-// /sys/tenant_group
-// Route::get(config('AppConfig.system.web_admin.multitenant.api_endpoint.tenant_group'),'TenantController@tenantGroupList');
+//jika artisan web access aktif, maka buka
+if(config('AppConfig.system.has_artisan_web_access',false)){
+    $artisanEndpoind = config('AppConfig.system.has_artisan_web_access','/update/run-artisan/').'{action}';
+    Route::get($artisanEndpoind, function(Request $request){
+        $command = $request->route('action');
+        $return = Utilities::artisan($command);
+        return $return;
+    });
+}

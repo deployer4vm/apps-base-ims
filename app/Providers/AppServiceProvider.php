@@ -15,6 +15,12 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         
+        if(config('AppConfig.system.public_path')){
+            $this->app->bind('path.public', function() {
+                return realpath(__DIR__.'/../..'.config('AppConfig.system.public_path'));
+            });
+        }
+        
         //bind interface global
         foreach(config('AppConfig.binding.interface',[]) as $contract => $service){
             $this->app->bind(

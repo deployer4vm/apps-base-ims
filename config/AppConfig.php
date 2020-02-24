@@ -116,11 +116,13 @@ $newPackageLocalEnv = []; //untuk filtered packageLocalEnv.json yang akan disave
 $acl = [];
 $tmpSidenav = [];
 $sidenav = [];
-$binding = [
+
+$tmpBindings = include(__DIR__.DIRECTORY_SEPARATOR.'hpsynapse.php');
+$binding = empty($tmpBindings['bindings'])?[
     'controller'=>[],
     'interface'=>[],
     'route'=>[]
-];
+]:$tmpBindings['bindings'];
 
 
 /**

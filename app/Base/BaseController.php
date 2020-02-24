@@ -7,11 +7,12 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Routing\Controller as LaravelBaseController;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Base\Traits\ResCacheTrait;
 
 class BaseController extends LaravelBaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
-    use RepoCacheTrait;
+    use ResCacheTrait;
     
     //default data parameter untuk responseable
     protected $output = [

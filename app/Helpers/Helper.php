@@ -111,9 +111,9 @@ if (!function_exists('is_route_prefix')) {
 if (!function_exists('pagination_format')) {    
     /**
      * 
-     * @param type $count
-     * @param type $offset
-     * @param type $limit
+     * @param int $count
+     * @param int $offset
+     * @param int $limit
      * @return array format
      *      total
      *      per_page
@@ -121,9 +121,14 @@ if (!function_exists('pagination_format')) {
      *      from
      *      to
      */
-    function pagination_format($count,$offset=1,$limit=10){
-        $curPage = (int) floor(($offset+1) / $limit) + 1;
-        $to = (int) floor(($count+1) / $limit) + 1;
+    function pagination_format(int $count,int $offset=1,int $limit=10){
+        if($limit==0){
+            $curPage = 1;
+            $to = 1;
+        }else{
+            $curPage = (int) floor(($offset+1) / $limit) + 1;
+            $to = (int) floor(($count+1) / $limit) + 1;
+        }
         $paginationData = [
             'total' => $count,
             'per_page' => $limit,
@@ -189,7 +194,7 @@ if (!function_exists('pagination_generate')) {
         // set current page
         // $currentPage = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
         // set limit 
-        $perPage = $paginationParam['limit'];
+        $perPage = $paginationParam['limit']?$paginationParam['limit']:($paginationParam['count']?$paginationParam['count']:10);
         
         $results = new \Illuminate\Pagination\LengthAwarePaginator(collect($paginationParam['data']), $paginationParam['count'], $perPage);
         

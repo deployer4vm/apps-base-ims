@@ -24,7 +24,7 @@ class AppGroupCheck
                 }
             }    
             if($appGroup && $tenant = Tenant::where('group_app',$appGroup)->first()){                
-                $a = resolve('bindTenant',['tenant_id'=>$tenant->id]);
+                resolve('bindTenant',['tenant_id'=>$tenant->id]);
                 $config = app('config');
                 $config->set('tenant',$tenant->toArray());
             }    

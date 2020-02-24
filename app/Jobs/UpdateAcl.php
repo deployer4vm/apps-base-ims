@@ -8,12 +8,12 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
+use App\Services\Utilities;
 
-use Carbon\Carbon;
-
-class UpdateAcl //implements ShouldQueue
+/**
+ * Jobs untuk update role dari file json di /app/MainApp/config/acl/*
+ */
+class UpdateAcl implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     public $connection;
@@ -35,19 +35,7 @@ class UpdateAcl //implements ShouldQueue
      */
     public function handle()
     {
-        if (!Schema::connection($this->connection)->hasTable('koperasi_grup_detail')) {
-            $roles = DB::connection($this->connection)->table('roles')->get();
-            
-            foreach ($roles as $value) {
-                $roleFilename = app_path('MainApp/config/acl/'.$value->role_code.'.json');
-                if(file_exists($roleFilename)){
-                    $rule = file_get_contents($roleFilename);
-                    DB::connection($this->connection)->table('roles')->where('role_code',$value->role_code)->update([
-                        'rule' => $rule
-                    ]);
-                }
-            }
-        }
-        
+        $command = 'moduser:aclupdate --connection='.$this->connection;
+        Utilities::artisan($command);        
     }
 }

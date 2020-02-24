@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Artisan;
 class Utilities
 {
     public static function findNamespaceResources(array $namespaces, $resourceFolderName, $resourceNamespace)
@@ -85,5 +86,42 @@ class Utilities
             }
         }
         return $return;
+    }
+
+    /**
+     * eksekusi perintah artisan
+     * 
+     * @param string $command perintah artisan, misal 'config:cache'
+     */
+    public static function artisan($command ='')
+    {
+        //list perintah artisan yg hanya bisa dieksekusi langsung via command line, tidak bisa via class Artisan
+        $shellOnlyCommands = [
+            'clear-compiled',
+            'package:discover',
+            'backup:run',
+            'passport:client --password',
+            'passport:install',
+            'apidoc:generate',
+            'route:list',
+            'config:cache',
+            'config:clear',
+            'migrate',
+            'db:seed',
+            'route:cache',
+            'route:clear',
+            'view:cache',
+            'view:clear',
+            'optimize:clear',
+            'optimize'
+        ];
+        $ret = '';
+        if(in_array($command,$shellOnlyCommands)){
+            $ret = shell_exec('cd '.base_path('').' && php artisan ' . $command);
+        }else{
+            Artisan::call($command);
+            $ret = Artisan::output();
+        }
+        return ['comamnd'=>$command,'return'=>$ret];
     }
 }

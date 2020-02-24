@@ -8,7 +8,9 @@
         "locale",
         "fallback_locale",
         "lang_endpoint",
-        "binding"
+        "binding",
+        "has_artisan_web_access",
+        "artisan_web_endpoint"
     ],
     "protected_packageLocal_key": [
         "name",
