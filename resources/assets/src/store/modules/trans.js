@@ -1,10 +1,10 @@
 import globals from "@/globals";
 
 const state = {
-    allLang: {},
-    isLangSet: null,
-    lastReload: null,
-    lang: null
+    allLang: {},//data object language nya
+    isLangSet: null,//true jika lang sudah diload
+    lastReload: null,//waktu terakhir reload lang
+    lang: null//lang yg aktif sekarang, "en","id",dll
 };
 
 const getters = {
@@ -14,6 +14,7 @@ const getters = {
     getLang(state) {
         return state.allLang;
     },
+    //get lang yang sedang aktif sekarang
     getLocale(state) {
         return state.lang;
     }

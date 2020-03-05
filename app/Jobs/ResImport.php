@@ -18,8 +18,10 @@ use Exception;
 class ResImport implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    public $repo,$startRow,$addsJobsParam;
+    public $repo,$startRow,$addsJobsParam,$resumeParam;
     public $tries = 1;
+    public $retryAfter = 10;
+    public $timeout = 3600;
 
     /**
      * Create a new job instance.
@@ -29,11 +31,12 @@ class ResImport implements ShouldQueue
      * 
      * @return void
      */
-    public function __construct($repo,int $startRow=2,array $addsJobsParam = [])
+    public function __construct($repo,int $startRow=2,array $addsJobsParam = [],array $resumeParam = [])
     {
         $this->repo = $repo;
         $this->startRow = $startRow;
         $this->addsJobsParam = $addsJobsParam;
+        $this->resumeParam = $resumeParam;
     }
 
     public function failed(Exception $exception)
@@ -53,6 +56,7 @@ class ResImport implements ShouldQueue
         $repo = new $this->repo;
         $repo->initImportOnJob($this->addsJobsParam);
         $repo->setImportStartRow($this->startRow);
-        $repo->processImport();
+        $repo->setImportAsResume($this->resumeParam);
+        $repo->importProcess();
     }
 }

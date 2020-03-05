@@ -43,12 +43,15 @@ var template = `
     </div>   
     <!-- jika status selesai atau gagal import maka tampilkan tombol approve dan/atau reset -->
     <template v-else>
-        <button @click="approveImport" class="btn btn-success btn-md mb-4" :disabled="importStatus.status==4">
-            <span class="ion ion-md-checkmark-circle"></span>&nbsp; Approve Import
-        </button>
-        <button @click="cancelImport" class="btn btn-danger btn-md mb-4">
-            <span class="ion ion-md-close-circle"></span>&nbsp; Cancel Import
-        </button>
+        <!-- jika sedang tidak dalam on progress cancle dan on progress import -->
+        <template v-if="importStatus.status!=5 && importStatus.status!=6">
+            <button @click="approveImport" class="btn btn-success btn-md mb-4" :disabled="importStatus.status==4">
+                <span class="ion ion-md-checkmark-circle"></span>&nbsp; Approve Import
+            </button>
+            <button @click="cancelImport" class="btn btn-danger btn-md mb-4">
+                <span class="ion ion-md-close-circle"></span>&nbsp; Cancel Import
+            </button>
+        </template>
         
         <div class="alert-info alert show pr-0" style="max-height: 200px; overflow-x: auto;">
             <i>Import data selesai :</i>                            
@@ -64,9 +67,12 @@ var cImport = Vue.component("c-import", {
         "api-import-approve",
         "api-import-status",
         "api-import-cancel",
-        "last-transaction-date",
-        "transaction-date-caption",
-        "show-transaction-date",
+
+        "last-transaction-date",//string format date Y-m-d
+        "transaction-date-caption",//string caption
+        "show-transaction-date",//true/false
+
+        //list event callback
         "on-start",
         "on-get-status",
         "on-finish",
@@ -92,7 +98,8 @@ var cImport = Vue.component("c-import", {
                 filename: '',
                 filenamePath: '',
                 count:0,
-                processedCount:0                  
+                processedCount:0,
+                transactionDate
             }
         };
     },
@@ -102,7 +109,7 @@ var cImport = Vue.component("c-import", {
         if(!this.transactionDateCaption) this.transactionDateCaption = 'Tanggal Transaksi';
         this.showTransactionDate = this.showTransactionDate||this.showTransactionDate==undefined?true:false;
 
-        this.getImportStatus();        
+        this.getImportStatus(true);        
     },
     mounted: function() {  
         var that = this;                     
@@ -150,11 +157,11 @@ var cImport = Vue.component("c-import", {
             });
         },
         //get status terakhir import
-        getImportStatus(){
+        getImportStatus(firstLoad=false){
             var that = this;
             axios.get( this.apiImportStatus)
                 .then((res)=>{
-                    var lastStatus = this.importStatus.status;
+                    var oldStatus = JSON.parse(JSON.stringify(this.importStatus));
                     this.importStatus = res.data.data;
                     this.onGetStatus(this.importStatus);
 
@@ -164,24 +171,26 @@ var cImport = Vue.component("c-import", {
                             that.getImportStatus();
                         },1000); 
                     //jika import selesai dan berhasil                          
-                    }else if(this.importStatus.status==3 && lastStatus == 2){
+                    }else if(this.importStatus.status==3 && !firstLoad){
                         if(this.onFinish!=undefined)
                             this.onFinish(this.importStatus);
                         showAlert({text: "Proses import selesai.",type: "success"});
                     //jika import selesai dan gagal
-                    }else if(this.importStatus.status==4 && lastStatus == 2){
+                    }else if(this.importStatus.status==4 && !firstLoad){
                         if(this.onFail!=undefined)
                             this.onFail(this.importStatus);
                         showAlert({text: "Proses import gagal.",type: "danger"});
                     //jika approve import selesai dan berhasil                          
-                    }else if(this.importStatus.status==0 && lastStatus == 5){
+                    }else if(this.importStatus.status==0 && oldStatus.status == 5 && !firstLoad){
                         if(this.onApproveFinish!=undefined)
                             this.onApproveFinish(this.importStatus);
+                        this.importStatus = oldStatus;
                         showAlert({text: "Proses Approve selesai.",type: "success"});
-                    //jika approve import selesai dan berhasil                          
-                    }else if(this.importStatus.status==0 && lastStatus == 5){
+                    //jika pembatalan import selesai dan berhasil                          
+                    }else if(this.importStatus.status==0 && oldStatus.status == 6 && !firstLoad){
                         if(this.onCancelFinish!=undefined)
                             this.onCancelFinish(this.importStatus);
+                        this.importStatus = oldStatus;
                         showAlert({text: "Proses pembatalan selesai.",type: "success"});
                     //jika status 0 berarti sudah tidak ada proses
                     }else{

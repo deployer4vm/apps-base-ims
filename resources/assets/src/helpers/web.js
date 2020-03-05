@@ -7,7 +7,7 @@ export default {
     store: null,
     router: null,
     notify: null, //vue-notification
-    endpoint: null, //local full endpoint
+    endpoint: null, //local full endpoint dari AppConfig.endpoint
     bvModal: null,
     tenantList: null,
     multitenantConfig: null,
@@ -15,6 +15,10 @@ export default {
     Route & Endpoint
     =======================================================================
     */
+   //get path yg sedang diakses sekarang
+    get curEndpoint() {
+        return this.router.currentRoute.path;
+    },
     get curAppEndpoint() {
         if (this.isAdminEndpoint()) {
             return this.endpoint.admin.app;
@@ -28,17 +32,22 @@ export default {
         return this.endpoint[app][packageNamespace];
     },
     /*
-    cek apakah url sekarang adalah path yang diinputkan
+    cek apakah url yang sedang diakses sekarang adalah bagian (diawali dengan) path (parameter)
     */
     isOnEndpoint(path = null) {
+        //get url yg sedang diakses sekarang
         let endpoint = path.replace(':group_app',this.router.currentRoute.params.group_app);
+        //ceka apakah diawali dengan 'path'
         return this.router.currentRoute.path.indexOf(endpoint) === 0;
     },
+    //cek apakah 'path' adalah url auth endpoin di aplikasi 'app'
     isAuthEdnpoint(path = null, app = "admin") {
         if (path == null) {
             path = this.router.currentRoute.path;
         }
+        //get url/path auth
         let atuhEndpoint = this.endpoint[app]["auth"].replace(':group_app',this.router.currentRoute.params.group_app);
+        //cek apakah parameter auth yg diinputkan berarawalan path auth
         return path.indexOf(atuhEndpoint) === 0;
     },
     //cek apakah halaman yang diakses sekarang admin area
@@ -82,7 +91,7 @@ export default {
             });
         }
     },
-    //force reload languange from server
+    //force reload tenant data from server
     reLoadTenant(groupApp) {
         this.store.dispatch('reloadTenant',groupApp).then((val)=>{
             this.tenantList = this.store.getters.getTenantList;
@@ -95,7 +104,7 @@ export default {
     getDefaultTenantRoute() {
         return this.multitenantConfig.default_route;
     },
-    //get active tenant
+    //get active tenant record
     get getTenant() {
         return this.store.getters.getTenant;
     },
@@ -130,19 +139,43 @@ export default {
         }
     },
     //---------------navbar (header)-------------------
+    //admin title digunakan di meta title dan brand/apps bar
     getAdminTitle() {
         return this.store.getters.getAdminTitle;
     },
-    setAdminTitle(newTitle) {
-        this.store.dispatch("setAdminTitle", newTitle);
+    // admin title tidak boleh diubah
+    // appendAdminTitle(title)
+    // {
+    //     this.store.commit("setAdminTitle", this.store.getters.getAdminTitle + ' - ' + title);
+    // },
+    // setAdminTitle(newTitle) 
+    // {
+    //     this.store.commit("setAdminTitle", newTitle);
+    // },
+    //-----
+    //title di navbar atas
+    getNavbarTitle() {
+        return this.store.getters.getNavbarTitle;
+    },
+    appendNavbarTitle(title)
+    {
+        this.store.commit("setNavbarTitle", this.store.getters.getNavbarTitle + ' \\ ' + title);
+    },
+    setNavbarTitle(newTitle) 
+    {
+        this.store.commit("setNavbarTitle", newTitle);
     },
     //---------------sidenav-------------------
-    getSidenavMenu() {
+    getSidenavMenu() 
+    {
         return this.store.getters.getSidenavMenu;
     },
     //---------------body-------------------
     addBreadcrumb(item, isAdmin = true) {
-        this.$store.dispatch("addBreadcrumb", item);
+        this.store.dispatch("addBreadcrumb", item);
+    },
+    setBodyWithPadding(isWithPadding) {
+        this.store.commit("setBodyWithPadding", isWithPadding);
     },
     /*
     tampilkan alert instan

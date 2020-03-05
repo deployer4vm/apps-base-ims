@@ -38,7 +38,6 @@
             :to="menus.route"
             :exact="true"
             :active="isMenuActive(Web.getModuleEndpoint(packageNamespace))"
-            :open="isMenuOpen(Web.getModuleEndpoint(packageNamespace))"
           >
             {{ Trans.chose(menus.caption) }}
           </sidenav-router-link>
@@ -60,12 +59,16 @@
 
                 <template v-if="menu.children == undefined">
 
-                  <sidenav-router-link
-                    :to="menu.route"
-                    :class="menu.class?menu.class:''"
-                    v-bind:key="aclIdLv1"
-                    :exact="true"
-                  ><i :class="'sidenav-icon ' + menu.icon" v-if="menu.icon"></i> {{ Trans.chose(menu.caption) }}</sidenav-router-link>
+                    <sidenav-router-link
+                        :to="menu.route"
+                        :class="menu.class?menu.class:''"
+                        :active="isMenuActive(menu.route)"
+                        v-bind:key="aclIdLv1"
+                        :exact="true"
+                    >
+                        <i :class="'sidenav-icon ' + menu.icon" v-if="menu.icon"></i> 
+                        {{ Trans.chose(menu.caption) }}
+                    </sidenav-router-link>
 
                 </template>
                 <template v-else>
@@ -77,7 +80,10 @@
                     :active="isMenuActive(menu.route)"
                     :open="isMenuOpen(menu.route)"
                   >
-                    <template slot="link-text"><i :class="'sidenav-icon ' + menu.icon" v-if="menu.icon"></i> {{ Trans.chose(menu.caption) }}</template>
+                    <template slot="link-text">
+                        <i :class="'sidenav-icon ' + menu.icon" v-if="menu.icon"></i> 
+                        {{ Trans.chose(menu.caption) }}
+                    </template>
 
                     <template v-for="(submenu,aclIdLv2) in menu.children">
 
@@ -89,6 +95,7 @@
                             :to="submenu.route"
                             :class="submenu.class?submenu.class:''"
                             v-bind:key="aclIdLv2"
+                            :active="isMenuActive(submenu.route)"
                             :exact="true"
                           ><i :class="'sidenav-icon ' + submenu.icon" v-if="submenu.icon"></i> {{ Trans.chose(submenu.caption) }}</sidenav-router-link>
 
@@ -150,19 +157,6 @@
 
 <script>
 import {
-  Sidenav,
-  SidenavLink,
-  SidenavRouterLink,
-  SidenavMenu,
-  SidenavHeader,
-  SidenavBlock,
-  SidenavDivider
-} from "@/vendor/libs/sidenav";
-
-export default {
-  name: "app-layout-sidenav",
-  components: {
-    /* eslint-disable vue/no-unused-components */
     Sidenav,
     SidenavLink,
     SidenavRouterLink,
@@ -170,79 +164,95 @@ export default {
     SidenavHeader,
     SidenavBlock,
     SidenavDivider
-    /* eslint-enable vue/no-unused-components */
-  },
+} from "@/vendor/libs/sidenav";
 
-  props: {
-    orientation: {
-      type: String,
-      default: "vertical"
-    }
-  },
-  created() {
-    
-  },
-  computed: {
-    tenantGroup() {
-      return this.$store.getters.getTenantGroup;
+export default {
+    name: "app-layout-sidenav",
+    components: {
+        /* eslint-disable vue/no-unused-components */
+        Sidenav,
+        SidenavLink,
+        SidenavRouterLink,
+        SidenavMenu,
+        SidenavHeader,
+        SidenavBlock,
+        SidenavDivider
+        /* eslint-enable vue/no-unused-components */
     },
-    title() {
-      return this.$store.getters.getAdminTitle;
-    },
-    sidebarMenu() {
-      return this.$store.getters.getSidenavMenu;
-    },
-    curClasses() {
-      let bg = this.layoutSidenavBg;
 
-      if (
-        this.orientation === "horizontal" &&
-        (bg.indexOf(" sidenav-dark") !== -1 ||
-          bg.indexOf(" sidenav-light") !== -1)
-      ) {
-        bg = bg
-          .replace(" sidenav-dark", "")
-          .replace(" sidenav-light", "")
-          .replace("-darker", "")
-          .replace("-dark", "");
-      }
+    props: {
+        orientation: {
+            type: String,
+            default: "vertical"
+        }
+    },
+    created() {},
+    computed: {
+        tenantGroup() {
+            return this.$store.getters.getTenantGroup;
+        },
+        title() {
+            return this.$store.getters.getAdminTitle;
+        },
+        sidebarMenu() {
+            return this.$store.getters.getSidenavMenu;
+        },
+        curClasses() {
+            let bg = this.layoutSidenavBg;
 
-      return (
-        `bg-${bg} ` +
-        (this.orientation !== "horizontal"
-          ? "layout-sidenav"
-          : "layout-sidenav-horizontal container-p-x flex-grow-0")
-      );
-    }
-  },
-  methods: {
-    /*
+            if (
+                this.orientation === "horizontal" &&
+                (bg.indexOf(" sidenav-dark") !== -1 ||
+                    bg.indexOf(" sidenav-light") !== -1)
+            ) {
+                bg = bg
+                    .replace(" sidenav-dark", "")
+                    .replace(" sidenav-light", "")
+                    .replace("-darker", "")
+                    .replace("-dark", "");
+            }
+
+            return (
+                `bg-${bg} ` +
+                (this.orientation !== "horizontal"
+                    ? "layout-sidenav"
+                    : "layout-sidenav-horizontal container-p-x flex-grow-0")
+            );
+        }
+    },
+    methods: {
+        /*
     cek apakah curGroup tenant group ada di active group
     param :
       curGroup : array
     */
-    isInGroup(curGroup) {
-      //jika tidak ada group maka tolak (berarti tidak punya akses)
-      if(!this.tenantGroup)return false;      
-      var arr = this.tenantGroup;
-      return curGroup.some(r=>arr.indexOf(r) >= 0);
-    },
-    isMenuActive(route) {  
-      let routePath = '';    
-      if (typeof route == "string") {
-        routePath = route;
-      } else {
-        let routePathObj = this.$router.resolve(route);
-        routePath = routePathObj.route.path;
-      }
-      return this.Web.isOnEndpoint(routePath);
-    },
-    isMenuOpen(route) {
-      return this.isMenuActive(route) && this.orientation !== "horizontal";
-    },
-    toggleSidenav() {
-      this.layoutHelpers.toggleCollapsed();
+        isInGroup(curGroup) {
+            //jika tidak ada group maka tolak (berarti tidak punya akses)
+            if (!this.tenantGroup) return false;
+            var arr = this.tenantGroup;
+            return curGroup.some(r => arr.indexOf(r) >= 0);
+        },
+        isMenuActive(route) {
+            let routePath = "";
+            if (typeof route == "string") {
+                routePath = route;
+            } else {
+                let routePathObj = this.$router.resolve(route);
+                routePath = routePathObj.route.path;
+            }
+            // console.log(routePath,this.Web.curEndpoint,this.Web.isOnEndpoint(routePath));
+            return routePath == "/" && this.Web.curEndpoint != "/"
+                ? false
+                : this.Web.isOnEndpoint(routePath);
+        },
+        isMenuOpen(route) {
+            return (
+                this.isMenuActive(route) && this.orientation !== "horizontal"
+            );
+        },
+        toggleSidenav() {
+            this.layoutHelpers.toggleCollapsed();
+        }
     }
-  }
 };
 </script>

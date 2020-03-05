@@ -18,8 +18,10 @@ use App\MainApp\Modules\UnitToko\Facades\StockOpname;
 class ResExport implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    public $repo,$addsJobsParam,$homeUrl;
+    public $repo,$addsJobsParam,$homeUrl,$resumeParam;
     public $tries = 1;
+    public $retryAfter = 10;
+    public $timeout = 3600;
     
     /**
      * Create a new job instance.
@@ -27,14 +29,16 @@ class ResExport implements ShouldQueue
      * @param ResExport $repo instance RestExport
      * @param array $addsJobsParam tambah parameter yang akan di passing ke initExportOnJon
      * @param string $homeUrl url lengkap ke home index
+     * @param array $resumeParam parameter ygn diinpunkan jika berupa proses resume
      * 
      * @return void
      */
-    public function __construct($repo,array $addsJobsParam = [],string $homeUrl='')
+    public function __construct($repo,array $addsJobsParam = [],string $homeUrl='',array $resumeParam = [])
     {
         $this->repo = $repo;
         $this->addsJobsParam = $addsJobsParam;
         $this->homeUrl = $homeUrl;
+        $this->resumeParam = $resumeParam;
     }
 
     public function failed(Exception $exception)
@@ -55,6 +59,7 @@ class ResExport implements ShouldQueue
         $repo = new $this->repo;
         $repo->initExportOnJob($this->addsJobsParam);
         $repo->setExportHomeUrl($this->homeUrl);
+        $repo->setExportAsResume($this->resumeParam);
         $repo->processExport();
     }
 }

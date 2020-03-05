@@ -6,7 +6,7 @@ use Closure;
 use Facades\hpsynapse\moduser\Services\UserAuth;
 use Illuminate\Support\Facades\Auth;
 use hpsynapse\moduser\Models\ApiToken;
-use App\Base\ResCacheTrait;
+use App\Base\Traits\ResCacheTrait;
 
 class AcceesConfigCheck
 {

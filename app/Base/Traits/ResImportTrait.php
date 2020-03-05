@@ -3,6 +3,9 @@ namespace App\Base\Traits;
 
 use Exception;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
+
 use App\Jobs\ResImport;
 use App\Facades\Excel;
 use Carbon\Carbon;
@@ -33,8 +36,9 @@ trait ResImportTrait {
     private $_importUseJobs = true;//sementara belum ada opsi pake jobs atau tidak, HARUS pake jobs
     private $_importUploadPath = 'import/';//path ke upload relative dari public_path
 
-    private $_importDefaultColumn = [];//daftar field yang diexport, jika array kosong maka semua field diexport
-    private $_importColumn = [];//daftar field yang diexport, jika array kosong maka semua field diexport
+    private $_importDefaultColumn = [];//daftar field yang diimport, jika array kosong maka semua field diimport
+    private $_importColumn = [];//daftar field yang diimport, jika array kosong maka semua field diimport
+    private $_resumeParams = [];
 
     public function initImport(string $group = '', $modelHeader=null, $modelDetail=null, array $addsJobsParam=[])
     {
@@ -77,7 +81,8 @@ trait ResImportTrait {
 
     public function setImportModel($modelHeader,$modelDetail)
     {
-        $this->setImportDetailForeignKey($modelHeader->getModel()->getTable().'_id');
+        if($modelHeader)
+            $this->setImportDetailForeignKey($modelHeader->getModel()->getTable().'_id');
         $this->_importModelHeader = $modelHeader;
         $this->_importModelDetail = $modelDetail;
     }
@@ -181,10 +186,11 @@ trait ResImportTrait {
      * @param Request $inputFile request input file
      * @param int $startRow start row ke berapa data mulai diread
      * @param array $addsData data tambahan untuk diinsert ke model header
+     * @param string $transactionDate tanggal transaksi saat ini
      * 
      * @return false|object record header
      */
-    public function startImport($inputFile,int $startRow=2,array $addsData = [])
+    public function startImport($inputFile,int $startRow=2,array $addsData = [],string $transactionDate='')
     {        
         if(!$this->_importFunctionInitialize){
             return false;
@@ -199,19 +205,30 @@ trait ResImportTrait {
         //proses jika upload berhasil
         if($filePath){
             try{
-                $addsData['import_filepath'] = $filePath;
-                $addsData['import_filename'] = $fileName;
-                $addsData['import_status'] = 0;
-                $result = $this->_importModelHeader->create($addsData);
-                if($result){
-                    $this->setImportStartProcess($result->toArray());
-                }else{
-                    $this->error = 'Insert error.';
-                    return false;
-                }                
+                if($this->_importModelHeader){
+                    $addsData['import_filepath'] = $filePath;
+                    $addsData['import_filename'] = $fileName;
+                    $addsData['import_log'] = '';
+                    $addsData['import_status'] = 0;
+                    $addsData['is_import'] = 1;
+                    $result = $this->_importModelHeader->create($addsData);                    
+                    if(!$result){
+                        $this->error = 'Insert error.';
+                        return false;
+                    }    
+                    
+                    $config = $this->getInitImportStatus();
+                    $config['addsData'] = $addsData;
+                    $this->saveImportStatus($config); 
+                }
 
-                $config =  $this->getImportStatus(); 
+                $this->setImportStartProcess([
+                    'filenamePath' => $filePath,
+                    'filename' => $fileName,
+                    'transactionDate' => $transactionDate?$transactionDate:now()->format('Y-m-d')
+                ]);
 
+                $config =  $this->getImportStatus();
                 // mulai jobs untuk proses import nya
                 ResImport::dispatch(
                     self::class,
@@ -230,40 +247,105 @@ trait ResImportTrait {
     }
     
     /**
+     * set params import, sebagai penanda bahwa jobs ini adalah kelanjutan dari jobs sebelumnya
+     * (jika si $resumeParams nya tidak kosong)
+     */
+    public function setImportAsResume(array $resumeParams = [])
+    {
+        $this->_resumeParams = $resumeParams;
+        if(!empty($this->_resumeParams))$this->onImportResume();
+
+    }
+    public function getImportResumeParam()
+    {
+        return $this->_resumeParams;
+    }
+
+    /**
+     * untuk diOVERRIDE
+     * dieksekusi saat pertama kali import diresume
+     */
+    public function onImportResume()
+    {
+
+    }
+
+    /**
      * proses file import yang sudah diupload
      */
-    public function processImport()
-    {        
+    public function importProcess()
+    {
+        ini_set('memory_limit','1024M');
+        set_time_limit(0);
+        
+        $startTime = microtime(true);
+
         if(!$this->_importFunctionInitialize){
             return false;
         }
 
-        $header = $this->_importModelHeader->where('import_status',0)->first();
-        if(!$header){
+        $config = $this->getImportStatus();
+        $header = [];
+        if($this->_importModelHeader){
+            $header = $this->_importModelHeader->where('import_status',0)->where('is_import',1)->first();
+            if(!$header){
 
-            $this->appendImportLog('<b class="text-danger">Import file not found!</b><br>');
-            $this->setImportFailed();
+                $this->appendImportLog('<b class="text-danger">Import file not found!</b><br>');
+                $this->setImportFailed();
 
-            $this->error = 'Tidak ada file import yang sudah diupload';
-            return false;
+                $this->error = 'Tidak ada file import yang sudah diupload';
+                return false;
+            }
+            $header = $header->toArray();
+        }else{
+            $header = $config['addsData'];
         }
-        $header = $header->toArray();
 
         /**
          * proses import
          */
+        
+        //jika jobs pertama maka
+        if(empty($this->_resumeParams)){
+            
+            $this->appendExportLog('<span class="text-info">Jobs started at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>...<br>');
+            $this->appendImportLog('Load file <b>'.$config['filename'].'</b><br>'); 
 
-        $this->appendImportLog('Load file <b>'.$header['import_filename'].'</b><br>'); 
+            $reader = Excel::load(Storage::path($config['filenamePath']),'xlsx',false);
+            $reader->setActiveSheetIndex(0);
+    
+            $startRecord = $this->getImportStartRow();
+    
+            $this->appendImportLog('Reading excel data, please wait...<br>');
+    
+            //read data di file excel
+            $data = Excel::readRow($reader,$startRecord,500,[$this, 'importReadExcelCall']);
+    
+            $config['count'] = count($data);
+            $config['log'] .= '<br><b class="text-info">Read complete !</b><br/>';
+            $config['log'] .= 'Data count : <b>'.$config['count'].'</b><br/>...<br/>';
+            $config['log'] .= 'Start importing to database, please wait...<br/>';
+            $this->saveImportStatus($config); 
+            $row=1;
+        }else{
+            $this->appendImportLog('<span class="text-info">Continueing process from previous jobs</span>...<br>');            
+            $this->appendExportLog('<span class="text-info">Jobs started at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>...<br>');
 
-        $reader = Excel::load(Storage::path($header['import_filepath']),'xlsx',false);
-        $reader->setActiveSheetIndex(0);
-        $startRecord = $this->getImportStartRow();
+            $this->appendImportLog('Reload file <b>'.$config['filename'].'</b><br>'); 
 
-        $this->appendImportLog('Reading excel data, please wait...<br>');
+            $reader = Excel::load(Storage::path($config['filenamePath']),'xlsx',false);
+            $reader->setActiveSheetIndex(0);
 
-        //read data di file excel
-        $data = Excel::readRow($reader,$startRecord,1000,[$this, 'importReadExcelCall']);
-
+            $this->appendImportLog('Re-Reading excel data, please wait...<br>');
+            
+            $startRecord = $this->getImportStartRow() + $this->_resumeParams['lastExcelRow'];
+    
+            //read data di file excel
+            $data = Excel::readRow($reader,$startRecord,500,[$this, 'importReadExcelCall']);
+            
+            $row=$this->_resumeParams['lastExcelRow']+1;
+        }
+        
         /**
          * ubah format column header caption dari lib Excel ke format column import
          */
@@ -272,17 +354,9 @@ trait ResImportTrait {
         },Excel::getColumnHeader());
         $this->setImportDefaultColumn($defaultHeaderColumn);
 
-        $config = $this->getImportStatus();
-        $config['count'] = count($data);
-        $config['log'] .= '<br><b class="text-info">Read complete !</b><br/>';
-        $config['log'] .= 'Data count : <b>'.$config['count'].'</b><br/>...<br/>';
-        $config['log'] .= 'Start importing to database, please wait...<br/>';
-        $this->saveImportStatus($config); 
-
         /**
          * Mulai pross insert ke table detail
          */
-        $row=1;
         foreach($data as $col => $val){
             
             //convert row excel ke struktur insert sesuai fungsi yang 
@@ -306,13 +380,71 @@ trait ResImportTrait {
             }
 
             $this->importIncrementProcessedCount();
+            //break proses setiap kurang dari 1 jam
+            if((microtime(true)-$startTime)>=3500){
+                $data = null;
+                unset($data);
+                $this->onBreakToNextImport();
+                $this->breakToNextImport($reader,$row);
+                return true;
+            }
             $row++;
             usleep(1000);
         }
+        
+        //pastikan semua selesai dan memory di-free-kan kembali
+        $reader->disconnectWorksheets();// Good to disconnect
+        $reader->garbageCollect(); // Add this too
+        $reader = null;
+        $data = null;
+        unset($reader,$data);
+
+        $this->importProcessAfter();
 
         //ubah status jadi ok
         $this->setImportFinish();
         return true;        
+    }
+    
+    /**
+     * untuk di OVERRICE
+     * dieksekusi sebelum jobs akan dipecah ke next job
+     */
+    public function onBreakToNextImport()
+    {
+
+    }
+
+    /**
+     * diset
+     */
+    private function breakToNextImport(&$reader,$lastExcelRow=1)
+    {
+        $this->appendImportLog('<br><span class="text-info">Break process to the next job, please wait</span>...<br>');
+        
+        //pastikan semua selesai dan memory di-free-kan kembali
+        $reader->disconnectWorksheets();// Good to disconnect
+        $reader->garbageCollect(); // Add this too
+        $reader = null;
+        unset($reader);
+
+        $resumParams = $this->getImportResumeParam();
+        $resumParams['lastExcelRow'] = $lastExcelRow;
+        ResImport::dispatch(
+            self::class,
+            $this->getImportStartRow(),
+            $this->_importAddsJobsParam,
+            $resumParams
+        );
+    }
+    
+    /**
+     * untuk di OVERRIDE
+     * Untukprocess lanjutan setelah insert semua ke database sebelum finish
+     */
+    public function importProcessAfter()
+    {
+
     }
 
     /**
@@ -331,7 +463,7 @@ trait ResImportTrait {
      * memformat row excel menjadi array insert database
      * 
      * @param array $row array row excel
-     * @param array $header array row database data header
+     * @param array $header array row database data header atau addsData dari status
      * @param int $rowNumber nomor urut baris/data saat ini yg sedang diproses
      * 
      * @return array
@@ -359,8 +491,12 @@ trait ResImportTrait {
 
         }
 
+        $insertRow['is_import'] = 1;
+
         //tambahkan field foreign key ke table header dari table detail
-        $insertRow[$this->getImportDetailForeignKey()] = isset($header['id'])?$header['id']:0;
+        if($this->_importModelHeader)
+            $insertRow[$this->getImportDetailForeignKey()] = isset($header['id'])?$header['id']:0;
+
         return $insertRow;
     }
 
@@ -428,17 +564,18 @@ trait ResImportTrait {
     /**
      * tandai proses import sudah mulai
      * 
-     * @param array $headerRecord record array dari table header (header dari detail yg sedang diproses nya)
+     * @param array $fileRecord array filename, filepath & transactionDate
      */
-    protected function setImportStartProcess(array $headerRecord)
+    protected function setImportStartProcess(array $fileRecord)
     {
         if(!$this->_importFunctionInitialize){
             return false;
         }
 
         $config = $this->getInitImportStatus();
-        $config['filename'] = $headerRecord['import_filename'];
-        $config['filenamePath'] = $headerRecord['import_filepath'];
+        $config['filename'] = $fileRecord['filename'];
+        $config['filenamePath'] = $fileRecord['filenamePath'];
+        $config['transactionDate'] = $fileRecord['transactionDate'];
         $config['log'] = '<b class="text-success">Start - import !</b><br>';
         $config['status'] = self::$IMPORT_STATUS_ON_PROGRESS;//1: onprogress
 
@@ -451,7 +588,8 @@ trait ResImportTrait {
     protected function setImportFinish()
     {
         $config = $this->getImportStatus(); 
-        $config['log'] .= '<br><b class="text-success">Import Selesai !</b>';
+        $config['log'] .= '<br><b class="text-success">Import Finished !</b><br>';
+        $config['log'] .= '<span class="text-info">Jobs ended at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>';
         $config['status'] = self::$IMPORT_STATUS_SUCCESS;//3: success
         $this->saveImportStatus($config); 
     }
@@ -468,6 +606,7 @@ trait ResImportTrait {
         $config = $this->getImportStatus();     
         Storage::delete($config['filenamePath']); 
         $config['log'] .= '<br><b class="text-danger">Import Failed !</b><br>';
+        $config['log'] .= '<span class="text-info">Jobs ended at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>';
         $config['filename'] = '';
         $config['filenamePath'] = '';
         $config['status'] = self::$IMPORT_STATUS_FAILED;//4: failed
@@ -503,15 +642,17 @@ trait ResImportTrait {
      */
     public function importApprove()
     { 
-        $header = $this->_importModelHeader->where('import_status',0)->first()->toArray();
-        $this->setImportApproveProcess($header);
+        $header = [];
+        if($this->_importModelHeader)
+            $header = $this->_importModelHeader->where('import_status',0)->where('is_import',1)->first()->toArray();
+        $this->importApproveProcess($header);
         return $this->setImportApproveDone(); 
     }
 
     /**
      * UNTUK DI OVERRIDE
      */
-    public function setImportApproveProcess(array $headerRecord=[])
+    public function importApproveProcess(array $headerRecord=[])
     {
 
     }
@@ -534,9 +675,14 @@ trait ResImportTrait {
      * tandai proses sebagai telah beres di approve, jadi bisa melakukan import yg lain
      */
     public function setImportApproveDone()
-    {
-        $this->_importModelHeader->where('import_status',0)->update(['import_status'=>1]);
-        $this->_importModelDetail->where('import_status',0)->update(['import_status'=>1]);
+    {   
+        $config = $this->getImportStatus();
+        Log::info('Import Approve '.$this->_importGroup.' DONE : '.$config['log']);
+        if($this->_importModelHeader){
+            $importHeader = ['import_status'=>1,'import_log'=>$config['log']];   
+            $this->_importModelHeader->where('import_status',0)->where('is_import',1)->update($importHeader);
+        }
+        $this->_importModelDetail->where('import_status',0)->where('is_import',1)->update(['import_status'=>1]);
 
         $this->saveImportStatus($this->getInitImportStatus()); 
         return $this->getImportStatus();
@@ -551,12 +697,14 @@ trait ResImportTrait {
      */
     public function ImportCancel()
     {
-        $header = $this->_importModelHeader->where('import_status',0)->first()->toArray();
+        $header = [];
+        if($this->_importModelHeader)
+            $header = $this->_importModelHeader->where('import_status',0)->where('is_import',1)->first()->toArray();
         $this->setImportCancelProcess($header);
         return $this->setImportCancelDone();
     }
 
-    public function setImportCancelProcess(array $headerRecord)
+    public function setImportCancelProcess(array $headerRecord=[])
     {
 
     }
@@ -577,10 +725,14 @@ trait ResImportTrait {
      */
     public function setImportCancelDone()
     {
-        $this->_importModelHeader->where('import_status',0)->delete();
-        $this->_importModelDetail->where('import_status',0)->delete();
+        $config = $this->getImportStatus();  
+        Log::info('Import Canceled '.$this->_importGroup.' DONE : '.$config['log']);
 
-        $config = $this->getImportStatus();     
+        if($this->_importModelHeader)
+            $this->_importModelHeader->where('import_status',0)->where('is_import',1)->delete();
+
+        $this->_importModelDetail->where('import_status',0)->where('is_import',1)->delete();
+   
         Storage::delete($config['filenamePath']); 
 
         $this->saveImportStatus($this->getInitImportStatus()); 
@@ -594,7 +746,7 @@ trait ResImportTrait {
      */
     public function canNewImport()
     {
-        return $this->_importModelHeader->where('import_status',0)->exists()?false:true;        
+        return $this->_importModelDetail->where('import_status',0)->where('is_import',1)->exists()?false:true;        
     }
 
     /**
@@ -629,12 +781,14 @@ trait ResImportTrait {
     protected function getInitImportStatus()
     {  
         $config = [];
+        $config['status'] = self::$IMPORT_STATUS_READY;
         $config['log'] = '';
         $config['filename'] = '';
         $config['filenamePath'] = '';
         $config['count'] = 0;
         $config['processedCount'] = 0;
-        $config['status'] = self::$IMPORT_STATUS_READY;
+        $config['transactionDate'] = now()->format('Y-m-d');
+        $config['addsData'] = [];
 
         return $config;
     }
@@ -687,13 +841,12 @@ trait ResImportTrait {
             }
         }
     }
-
     
     /**
      * list item-item yang sedang proses import
      */
     public function listImport(array $filter=[], int $offset=0, int $limit = 0,array $orderBy = [])
     {        
-        return $this->_list($this->_importModelDetail->where('import_status',0),$filter,$offset,$limit,$orderBy);
+        return $this->_list($this->_importModelDetail->where('import_status',0)->where('is_import',1),$filter,$offset,$limit,$orderBy);
     }
 }

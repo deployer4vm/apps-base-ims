@@ -14,14 +14,17 @@ class Utilities
             $paths = array_map(function ($component) use ($resourceNamespace, $resourceFolderName, $modulePrefix, $isModuleOk) {
                 
                 if($modulePrefix){
+
                     $moduleName = substr($component, strrpos($component, DIRECTORY_SEPARATOR) + 1);       
                     
                     if(!is_array($modulePrefix))$modulePrefix = [$modulePrefix];
-
+                    $skipModule = true;
                     foreach ($modulePrefix as $val) {
-                        if(strpos($moduleName, $val) !== 0)    
-                            return false;
+                        if(strpos($moduleName, $val) === 0)    
+                            $skipModule = false;
                     }   
+                    if($skipModule)    
+                        return false;
                     
                     $component .= DIRECTORY_SEPARATOR.'src';
                 }
@@ -50,21 +53,21 @@ class Utilities
     {
         $return = [];
 
+        //$namespace = namespace
         //$path[0] = path ke namespace
-        //$path[1] = prefix directory yang ada di path bersangkutan, false jika tanpa prefix
+        //$path[1] = array prefix directory yang ada di path bersangkutan, false jika tanpa prefix
         foreach ($namespaces as $namespace => $path) {
             $tmp = glob(sprintf('%s*', $path[0]),GLOB_ONLYDIR);
             foreach ($tmp as $modulePath){                
                 //$component : nama/folder module nya
                 $component = substr($modulePath, strrpos($modulePath, DIRECTORY_SEPARATOR) + 1);
-                
                 //cek jika ada prefix maka hanya ambil path yg sesuai prefix nya saja
                 if($path[1]){
                     if(!is_array($path[1]))$path[1] = [$path[1]];
-                    $skipModule = false;
+                    $skipModule = true;
                     foreach ($path[1] as $val) {
-                        if(strpos($component, $val) !== 0)    
-                            $skipModule = true;
+                        if(strpos($component, $val) === 0)    
+                            $skipModule = false;
                     }
                     if($skipModule)    
                         continue;

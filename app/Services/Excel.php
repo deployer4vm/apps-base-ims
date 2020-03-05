@@ -17,7 +17,7 @@ class Excel
     /**
 	 * excel colom, ubah angka kolom ke kolom excel
 	 */
-	public function excol($int=false){
+	public function excol(int $int=0){
 		$hasil = array();
 		
 		while ($s1 = floor($int/26)){
@@ -43,10 +43,10 @@ class Excel
     }
     
     /**
-     * GRUP EXCEL FORMATING
+     * GRUP EXCEL FORMATING & STYLING
      */
 
-    public function setBorder($reader, $cell)
+    public function setBorder(&$reader, $cell)
     {
         $styleArray = [
             'borders' => [
@@ -61,7 +61,7 @@ class Excel
         return $reader; 
     }
     
-    public function setFont($reader, $cell, array $style = [])
+    public function setFont(&$reader, $cell, array $style = [])
     {
         $styleArray = [
             'font' => $style
@@ -71,14 +71,14 @@ class Excel
         return $reader; 
     }
 
-    public function setFontBold($reader, $cell)
+    public function setFontBold(&$reader, $cell)
     {
         $styleArray = ['font'=>['bold'=>true]];        
         $reader->getActiveSheet()->getStyle($cell)->applyFromArray($styleArray);
         return $reader; 
     }
 
-    public function setFontNormal($reader, $cell)
+    public function setFontNormal(&$reader, $cell)
     {
         $styleArray = ['font'=>['bold'=>false]];        
         $reader->getActiveSheet()->getStyle($cell)->applyFromArray($styleArray);
@@ -93,7 +93,7 @@ class Excel
      * @param string $template path dokumen
      * @param string $format format excel, "Xls" atau "Xlsx"
      */
-    public function load($template, $format = 'Xls', $isTemplate = true)
+    public function load($template, string $format = 'Xls', bool $isTemplate = true)
 	{
         $format = ucfirst(strtolower($format))=='Xls'?'Xls':'Xlsx';
         if($isTemplate){
@@ -119,7 +119,7 @@ class Excel
      *          ...
      *      ]
      */
-    public function readRow($reader, $startRow=1,$perRowSleep=0, $loppingFunc = null)
+    public function readRow(&$reader,int $startRow=1,int $perRowSleep=0, $loppingFunc = null): array
     {
         if($startRow<=1)$startRow=1;
         $result = [];
@@ -139,6 +139,7 @@ class Excel
             }
                
         }
+        $loppingFunc = null;
         return $result;
     }
 
@@ -156,6 +157,8 @@ class Excel
         foreach ($cellIterator as $key2 => $cell) {
             $result[$key2] = $cell->getValue();
         }
+        $rowIterator = null;
+        unset($rowIterator,$cell,$key2);
         return $result;
     }
 
@@ -172,27 +175,47 @@ class Excel
     /**
      * write data ke berdasarkan cell nya
      */
-    public function setCell($reader,$data){
+    public function setCell(&$reader,$data){
+
         foreach ($data as $key => $value) {
-            if(is_string($value)){        
-                $reader->getActiveSheet()->setCellValueExplicit(
-                    $key, 
-                    $value,
-                    \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING
-                );   
-                //jika value diawali dengan - atau angka maka kasih quote
-                if(strpos($value,'-')===0 || preg_match('/^\d/', $value) === 1){
-                    $reader->getActiveSheet()->getStyle($key)->setQuotePrefix(true);
+            if(is_string($value)){
+                //jika formula
+                if(strpos($value,'=')===0){
+                    $reader->getActiveSheet()->setCellValueExplicit(
+                        $key, 
+                        $value,
+                        \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_FORMULA
+                    );
+                }else{
+                    $this->setCellString($reader,$key,$value);
                 }
             }else{
                 $reader->getActiveSheet()->setCellValue($key, $value);
-            }
-            
+            }            
         }
+
+        //untuk memastikan memory langsung free tanpa nunggu gc
+        $data = null;
+        unset($data);
+
         return $reader;
     }
 
-    public function insertRow($reader,$row, $templateVar){
+    private function setCellString(&$reader,$key,$value)
+    {        
+        //jika value diawali dengan - atau angka maka kasih quote
+        if(strpos($value,'-')===0 || preg_match('/^\d/', $value) === 1){
+            $value = "'".$value;
+        }           
+        $reader->getActiveSheet()->setCellValueExplicit(
+            $key, 
+            $value,
+            \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING
+        ); 
+        // $reader->getActiveSheet()->getStyle($key)->setQuotePrefix(true);
+    }
+
+    public function insertRow(&$reader,$row, $templateVar){
         $reader->getActiveSheet()->insertNewRowBefore($row, 1);
         $newvar = [];
         foreach ($templateVar as $key => $value) {
@@ -201,13 +224,19 @@ class Excel
         return $this->setCell($reader,$newvar);
     }
 
-    public function download($reader){
+    public function download(&$reader){
         $writer = IOFactory::createWriter($reader, 'Xlsx');
-		$writer->save('php://output'); // download file
+        $writer->save('php://output'); // download file
+        //untuk memastikan memory langsung free tanpa nunggu gc
+        $writer = null;
+        unset($writer);
     }
 
-    public function save($reader,$filename){
+    public function save(&$reader,$filename){
         $writer = IOFactory::createWriter($reader, 'Xlsx');
-		$writer->save($filename); // save file
+        $writer->save($filename); // save file
+        //untuk memastikan memory langsung free tanpa nunggu gc
+        $writer = null;
+        unset($writer);
     }
 }

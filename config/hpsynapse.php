@@ -22,6 +22,7 @@ $langPath = array_merge(
     ], 
     $langPath
 );
+
 $langPath[] = app_path('MainApp' . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'lang');
 
 return [

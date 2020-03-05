@@ -2,7 +2,7 @@
 
 namespace App\Base;
 
-use Illuminate\Support\Facades\Cache;
+use Exception;
 use App\Base\Traits\ResCacheTrait;
 
 abstract class BaseRepository {
@@ -19,17 +19,38 @@ abstract class BaseRepository {
     protected $error = '';//error strinng
     protected $errorCode = 0;//error code
 
+    protected $pagination = [
+        'count' => 0,
+        'offset' =>0,
+        'limit' => 0,
+        'currentPage' => 1,
+        'pageCount' => 1
+    ];//default hasil list disimpan
+
+    private $paginationDefault = [
+        'count' => 0,
+        'offset' =>0,
+        'limit' => 0,
+        'currentPage' => 1,
+        'pageCount' => 1
+
+    ];//default data untuk $pagination
+
     /**
      * BLOCK CLASS DEPENDENCY
-     */
-    
-    protected $dependencyLoaded = [];
+     * class dependendency ini digunakan untuk dependency ke class yg menggunakan bindind interface & model nya.
+     * dibuat seperti ini karena saat repository di binding dengan interface, maka sulit untuk repository tersebut mendependency ke repository yg juga binding dengna interface.
+     */    
+    private $dependencyLoaded = [];//list instance dari class dependency yg telah diload
     protected $dependency = [
         // 'jurnal' => 'App\MainApp\Modules\Pembukuan\Contracts\Jurnal' --> list array dependency
     ];
 
-    //load dependency
-	public function __get($name) {
+    /**
+     * load dependency
+     */
+    public function __get($name) 
+    {
         if(isset($this->dependency[$name])){
             if(!isset($this->dependencyLoaded[$name])){
                 $this->dependencyLoaded[$name] = resolve($this->dependency[$name]);
@@ -38,14 +59,15 @@ abstract class BaseRepository {
             }
             return $this->dependencyLoaded[$name];
         }
+        throw new Exception("Property $name is not defined");
     }  
 
     public function setTenantId(int $tenantId=0)
     {
         $this->tenantId = $tenantId;
     } 
+
     /**
-     * DONE
      * get error string
      * 
      * @return string       error string
@@ -55,7 +77,6 @@ abstract class BaseRepository {
     }
 
     /**
-     * DONE
      * get error code
      * 
      * @return integer       error code
@@ -65,7 +86,6 @@ abstract class BaseRepository {
     }
 
     /**
-     * DONE
      * get deafault model
      * 
      * @return eloquent model
@@ -75,13 +95,20 @@ abstract class BaseRepository {
     }
 
     /**
-     * DONE
-     * set default model
+     * set/re-set default model
      * 
-     * @param type $model
+     * @param eloquent $model
      */
     public function setModel($model) {
         $this->model = $model;
+    }
+
+    /**
+     * get default output untuk listing
+     */
+    protected function getDefaultListFormat()
+    {
+        return $this->paginationDefault;
     }
 
     /*
@@ -90,35 +117,15 @@ abstract class BaseRepository {
      */
 
     /**
-     * SEMENTARA TIDAK DIGUNAKAN
-     * 
-     * deteksi parameter where, apakah memiliki param $field (default "id") atau tidak,
-     * jika memiliki maka value dari field tersebut akan di retur
-     * 
-     * @param array|string      $key
-     * @param string            $value
-     * @param string            $field
-     * 
-     * @return false|mix    false jika bukan $field, atau value $field nya jika berdasarkan $field
-     */
-    // protected function _isField($key, $field = 'id') {
-    //     if (isset($key[$field]))
-    //         return $key[$field];
-    //     if ($field == 'id' && !is_array($key))
-    //         return $key;
-    //     return false;
-    // }
-
-
-    /**
-     * DONE
      * cek apakah key di $inputData ada semua di $availableFields
      * 
-     * @param array $inputData          array data
-     * @param array $availableFields    list available field nya
-     * @return bolean                   true jika sesuai, false jika tidak sesuai
+     * @param array         $inputData          array data
+     * @param array         $availableFields    list available field nya
+     * 
+     * @return boolean                           true jika sesuai, false jika tidak sesuai
      */
-    protected function _checkField($inputData, $availableFields = null) {
+    final protected function _checkField(array $inputData = [], $availableFields = null) 
+    {
         $collection = collect($inputData);
 
         return $collection->every(function ($value, $key) use ($availableFields) {
@@ -127,40 +134,29 @@ abstract class BaseRepository {
     }
 
     /**
-     * DONE
-     * filter array hanya berdasarkan key yg diallow nya saja
-     * filter data yang akan di update / output / field, jika ada field yang tidak sesuai dengan
-     * list availableFields field maka akan dihapus
+     * Hapus semua item array $item yang tidak ada di $allowedFields.
      * 
-     * @param array $data                input datanya
-     * @param array $availableFields     list available field nya
-     * @return array                     hasil filter data
+     * filter array hanya berdasarkan key yg diallow nya saja
+     * filter $data yang akan di update / output / field, jika ada field yang tidak sesuai dengan
+     * list allowedFields field maka akan dihapus
+     * 
+     * @param array         $data               input datanya
+     * @param array         $allowedFields    daftar field-field yang boleh ada di $data
+     * 
+     * @return array                            hasil filter data
      */
-    protected function _filterAllowField($data, $availableFields = null) {
+    protected function _filterAllowField(array $data = [], array $allowedFields = null) 
+    {
         $collection = collect($data);
 
-        return $collection->filter(function ($value, $key) use ($availableFields) {
-            return in_array($key, $availableFields);
+        return $collection->filter(function ($value, $key) use ($allowedFields) {
+            return in_array($key, $allowedFields);
         })->toArray();
     }
 
     /**
-     * DONE
-     * hapus semua data yang value nya kosong
+     * Hapus semua item array $item yang ada di $rejectedFields.
      * 
-     * @param array $data       array data yang difilter
-     * @return array            hasil data yang sudah difilter
-     */
-    protected function _filterEmptyField($data) {
-        $result = [];
-        foreach ($data as $key => $value) {
-            if(!empty($value))$result[$key] = $value;
-        }
-        return $result;
-    }
-
-    /**
-     * DONE
      * filter array berdasarkan field yang tidak boleh ada (dihapus)
      * filter data yang akan di update / output / field, jika ada field yang terdaftar
      * di rejectedField maka akan dihapus
@@ -169,7 +165,8 @@ abstract class BaseRepository {
      * @param array        $rejectedFields      list field yang akan dihapus
      * @return array                            hasil filter data
      */
-    protected function _filterField($data, $rejectedFields = null) {
+    final protected function _filterField($data, $rejectedFields = null) 
+    {
         $collection = collect($data);
 
         return $collection->filter(function ($value, $key) use ($rejectedFields) {
@@ -178,15 +175,31 @@ abstract class BaseRepository {
     }
 
     /**
+     * hapus semua data yang value nya kosong
+     * 
+     * @param array     $data       array data yang difilter
+     * 
+     * @return array                hasil data yang sudah difilter
+     */
+    final protected function _filterEmptyField(array $data = []) 
+    {
+        $collection = collect($data);
+        return $collection->filter(function ($value, $key) {
+            return !empty($value);
+        })->toArray();
+    }
+
+    /**
      * DONE
      * generate basic where function
      * 
-     * @param eloquent instance $model
-     * @param array $filter where format
-     * @return eloquent instance 
+     * @param eloquent      $model
+     * @param array         $filter     synapse where format
+     * 
+     * @return eloquent  
      */
-    protected function _where($model, $where) {
-
+    final protected function _where($model, $where) 
+    {
         //jika sudah kosong maka langsung kembalikan model nya
         if(empty($where))return $model;
 
@@ -194,9 +207,26 @@ abstract class BaseRepository {
         if (!is_array($where)) {
             $where = [['id', $where]];
         }
+
+        //berarti sudah tidak nested, harusnya yang sudah tidak nested tidak masuk ke sini
         if (isset($where[0]) && !is_array($where[0]) && $where[0] != 'or') {
-            $where = [$where];
+            $model = $this->__whereNotNested($model, $where); 
+        }else{
+            $model = $this->__whereNested($model, $where); 
         }
+
+        return $model;
+    }
+
+    /**
+     * helper untuk _where(), memproses array where yang masih nested
+     * 
+     * @param Eloquent $model
+     * @param array $where
+     * 
+     * @return eloquent  
+     */
+    private function __whereNested($model, $where){
 
         foreach ($where as $value) {
             //jika value[1] tidak ada kemungkinan ada yang keliru input format, maka langsung tolak
@@ -204,7 +234,8 @@ abstract class BaseRepository {
 
             //jika sudah tidak nested maka langsung proses
             if (is_array($value) && !is_array($value[0]) && strtolower($value[0]) != 'or') {
-                $model = $this->__where($model, $value);                
+                $model = $this->__whereNotNested($model, $value);  
+            //jika masih nested maka process recursive lagi              
             } else {
                 $varWhere = 'where';
                 //detek apakah or
@@ -217,32 +248,33 @@ abstract class BaseRepository {
                 });
             }
         }
-
         return $model;
     }
 
     /**
-     * DONE
-     * helper untuk _where()
+     * helper untuk _where(), memproses array where yang sudah tidak nested
      * 
      * @param Eloquent $model
-     * @param array $value
+     * @param array $where
+     * 
+     * @return eloquent  
      */
-    private function __where($model, $value){
+    private function __whereNotNested($model, $where)
+    {
         
         $op = '=';
-        $field = $value[0];
+        $field = $where[0];
         $isOr = false;
-        if(stripos($value[0],'or ')===0){
-            $field = str_ireplace('or ','', $value[0]);
+        if(stripos($where[0],'or ')===0){
+            $field = str_ireplace('or ','', $where[0]);
             $isOr = true;
         }
         //jika ada 3 item berarti menyertakan operator nya juga
-        if(count($value)==3){
-            $op = $value[1];
-            $dVal = $value[2];
+        if(count($where)==3){
+            $op = $where[1];
+            $dVal = $where[2];
         }else{
-            $dVal = $value[1];
+            $dVal = $where[1];
         }
         if(is_array($dVal)){
             if($isOr){
@@ -261,16 +293,16 @@ abstract class BaseRepository {
     }
 
     /**
-     * DONE
-     * 
-     * Default string search
+     * pemrosesan default search data berdasarkan $q string yg diinput
      * 
      * @param eloquent instance $model
      * @param string $q query string
      * @param array $searchField list field yg di search nya
+     * 
      * @return eloquent instance
      */
-    protected function _searchString($model, $q, $searchField = false) {
+    final protected function _searchString($model, $q, $searchField = false) 
+    {
         $model = $model->where(function($query) use ($q, $searchField) {
             foreach ($searchField as $value) {
                 $query = $query->orWhere($value, 'LIKE', '%' . $q . '%');
@@ -280,70 +312,48 @@ abstract class BaseRepository {
     }
 
     /**
-     * 
-     * DONE
-     * 
-     * list data
+     * Default fungsi list data
      * 
      * @param eloquen instance $model model data yang digunakan
      * @param array $filter filter data jika ada
      *      q string jika menyertakan ini maka akan dilakuan string filter berdasarkan field $searchField     * 
      *      function function($model) filter tambahan jika diperlukan
      *      searchField array list field/column yg termasuk kedalam filter search
-     *      hiddenColumn array list field/column yg di hidde *  
+     *      hiddenColumn array list field/column yg di hidde * -- HINDARI PENGGUNAAN HIDDEN COLUMN UNTUK DATA BESAR
      *     
      *      ADDITIONAL_PARAM array where untuk default filter
      * 
-     * @param array $orderBy
+     * @param array $orderBy [['field','DESC/ASC'],['other_field','ASC/DESC']] atau array 1 level jika memang cuma 1 yg di order by nya
      * @param int $offset
-     * @param int $limit
+     * @param int $limit jika 0 maka view all
      * 
      * @return array
      */
-    protected function _list($model, $filter = false, $offset = 0, $limit = 0, $orderBy = false) {
-        if ($orderBy) {
-            $model = $model->orderBy($orderBy[0], $orderBy[1]);
+    final protected function _list($model, array $filter = [], int $offset = 0, int $limit = 0, array $orderBy = []) 
+    {
+
+        if (!empty($orderBy)) {
+
+            if(!is_array($orderBy[0]))$orderBy=[$orderBy];
+
+            foreach($orderBy as $oBitem){
+                $model = $model->orderBy($oBitem[0], $oBitem[1]);
+            }
         }
 
-        $hiddenColumn = false;
-        $qSearch = false;
-        $searchField = false;
-
-        if ($filter) {
-            if(empty($filter['q']))
-                unset($filter['q']);
-            if(empty($filter['hiddenColumn']))
-                unset($filter['hiddenColumn']);
-            if(empty($filter['searchField']))
-                unset($filter['searchField']);
-
-            if (isset($filter['q'])) {
-                $qSearch = $filter['q'];
-                unset($filter['q']);
-            }
-            if (isset($filter['searchField'])) {
-                $searchField = $filter['searchField'];
-                unset($filter['searchField']);
-            }
-            
+        $hiddenColumn = null;
+        if (!empty($filter)) {
+            $model = $this->_filter($model,$filter);            
             if (isset($filter['hiddenColumn'])) {                
                 $hiddenColumn = $filter['hiddenColumn'];
                 unset($filter['hiddenColumn']);
             }
+            unset($filter);
+        }
 
-            if (isset($filter['function'])) {
-                $model = $filter['function']($model);
-                unset($filter['function']);
-            }
-
-            if (isset($filter)) {
-                $model = $this->_where($model, $filter);
-            }
-            
-            if ($qSearch) {
-                $searchField = $searchField ? $searchField : $this->searchField;
-                $model = $this->_searchString($model, $qSearch, $searchField);
-            }
+        if(empty($model)){
+            $this->pagination = $this->getDefaultListFormat();
+            return $this->pagination;
         }
         
         $this->pagination['count'] = $model->count();
@@ -380,6 +390,53 @@ abstract class BaseRepository {
         return $this->pagination;
     }
 
+    final protected function _filter($model,array $filter=[])
+    {
+        if(empty($model))return $model;
+
+        $qSearch = null;
+        $searchField = null;
+
+        if(empty($filter['q']))
+            unset($filter['q']);
+
+        if(empty($filter['hiddenColumn']))
+            unset($filter['hiddenColumn']);
+
+        if(empty($filter['searchField']))
+            unset($filter['searchField']);
+            
+        if (isset($filter['q'])) {
+            $qSearch = $filter['q'];
+            unset($filter['q']);
+        }
+
+        if (isset($filter['searchField'])) {
+            $searchField = $filter['searchField'];
+            unset($filter['searchField']);
+        }
+
+        if (isset($filter['function'])) {
+            $model = $filter['function']($model);
+            unset($filter['function']);
+        }            
+
+        //hiddenColumn digunakan di filter saat result
+        if (isset($filter['hiddenColumn'])) {
+            unset($filter['hiddenColumn']);
+        }
+
+        if (isset($filter)) {
+            $model = $this->_where($model, $filter);
+        }
+        
+        if ($qSearch) {
+            $searchField = $searchField ? $searchField : $this->searchField;
+            $model = $this->_searchString($model, $qSearch, $searchField);
+        }
+        return $model;
+    }
+
     /**
      * DONE
      * Generate pagination untuk di view blade (menggunakan pagination laravel)
@@ -392,7 +449,8 @@ abstract class BaseRepository {
      *      data
      * @return pagination instance
      */
-    protected function _getPagination($path = '', $pagination = false) {
+    final protected function _getPagination(string $path = '', $pagination = false)
+    {
         if (!$path)
             $path = request()->url();
         if (!$pagination)
@@ -401,15 +459,17 @@ abstract class BaseRepository {
     }
 
     /**
-     * DONE
-     * 
      * fungsi utama untuk get 1 record data
      * 
-     * @param eloquen instance $model
-     * @param array $where where array where
-     * @return boolean|array            false jika gagal, array record jika ada
+     * @param eloquen instance  $model
+     * @param array|int         $filter     synapse array where filter format, atau id table
+     * 
+     * @return false|array    false jika gagal, array record jika ada
      */
-    protected function _getOne($model, $where) {
+    final protected function _getOne($model, $where)
+    {
+        if(empty($model))return $model;
+
         $data = $this->_getOneModel($model, $where);
         return $data ? $data->toArray() : false;
     }
@@ -419,20 +479,26 @@ abstract class BaseRepository {
      * 
      * fungsi utama untuk get 1 record data
      * 
-     * @param eloquen       $model      model eloquent
-     * @param array         $filter     array where filter
-     * @return eloquen                  false jika gagal, aloquent collection jika berhasil
+     * @param eloquen           $model      model eloquent
+     * @param array|int         $where     synapse array where filter format, atau id table
+     * 
+     * @return eloquen                      false jika gagal, aloquent collection jika berhasil
      */
-    protected function _getOneModel($model, $filter) {
-        //jika array berarti berisi filter
-        if (!is_array($filter)) {
-            $filter = [['id',$filter]];
+    final protected function _getOneModel($model, $where)
+    {
+        if(empty($model))return $model;
+
+        //jika array berarti berisi where
+        if (!is_array($where)) {
+            $where = [['id',$where]];
         }
 
-        $data = $this->_where($model, $filter);
+        $data = $this->_where($model, $where);
         $data = $data->first();
+        
         if (!$data)
             return false;
+
         return $data;
     }
     
@@ -440,9 +506,14 @@ abstract class BaseRepository {
      * DONE
      * detect
      * 
-     * @param array $filter array where filter
+     * @param eloquen           $model      model eloquent
+     * @param array|int         $filter     synapse array where filter format, atau id table
+     * 
+     * @return boolean
      */
-    protected function _exists($model, $where) {
+    final protected function _exists($model, $where): bool
+    {
+        if(empty($model))return false;
         //jika array berarti berisi filter
         if (!is_array($where)) {
             $where = ['id',$where];
@@ -460,9 +531,10 @@ abstract class BaseRepository {
      * 
      * @param eloquent $model
      * @param array $data
-     * @return boolean|array    false jika gagal, atau array record databasenya jika berhasil
+     * @return null|array    null jika gagal, atau array record databasenya jika berhasil
      */
-    protected function _create($model, $data) {
+    final protected function _create($model, $data) 
+    {
         //get QueryExeption
         try { 
             if ($data = $model->create($data)) {
@@ -471,47 +543,50 @@ abstract class BaseRepository {
         }catch (\Illuminate\Database\QueryException $ex){
             $this->error = $ex->getMessage();
         }
-        return false;
+        return null;
     }
 
     /**
-     * DONE
      * 
      * Update data
      * 
      * @param eloquent          $model  instance eloquent model yang akan diupdate
-     * @param string|array      $where  array where filter atau string/integer id data
+     * @param array|int         $where  array where filter atau string/integer id data
      * @param array             $data   array data yang akan update
      * 
-     * @return false|integer     effected arrow atau false jika gagal
+     * @return null|integer     effected arrow atau null jika gagal
      */
-    protected function _update($model, $where, $data = null) {
-        if (!is_array($where)) {
-            $where = [['id', $where]];
-        }
-        $model = $this->_getOneModel($model, $where);
-        
+    final protected function _update($model, $where, array $data = []) 
+    {
         //get QueryExeption
         try { 
+            if (!is_array($where)) {
+                $where = [['id', $where]];
+            }
+            $model = $this->_where($model, $where);
+        
             if ($model)
                 return $model->update($data);
         }catch (\Illuminate\Database\QueryException $ex){
             $this->error = $ex->getMessage();
         }
         
-        return false;
+        return null;
     }
 
     /**
-     * DONE
      * 
      * Delete data
      * 
      * @param eloquent          $model  instance eloquent model yang akan diupdate
-     * @param string|array      $where  array where filter atau string/integer id data
+     * @param array|int         $where  array synapse where format atau integer id data
+     * 
      * @return boolean
      */
-    protected function _delete($model, $where) {
+    final protected function _delete($model, $where): bool
+    {
+        if(empty($model))return false;
+
         $model = $this->_where($model, $where);
         if ($model != false) {
             if ($model->delete()) {
@@ -529,18 +604,19 @@ abstract class BaseRepository {
     /**
      * method default untuk listing data model default
      * 
-     * @param type $filter
-     * @param type $orderBy
-     * @param type $offset
-     * @param type $limit
-     * @return type
+     * @param array         $filter     array synapse filter format
+     * @param int           $offset
+     * @param int           $limit
+     * @param array         $orderBy
+     * 
+     * @return array|null
      */
-    public function getList($filter = false, $offset = 0, $limit = 0, $orderBy = false) {
+    public function getList(array $filter = [], int $offset = 0, int $limit = 0, array $orderBy = []) 
+    {
         $filter = [
             'filter' => $filter,
             'searchField' => $this->searchField
         ];
-
         return $this->_list($this->model, $filter, $offset, $limit, $orderBy);
     }
 
@@ -551,29 +627,32 @@ abstract class BaseRepository {
      * @param array $pagination data pagination
      * @return pagination laravel object
      */
-    public function getPagination($path = '', $pagination = false) {
+    public function getPagination($path = '', $pagination = false) 
+    {
         return $this->_getPagination($path, $pagination);
     }
 
     /**
      * method default untuk get 1 record data model utama
      * 
-     * @param array/string $key
-     * @param string/null $value
-     * @return array / false
+     * @param array|int         $where  array synapse where format atau integer id data
+     * 
+     * @return array|null
      */
-    public function getOne($where) {
+    public function getOne($where) 
+    {
         return $this->_getOne($this->model, $where);
     }
 
     /**
      * cek apakah data yg dimaksud ada
      * 
-     * @param array/string $key
-     * @param string/null $value
-     * @return booleadn
+     * @param array|int         $where  array synapse where format atau integer id data
+     * 
+     * @return boolean
      */
-    public function exists($where) {
+    public function exists($where):bool
+    {
         return $this->_exists($this->model, $where);
     }
 
@@ -581,24 +660,31 @@ abstract class BaseRepository {
      * default create new data function
      * 
      * @param array $data
-     * @return array/false
+     * 
+     * @return array|null
      */
-    public function create($data) {
+    public function create(array $data = []) 
+    {
         return $this->_create($this->model, $data);
     }
 
     /**
      * 
-     * @param array/string $key
-     * @param array/string $value jika $data null berarti $value berisi $data
-     * @param array/null $data
-     * @return array/false
+     * @param array|integer     $key
+     * @param array             $data
+     * 
+     * @return null|integer     effected arrow atau null jika gagal
      */
-    public function update($where, $data = null) {
-        return $this->_update($this->model, $where, $data);
+    public function update($where, array $updatedData = null) 
+    {
+        return $this->_update($this->model, $where, $updatedData);
     }
 
-    public function delete($where) {
+    /**
+     * @param array|int         $where  array synapse where format atau integer id data
+     */
+    public function delete($where) 
+    {
         return $this->_delete($this->model, $where);
     }
 

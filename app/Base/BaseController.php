@@ -8,6 +8,7 @@ use Illuminate\Routing\Controller as LaravelBaseController;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Base\Traits\ResCacheTrait;
+use Illuminate\Support\Facades\Session;
 
 class BaseController extends LaravelBaseController
 {
@@ -21,12 +22,14 @@ class BaseController extends LaravelBaseController
             'message_type'=>'info',//khusus warning view (bukan api)
             'data'=>null,
             'viewdata'=>null,//data yang hanya disertakan di web request
-            // 'listdata'=>null,//untuk data berbentuk list array, jadi di view akan jadi output->output['data'][VAR_NAME] dan di api akan jadi output->output['data']
             'errors'=>null,
         ];
     
-    //nama variable list data di view (web request)
-    protected $listDataVarName = 'data';
+    /**
+     * boolean nama variable wrap/grouping data di view (web request)
+     */
+    protected $isViewVarWraped = false;//apakah seluruh variable diwrap/grupping ke variable $viewWrapVarName
+    protected $viewWrapVarName = 'data';//nama variable wrap/grouping ,untuk data berbentuk list array, jadi di view akan jadi output->output['data'][VAR_NAME] dan di api akan jadi output->output['data']
 
 
     //default response paramter untuk
@@ -61,11 +64,12 @@ class BaseController extends LaravelBaseController
         }
 
         if($this->isWebCall() && $this->forceOutput != 2)
-            \Session::put('alert', [
+            Session::put('alert', [
                     'type' => $type,
                     'message' => $message
                 ]);
     }
+    
     /**
      * 
      * @param string $message
@@ -76,17 +80,6 @@ class BaseController extends LaravelBaseController
     protected function setError($message,$error=false,$code=400,$response=null)
     {        
         $this->setWarning($message,'danger',$code,$error,$response);
-
-        // $this->output['status'] = $code;
-        // $this->output['message'] = $message;
-        // $this->output['message_type'] = 'danger';
-        // $this->output['errors'] = $error===true||$error===1||$error===false?[true]:$error;
-        // if(!is_null($response)){
-        //     $this->response = 
-        //         $response===true||$response===1||$response===false?
-        //         redirect(url()->previous())->withInput():
-        //         $response;
-        // }
     }
     
     /**
@@ -98,14 +91,66 @@ class BaseController extends LaravelBaseController
     protected function setAlert($message,$type='info')
     {        
         $this->setWarning($message,$type,'200');
+    }
 
-        // $this->output['message'] = $message;
-        // $this->output['message_type'] = $type;
-        // if($this->isWebCall() && $this->forceOutput != 2)
-        //     \Session::put('alert', [
-        //             'type' => $type,
-        //             'message' => $message
-        //         ]);
+    /**
+     * generate/get default parameter di resource listing, yang akan dipassing jug ke output
+     * 
+     * @param bool $mergeParam true jika parameter input lainnya langsung dimasukan ke query dan filter
+     *                         false jika dipisah di key terpisah saja (all)
+     * @param array $mergeExcept list parameter yg tidak di merge kan ke query & filter
+     * @return array format :
+     *  [
+     *      all => seluruh parameter input
+     *      query => [
+     *          limit
+     *          offset
+     *          *orderBy --> optional jika menyertakan parameter orderBy atau orderType
+     *          *orderType --> optional jika menyertakan parameter orderBy atau orderType
+     *          q
+     *      ],
+     *      filter => [
+     *          q
+     *      ],
+     *      orderBy => []
+     *  ]
+     */
+    final protected function getListParam(bool $mergeParam = true,array $mergeExcept = [])
+    {
+        $params = [
+            'all' => request()->except(['limit','offset','orderBy','orderType','q']),
+            'query' => [//parameter yang dipassing di URL, termasuk juga parameter filter, untuk di passing ke pagination juga
+                'limit' => request()->input('limit', 10),
+                'offset' => request()->input('offset', 0)
+            ],
+            'filter' => [],//parameter filter ke method repo listing nya
+            'orderBy' => []
+        ];
+
+        //jika menyertakan orderBy
+        if(request()->input('orderBy',null)||request()->input('orderType',null)){
+            $params['query']['orderBy'] = request()->input('orderBy','id');
+            $params['query']['orderType'] = request()->input('orderType','ASC');
+            $params['orderBy'] = [$params['query']['orderBy'] , $params['query']['orderType']];
+        }
+
+        //jika menyertakan query string
+        if(request()->input('q', null)){
+            $params['query']['q'] = request()->input('q','');
+            $params['filter']['q'] = $params['query']['q'];
+        }
+
+        //jika merge parameter
+        if($mergeParam && !empty($params['all'])){
+            foreach ($params['all'] as $key => $param) {
+                if(!in_array($key,$mergeExcept)){
+                    $params['query'][$key] = $param;
+                    $params['filter'][] = [$key,$param];
+                }
+            }            
+        }
+
+        return $params;
     }
     
     /**
@@ -118,7 +163,7 @@ class BaseController extends LaravelBaseController
     }
     
     /**
-     * cek apakah request API atau WEB
+     * cek apakah request API
      * @return boolean
      */
     protected function isApiCall()
@@ -127,7 +172,7 @@ class BaseController extends LaravelBaseController
     }
     
     /**
-     * cek apakah request API atau WEB
+     * cek apakah request Ajax
      * @return boolean
      */
     protected function isAjaxCall()
@@ -172,7 +217,8 @@ class BaseController extends LaravelBaseController
             $this->output, 
             $this->response, 
             $this->forceOutput, 
-            $this->listDataVarName);
+            $this->isViewVarWraped, 
+            $this->viewWrapVarName);
     }
     
     /*

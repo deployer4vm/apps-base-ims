@@ -7,7 +7,12 @@ use Illuminate\Contracts\Support\Responsable;
 abstract class BaseResponse implements Responsable
 {
 
-    protected $data, $response, $forceOutput, $listdataVarName;
+    protected 
+        $data, 
+        $response, 
+        $forceOutput, 
+        $isViewVarWraped=false,//apakah seluruh variable diwrap/grupping ke variable $viewWrapVarName
+        $viewWrapVarName;//nama variable wrap/grouping
     
     /**
      * 
@@ -18,12 +23,13 @@ abstract class BaseResponse implements Responsable
      *      instance recirect() jika redirect
      * @param int $forceOutput 0 auto, 1 force web, 2 force api
      */
-    public function __construct($output=false,$response='list',$forceOutput=0, $listdataVarName='data')
+    public function __construct($output=false,$response='list',$forceOutput=0,$isViewVarWraped=false, $viewWrapVarName='data')
     {
         $this->output = $output;
         $this->response = $response;
         $this->forceOutput = $forceOutput;
-        $this->listdataVarName = $listdataVarName;
+        $this->viewWrapVarName = $viewWrapVarName;
+        $this->isViewVarWraped = $isViewVarWraped;
     }
     
     /**
@@ -127,9 +133,9 @@ abstract class BaseResponse implements Responsable
         }
         
         //jika menyertakan data type listing
-        // if(isset($this->output['listdata'])&&!is_null($this->output['listdata'])){
-        //     $dataTmp[$this->listdataVarName] = $this->output['listdata'];
-        // }
+        if($this->isViewVarWraped){
+            $dataTmp[$this->viewWrapVarName] = $this->output['data'];
+        }
         
         //jika menyertakan data tambahan untuk view
         if(isset($this->output['viewdata'])&&is_array($this->output['viewdata'])){

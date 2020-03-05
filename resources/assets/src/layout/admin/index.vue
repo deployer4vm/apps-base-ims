@@ -1,48 +1,61 @@
 <template>
-  <div class="layout-wrapper layout-2">
+    <div class="layout-wrapper layout-2">
+        <div class="layout-inner" v-if="showComponent">
+            <app-layout-navbar />
 
-    <div class="layout-inner" v-if="showComponent">
-      <app-layout-navbar />
+            <div class="layout-container">
+                <app-layout-sidenav />
 
-      <div class="layout-container">
-        <app-layout-sidenav />
+                <div class="layout-content">
+                    <div
+                        :class="{
+                            'router-transitions': true,
+                            'container-fluid': true,
+                            'flex-grow-1': true,
+                            'container-p-y': true,
+                            'p-0': !bodyWithPadding,
+                            'pt-0': !bodyWithPadding,
+                            'pb-0': !bodyWithPadding
+                        }"
+                    >
+                        <router-view />
+                    </div>
 
-        <div class="layout-content">
-          <div class="router-transitions container-fluid flex-grow-1 container-p-y">
-            <router-view />
-          </div>
-
-          <app-layout-footer v-if="showFooter" />
+                    <app-layout-footer v-if="showFooter" />
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-    <div class="layout-inner" v-else>
-      <div class="text-mutted h- row align-items-center" style="width: 100%;">
-        <div class="col">
-          <div class="sk-cube-grid sk-primary">
-            <div class="sk-cube sk-cube1"></div>
-            <div class="sk-cube sk-cube2"></div>
-            <div class="sk-cube sk-cube3"></div>
-            <div class="sk-cube sk-cube4"></div>
-            <div class="sk-cube sk-cube5"></div>
-            <div class="sk-cube sk-cube6"></div>
-            <div class="sk-cube sk-cube7"></div>
-            <div class="sk-cube sk-cube8"></div>
-            <div class="sk-cube sk-cube9"></div>
-          </div>
+        <div class="layout-inner" v-else>
+            <div
+                class="text-mutted h- row align-items-center"
+                style="width: 100%;"
+            >
+                <div class="col">
+                    <div class="sk-cube-grid sk-primary">
+                        <div class="sk-cube sk-cube1"></div>
+                        <div class="sk-cube sk-cube2"></div>
+                        <div class="sk-cube sk-cube3"></div>
+                        <div class="sk-cube sk-cube4"></div>
+                        <div class="sk-cube sk-cube5"></div>
+                        <div class="sk-cube sk-cube6"></div>
+                        <div class="sk-cube sk-cube7"></div>
+                        <div class="sk-cube sk-cube8"></div>
+                        <div class="sk-cube sk-cube9"></div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
+        <div class="layout-overlay" @click="closeSidenav"></div>
     </div>
-    <div class="layout-overlay" @click="closeSidenav"></div>
-  </div>
 </template>
 
 <style>
 .avatar-header-block {
-  height: 22px; width: 22px;
+    height: 22px;
+    width: 22px;
 }
 .avatar-header-block i.ion {
-  padding-top: 5px;
+    padding-top: 5px;
 }
 .sidenav-app-brand {
     height: 58px;
@@ -96,39 +109,44 @@
 </style>
 
 <script>
-import navbar from './navbar'
-import sidenav from './sidenav'
-import footer from './footer'
+import navbar from "./navbar";
+import sidenav from "./sidenav";
+import footer from "./footer";
 
 export default {
-  name: 'app-admin-1',
-  components: {
-    'app-layout-navbar': navbar,
-    'app-layout-sidenav': sidenav,
-    'app-layout-footer': footer
-  },
-
-  mounted () {
-    this.layoutHelpers.init()
-    this.layoutHelpers.update()
-    this.layoutHelpers.setAutoUpdate(true)
-  },
-
-  beforeDestroy () {
-    this.layoutHelpers.destroy()
-  },
-  computed: {
-    showFooter() {
-      return this.$store.getters.isFooterShowed;
+    name: "app-admin-1",
+    components: {
+        "app-layout-navbar": navbar,
+        "app-layout-sidenav": sidenav,
+        "app-layout-footer": footer
     },
-    showComponent() {
-      return this.AppConfig.system.has_acl == 0 || this.UserAuth.isLogin() ? true : false;
+
+    mounted() {
+        this.layoutHelpers.init();
+        this.layoutHelpers.update();
+        this.layoutHelpers.setAutoUpdate(true);
+    },
+
+    beforeDestroy() {
+        this.layoutHelpers.destroy();
+    },
+    computed: {
+        bodyWithPadding() {
+            return this.$store.getters.isBodyWithPadding;
+        },
+        showFooter() {
+            return this.$store.getters.isFooterShowed;
+        },
+        showComponent() {
+            return this.AppConfig.system.has_acl == 0 || this.UserAuth.isLogin()
+                ? true
+                : false;
+        }
+    },
+    methods: {
+        closeSidenav() {
+            this.layoutHelpers.setCollapsed(true);
+        }
     }
-  },
-  methods: {
-    closeSidenav () {
-      this.layoutHelpers.setCollapsed(true)
-    }
-  }
-}
+};
 </script>

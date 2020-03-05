@@ -4,7 +4,7 @@
         no-body class="mb-3"
         border-variant="info"
     >
-        
+            
         <b-card-header class="with-elements bg-info text-white">
             <span class="card-header-title mr-2">{{Trans.get('notif.unread_notification')}}</span>
             <div class="card-header-elements ml-md-auto">

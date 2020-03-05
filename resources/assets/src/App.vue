@@ -93,6 +93,9 @@ export default {
         // Remove loading state
         setTimeout(() => document.body.classList.remove('app-loading'), 1);
     },
+    created() {
+        // this.Web.setAdminTitle(this.$store.state.template.admin.title);
+    },
     methods: {
         appendCSS(){
             let file = document.createElement('link');

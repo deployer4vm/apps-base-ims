@@ -28,8 +28,9 @@ const state = {
         ]
     },
     admin: {
-        title: globals().AppConfig.system.template.admin.title,
+        title: globals().AppConfig.system.template.admin.title,//digunakan sebagai brand title
         navbar: {
+            title: "",
             appsbar: {
 
             },
@@ -49,6 +50,9 @@ const state = {
             }            
         ],
         sidenav: {},
+        body: {
+            withPadding: true
+        },
         footer: {
             show: globals().AppConfig.system.template.admin.footer.show,
             text: globals().AppConfig.system.template.admin.footer.text,
@@ -67,6 +71,9 @@ const getters = {
     getAdminTitle(state) {
         return state.admin.title;
     },
+    getNavbarTitle(state) {
+        return state.admin.navbar.title;
+    },
     getTabs(state) {
         return state.admin.navbar.tabs;
     },
@@ -79,7 +86,10 @@ const getters = {
     getBreadcrumb(state) {
         return state.admin.sidenav;
     },
-        
+    isBodyWithPadding(state) {
+        return state.admin.body.withPadding;
+
+    },        
     //---------------footer-------------------
     isFooterShowed(state) {
         return state.admin.footer.show;
@@ -116,8 +126,12 @@ const mutations = {
         state.alertModal.modalButtonOk = v.modalButtonOk?v.modalButtonOk:globals().Trans.get('alert.modal_ok_caption');
     },
     //---------------navbar (header-------------------
-    setAdminTitle (state, newTitle) {
-        state.admin.title = newTitle;
+    // admin title tidak boleh diubah
+    // setAdminTitle (state, newTitle) {
+    //     state.admin.title = newTitle;
+    // },    
+    setNavbarTitle (state, newTitle) {
+        state.admin.navbar.title = newTitle;
     },    
     //---------------sidenav-------------------
     setSidenavMenu (state) {
@@ -132,6 +146,9 @@ const mutations = {
     addBreadcrumb (state, data) {
         state.example_data = data;
     },
+    setBodyWithPadding(state,isWithPadding) {
+        state.admin.body.withPadding = isWithPadding;
+    }
 };
 
 const actions = {
@@ -140,9 +157,10 @@ const actions = {
     initTemplateState({commit}){
         commit('setSidenavMenu');
     },
-    setAdminTitle({commit}, newTitle) {
-        commit('setAdminTitle', newTitle);
-    },
+    // admin title tidak boleh diubah
+    // setAdminTitle({commit}, newTitle) {
+    //     commit('setAdminTitle', newTitle);
+    // },
     updateTemplate({commit}, data) {
         commit('changeData', data);
     },    
