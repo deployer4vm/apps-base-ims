@@ -12,7 +12,7 @@
                             'router-transitions': true,
                             'container-fluid': true,
                             'flex-grow-1': true,
-                            'container-p-y': true,
+                            'p-3': bodyWithPadding,
                             'p-0': !bodyWithPadding,
                             'pt-0': !bodyWithPadding,
                             'pb-0': !bodyWithPadding

@@ -3,6 +3,7 @@
 namespace App\Base;
 
 use Exception;
+use Illuminate\Support\Facades\Validator;
 use App\Base\Traits\ResCacheTrait;
 
 abstract class BaseRepository {
@@ -14,10 +15,6 @@ abstract class BaseRepository {
 
     //list field yg dimasukan untuk search
     protected $searchField = ['name'];
-    protected $tenantId = 0;
-
-    protected $error = '';//error strinng
-    protected $errorCode = 0;//error code
 
     protected $pagination = [
         'count' => 0,
@@ -36,8 +33,11 @@ abstract class BaseRepository {
 
     ];//default data untuk $pagination
 
+
     /**
      * BLOCK CLASS DEPENDENCY
+     * -------------------------------------------------------------------------------------
+     * 
      * class dependendency ini digunakan untuk dependency ke class yg menggunakan bindind interface & model nya.
      * dibuat seperti ini karena saat repository di binding dengan interface, maka sulit untuk repository tersebut mendependency ke repository yg juga binding dengna interface.
      */    
@@ -61,12 +61,203 @@ abstract class BaseRepository {
         }
         throw new Exception("Property $name is not defined");
     }  
+    /**
+     * -------------------------------------------------------------------------------------
+     * / BLOCK CLASS DEPENDENCY
+     */
 
+    /**
+     * BLOCK AUTO RESOURCE
+     * -------------------------------------------------------------------------------------
+     * 
+     * auto fungsion
+     */
+    protected $autoResource = [
+        // 'Workshop' => 'hpsynapse\modworkshop\Models\Ws' // 1 general model
+        // 'Workshop' => [
+        //     'c' => 'hpsynapse\modworkshop\Models\Ws',
+        //     'r' => 'hpsynapse\modworkshop\Models\Ws',
+        //     'u' => 'hpsynapse\modworkshop\Models\Ws',
+        //     'd' => 'hpsynapse\modworkshop\Models\Ws'
+        // ]
+    ];
+    protected $autoResourceSearchField = [
+        // 'Workshop' => ['name'] --> list array workshop
+    ];
+    //list field validation saat create
+    protected $autoResourceCreateValidate = [
+        // 'Workshop' => ['nama'=>'required']
+    ];
+    //list field validation saat update
+    protected $autoResourceUpdateValidate = [
+        // 'Workshop' => ['nama'=>'required']
+    ];
+
+    public function __call($name, $arguments)
+    {
+        if(strpos($name,'list')===0){
+            return $this->_autoResourceList($name,$arguments);
+        }else if(strpos($name,'get')===0){
+            return $this->_autoResourceGet($name,$arguments);
+        }else if(strpos($name,'create')===0){
+            return $this->_autoResourceCreate($name,$arguments);
+        }else if(strpos($name,'update')===0){
+            return $this->_autoResourceUpdate($name,$arguments);
+        }else if(strpos($name,'delete')===0){
+            return $this->_autoResourceDelete($name,$arguments);
+        }else if(strrpos($name,'Exists')){
+            return $this->_autoResourceExists($name,$arguments);
+        }
+
+        throw new Exception("Method $name is not defined");
+    }
+
+    private function _autoResourceGetModel($resource,string $crud='r')
+    {
+        if(is_array($resource) && isset($resource[$crud])){
+            $resource = $resource[$crud];
+        }
+        return is_callable($resource)?$resource:new $resource;
+    }
+
+    /**
+     * resource list
+     */
+    protected function _autoResourceList($name, $arguments)
+    {
+        $model = substr($name, 4);
+        if(isset($this->autoResource[$model])){
+
+            $filter = isset($arguments[0])?$arguments[0]:[];
+            //jika tidak menyertakan searchfield maka gunakan default
+            if(!isset($filter['searchField']))
+                $filter['searchField'] = 
+                    isset($this->autoResourceSearchField[$model])?
+                    $this->autoResourceSearchField[$model]:
+                    $this->searchField;
+
+            return $this->_list(
+                $this->_autoResourceGetModel($this->autoResource[$model]), 
+                $filter, 
+                isset($arguments[1])?$arguments[1]:0, 
+                isset($arguments[2])?$arguments[2]:0, 
+                isset($arguments[3])?$arguments[3]:[]);
+        }
+        
+        throw new Exception("Method $name is not defined");
+    }
+
+    /**
+     * resource get 1 record
+     */
+    protected function _autoResourceGet($name, $arguments)
+    {
+        $model = substr($name, 3);
+        if(isset($this->autoResource[$model])){
+            return $this->_getOne(
+                $this->_autoResourceGetModel($this->autoResource[$model]), 
+                isset($arguments[0])?$arguments[0]:null);
+        }
+        
+        throw new Exception("Method $name is not defined");
+    }
+
+    /**
+     * resource create
+     */
+    protected function _autoResourceCreate($name, $arguments)
+    {
+        $model = substr($name, 6);
+        if(isset($this->autoResource[$model])){
+            $data = isset($arguments[0])?$arguments[0]:[];
+            if(isset($this->autoResourceUpdateValidate[$model])){
+                //jika error/tidak valid
+                if(!$this->_createValidate($this->autoResourceCreateValidate[$model], $data)){
+                    return false;
+                }
+            }
+            return $this->_create(
+                $this->_autoResourceGetModel($this->autoResource[$model]), 
+                $data);
+        }
+        
+        throw new Exception("Method $name is not defined");
+    }
+    
+    /**
+     * resource update
+     */
+    protected function _autoResourceUpdate($name, $arguments)
+    {
+        $model = substr($name, 6);
+        if(isset($this->autoResource[$model])){
+            $data = isset($arguments[1])?$arguments[1]:[];
+            if(isset($this->autoResourceUpdateValidate[$model])){
+                //jika error/tidak valid
+                if(!$this->_updateValidate($this->autoResourceUpdateValidate[$model], $data)){
+                    return false;
+                }
+            }
+            return $this->_update(
+                $this->_autoResourceGetModel($this->autoResource[$model]), 
+                isset($arguments[0])?$arguments[0]:null, 
+                $data);
+        }
+        
+        throw new Exception("Method $name is not defined");
+    }
+
+    /**
+     * resource delete
+     */
+    protected function _autoResourceDelete($name, $arguments)
+    {
+        $model = substr($name, 6);
+        if(isset($this->autoResource[$model])){
+            return $this->_delete(
+                $this->_autoResourceGetModel($this->autoResource[$model]), 
+                isset($arguments[0])?$arguments[0]:null);
+        }
+        
+        throw new Exception("Method $name is not defined");
+    }
+
+    /**
+     * resource detect exists
+     */
+    protected function _autoResourceExists($name, $arguments)
+    {
+        $model = ucfirst(substr($name,0, -6));
+        if(isset($this->autoResource[$model])){
+            return $this->_exists(
+                $this->_autoResourceGetModel($this->autoResource[$model]), 
+                isset($arguments[0])?$arguments[0]:null);
+        }
+        
+        throw new Exception("Method $name is not defined");
+    }
+
+    /**
+     * -------------------------------------------------------------------------------------
+     * / BLOCK AUTO RESOURCE
+     */
+
+    protected $tenantId = 0;
     public function setTenantId(int $tenantId=0)
     {
         $this->tenantId = $tenantId;
     } 
 
+    
+    protected $error = '';//error message string
+    protected $errorValidator = [];//error validator/request
+    protected $errorCode = 0;//error code
+
+    public function clearError(){
+        $this->error = '';
+        $this->errorValidator=[];
+        $this->errorCode=0;
+    }
     /**
      * get error string
      * 
@@ -75,7 +266,14 @@ abstract class BaseRepository {
     public function error() {
         return $this->error;
     }
-
+    /**
+     * get error string
+     * 
+     * @return string       error string
+     */
+    public function errorValidator() {
+        return $this->errorValidator;
+    }
     /**
      * get error code
      * 
@@ -386,7 +584,7 @@ abstract class BaseRepository {
             }
         } else {
             $this->pagination['data'] = [];
-        }
+        }        
         return $this->pagination;
     }
 
@@ -525,16 +723,15 @@ abstract class BaseRepository {
     }
 
     /**
-     * DONE
-     * 
      * insert new record
      * 
      * @param eloquent $model
      * @param array $data
      * @return null|array    null jika gagal, atau array record databasenya jika berhasil
      */
-    final protected function _create($model, $data) 
+    final protected function _create($model, array $data) 
     {
+        $this->clearError();
         //get QueryExeption
         try { 
             if ($data = $model->create($data)) {
@@ -547,6 +744,24 @@ abstract class BaseRepository {
     }
 
     /**
+     * validasi menggunakan laravel Validator saat create
+     * 
+     * @param array $rules validator rule, key : nama field, value : rule
+     * @param array $data data input nya
+     * @return boolean valid atau tidak valid
+     */
+    final protected function _createValidate(array $rules, array $data)
+    {
+        $validator = Validator::make($data,$rules);
+        if ($validator->fails()) {
+            $this->error = __('alert.form_must_complete_title');
+            $this->errorValidator = $validator->errors()->all();
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * 
      * Update data
      * 
@@ -554,10 +769,11 @@ abstract class BaseRepository {
      * @param array|int         $where  array where filter atau string/integer id data
      * @param array             $data   array data yang akan update
      * 
-     * @return null|integer     effected arrow atau null jika gagal
+     * @return boolean|integer     effected arrow atau true jika berhasil, false jika gagal
      */
-    final protected function _update($model, $where, array $data = []) 
+    final protected function _update($model, $where, array $data) 
     {
+        $this->clearError();
         //get QueryExeption
         try { 
             if (!is_array($where)) {
@@ -565,13 +781,37 @@ abstract class BaseRepository {
             }
             $model = $this->_where($model, $where);
         
-            if ($model)
-                return $model->update($data);
+            if ($model){
+                $return = $model->update($data);
+                return $return==null?true:$return;
+            }
         }catch (\Illuminate\Database\QueryException $ex){
             $this->error = $ex->getMessage();
         }
         
-        return null;
+        return false;
+    }
+
+    /**
+     * validasi menggunakan laravel Validator saat update
+     * 
+     * @param array $rules validator rule, key : nama field, value : rule
+     * @param array $data data input nya
+     * @return boolean valid atau tidak valid
+     */
+    final protected function _updateValidate(array $rules, array $data)
+    {       
+        $validateRule = [];
+        foreach($rules as $field => $rule){
+            if(isset($data[$field]))$validateRule[$field] = $rule;
+        }
+        $validator = Validator::make($data,$validateRule);
+        if ($validator->fails()) {
+            $this->error = __('alert.form_must_complete_title');
+            $this->errorValidator = $validator->errors()->all();
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -591,7 +831,9 @@ abstract class BaseRepository {
         if ($model != false) {
             if ($model->delete()) {
                 return true;
-            }
+            }            
+        }else{
+            $this->error = __('lang.data_not_found');
         }
         return false;
     }
@@ -613,10 +855,6 @@ abstract class BaseRepository {
      */
     public function getList(array $filter = [], int $offset = 0, int $limit = 0, array $orderBy = []) 
     {
-        $filter = [
-            'filter' => $filter,
-            'searchField' => $this->searchField
-        ];
         return $this->_list($this->model, $filter, $offset, $limit, $orderBy);
     }
 
@@ -663,7 +901,7 @@ abstract class BaseRepository {
      * 
      * @return array|null
      */
-    public function create(array $data = []) 
+    public function create(array $data) 
     {
         return $this->_create($this->model, $data);
     }
@@ -675,7 +913,7 @@ abstract class BaseRepository {
      * 
      * @return null|integer     effected arrow atau null jika gagal
      */
-    public function update($where, array $updatedData = null) 
+    public function update($where, array $updatedData) 
     {
         return $this->_update($this->model, $where, $updatedData);
     }

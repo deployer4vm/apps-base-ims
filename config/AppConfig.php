@@ -151,7 +151,7 @@ if (!function_exists('processAcl')) {
     }
 }
 /**
- * Filter acl
+ * Generate sidenav
  */
 if (!function_exists('processSidenav')) {
     function processSidenav($children){
@@ -162,6 +162,8 @@ if (!function_exists('processSidenav')) {
                 //jika masih ada child nya proses terus
                 if(isset($value['children'])){
                     $res[$aclId]['children'] = processSidenav($res[$aclId]['children']);
+                    if(count($res[$aclId]['children'])==0)
+                        unset($res[$aclId]['children']);
                 }
             }
         }
@@ -224,8 +226,10 @@ foreach ($package as $item) {
         if($packageLocal[$item['package_namespace']]['access']['is_navbar']){
             $tmpSidenavTmp = ['package_namespace'=>$item['package_namespace'],$item['package_namespace'] => $packageLocal[$item['package_namespace']]['access']];
             
-            if(isset($tmpSidenav[$item['package_namespace']]['children'])){
-                $tmpSidenavTmp[$item['package_namespace']]['children'] = processSidenav($sidenav[$item['package_namespace']]['children']);
+            if(isset($tmpSidenavTmp[$item['package_namespace']]['children'])){
+                $tmpSidenavTmp[$item['package_namespace']]['children'] = processSidenav($tmpSidenavTmp[$item['package_namespace']]['children']);
+                if(count($tmpSidenavTmp[$item['package_namespace']]['children'])==0)
+                    unset($tmpSidenavTmp[$item['package_namespace']]['children']);
             }    
             
             if(isset($packageLocal[$item['package_namespace']]['access']['position'])){

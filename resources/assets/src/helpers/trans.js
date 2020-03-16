@@ -8,10 +8,11 @@ export default {
     allLang: null,
     lang: null,
     //load language file from cache if exist, reload from server if not exist
-    loadLang() {
+    loadLang(onLoadComplete=null) {
         if(!this.store.getters.isLangSet){
             this.store.dispatch('reloadLang').then((val)=>{
                 this.allLang = this.store.getters.getLang;
+                if(onLoadComplete)onLoadComplete();
             });
         }else{
             this.allLang = this.store.getters.getLang;

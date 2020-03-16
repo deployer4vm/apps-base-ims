@@ -21,6 +21,7 @@ class BaseController extends LaravelBaseController
             'message'=>'',
             'message_type'=>'info',//khusus warning view (bukan api)
             'data'=>null,
+            'params'=>null,
             'viewdata'=>null,//data yang hanya disertakan di web request
             'errors'=>null,
         ];

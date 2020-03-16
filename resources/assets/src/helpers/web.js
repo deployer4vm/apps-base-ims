@@ -11,6 +11,10 @@ export default {
     bvModal: null,
     tenantList: null,
     multitenantConfig: null,
+    langDefault: {
+        title: "Alert",
+        text: "Someting went wrong!"
+    },
     /*
     Route & Endpoint
     =======================================================================
@@ -195,8 +199,8 @@ export default {
     */
     showAlert(params) {
         if (!params.type) params.type = "info";
-        if (!params.title) params.title = "Alert";
-        if (!params.text) params.text = "Shome Warning";
+        if (!params.title) params.title = this.langDefault.title;
+        if (!params.text) params.text = this.langDefault.text;
         if (!params.styleType) params.styleType = "hover";
         if (!params.position) params.position = "top-center";
         

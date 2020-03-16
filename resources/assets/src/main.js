@@ -79,14 +79,19 @@ var VM = new Vue({
         //initiate language helper
         this.Trans.store = this.$store;
         this.Trans.router = this.$router;
-        this.Trans.loadLang();
+        this.Trans.loadLang(()=>{
+            //load default lang             
+            this.Web.langDefault = {
+                title: this.Trans.get('alert.info_title'),
+                text: this.Trans.get('alert.default_text')
+            };
+        });
 
         //set bahasa untuk alert token invalid
         setTimeout(()=>{
-            if(this.Trans.get("alert.session_expired")!='alert.session_expired')
-                this.LocalApi.errAlertText.text = this.Trans.get("alert.session_expired");
-        },300);
-        
+            if(this.Trans.get('alert.session_expired')!='alert.session_expired')
+                this.LocalApi.errAlertText.text = this.Trans.get('alert.session_expired');
+        },300);        
 
         //init helper app web
         this.Web.store = this.$store;
@@ -94,7 +99,7 @@ var VM = new Vue({
         this.Web.notify = this.$notify;
         this.Web.bvModal = this.$bvModal;
         this.Web.endpoint = this.AppConfig.endpoint; 
-        this.Web.multitenantConfig = this.AppConfig.system.web_admin.multitenant; 
+        this.Web.multitenantConfig = this.AppConfig.system.web_admin.multitenant;
 
         //jika ada fitur auth dan sedang posisi login maka implementAcl
         if(

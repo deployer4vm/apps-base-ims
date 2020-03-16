@@ -3,10 +3,10 @@
 namespace App\Base;
 
 use Illuminate\Contracts\Support\Responsable;
+use Illuminate\Support\Facades\Session;
 
 abstract class BaseResponse implements Responsable
 {
-
     protected 
         $data, 
         $response, 
@@ -15,8 +15,6 @@ abstract class BaseResponse implements Responsable
         $viewWrapVarName;//nama variable wrap/grouping
     
     /**
-     * 
-     * 
      * @param array $output autput dari controller
      * @param mixed $response 
      *      string jika nama view
@@ -75,6 +73,7 @@ abstract class BaseResponse implements Responsable
         $outputParam = [
             'status'=>200,
             'data'=>[],
+            'params'=>[],
             'message'=>'',
             'errors'=>null
         ];
@@ -120,6 +119,7 @@ abstract class BaseResponse implements Responsable
         $this->viewdata = false;
         
         $dataTmp = $this->output['data'];
+        $dataTmp['params'] = $this->output['params'];
         
         if(isset($this->output['message']) && $this->output['message']){            
             $this->alert = [
@@ -132,7 +132,7 @@ abstract class BaseResponse implements Responsable
             $this->errors = $this->output['errors'];
         }
         
-        //jika menyertakan data type listing
+        //jika menggroupkan seluruh variable di data ke varible terntentu
         if($this->isViewVarWraped){
             $dataTmp[$this->viewWrapVarName] = $this->output['data'];
         }
@@ -164,11 +164,11 @@ abstract class BaseResponse implements Responsable
                 $redirectUrl = $this->_viewResponseProccParam(
                     $this->response->getTargetUrl(),
                     $this->viewdata
-                    );
+                );
                 $this->response = $this->response->setTargetUrl($redirectUrl);
             }
         }
-        if($this->alert)\Session::put('alert', $this->alert);
+        if($this->alert)Session::put('alert', $this->alert);
         
         if($this->errors)$this->response = $this->response->withErrors($this->errors);
         

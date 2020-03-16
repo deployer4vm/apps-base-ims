@@ -3,6 +3,9 @@
 use Illuminate\Database\Seeder;
 use App\Services\Utilities;
 
+use App\Models\Seed;
+// use Exception;
+
 class DatabaseSeeder extends Seeder
 {
     /**
@@ -25,8 +28,17 @@ class DatabaseSeeder extends Seeder
             if($value) $moduleSeeds = array_merge($moduleSeeds,include($value));
         }
         $projectSeeds = array_merge($moduleSeeds,$projectSeeds);
+
         foreach($projectSeeds as $class){
-            $this->call($class);
+            if(!Seed::where('seed',$class)->exists()){
+                try {
+                    $this->call($class);
+                    Seed::create(['seed'=>$class]);
+                } catch (Exception $th) {
+                    throw $th;
+                }
+                
+            }
         }
 
     }
