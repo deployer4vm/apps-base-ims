@@ -3,12 +3,15 @@
  * GENERAL TEMPLATE LANGUAGE
  */
 return [
+    'add' => 'Add',
+    'add_attribute' => 'Add new :attribute',
     'save_change' => 'Save Changes',
     'save' => 'Save',
     'change' => 'Change',
     'reset' => 'Reset',
     'cancel' => 'Cancel',
     'no' => 'No',
+    'not' => 'Not',
     'close' => 'Close',
     'ok' => 'Ok',
     'yes' => 'Yes',
@@ -16,6 +19,7 @@ return [
     'back' => 'Back',
     'delete' => 'Delete',
     'edit' => 'Edit',
+    'edit_attribute' => 'Edit :attribute',
     'search' => 'Search',
     'view_all' => 'View All',
     'data_not_found' => 'Data not found',

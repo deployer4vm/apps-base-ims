@@ -19,7 +19,6 @@ Vue.use(Meta);
 let tmpRoutes = [...projectRoutes];
 // if (globals().AppConfig.system.web_admin.autoload_router.frontend) {
     tmpRoutes.push({
-        name: "homeadmin",
         path: globals().AppConfig.endpoint.admin.app,
         component: BlankRouterContainer,
         children: modulesAdminRoutes

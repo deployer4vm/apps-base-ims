@@ -42,7 +42,7 @@ export default {
         //get url yg sedang diakses sekarang
         let endpoint = path.replace(':group_app',this.router.currentRoute.params.group_app);
         //ceka apakah diawali dengan 'path'
-        return this.router.currentRoute.path.indexOf(endpoint) === 0;
+        return this.router.currentRoute.path.indexOf(endpoint + '/') === 0;
     },
     //cek apakah 'path' adalah url auth endpoin di aplikasi 'app'
     isAuthEdnpoint(path = null, app = "admin") {

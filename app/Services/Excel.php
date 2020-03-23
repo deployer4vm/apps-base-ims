@@ -85,6 +85,12 @@ class Excel
         return $reader; 
     }
 
+    public function setBackground(&$reader, $cell,$bgcolor = 'ffffff')
+    {  
+        $reader->getActiveSheet()->getStyle($cell)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB($bgcolor);
+        return $reader; 
+    }
+
     /**
      * GRUP EXCEL READ & WRITE
      */

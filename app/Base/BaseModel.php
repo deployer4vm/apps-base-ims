@@ -12,7 +12,7 @@ class BaseModel extends Model
      */
     public function getFillable()
     {
-        if(!empty($this->fillable))$this->setAutoFillable();
+        if(empty($this->fillable))$this->setAutoFillable();
         return $this->fillable;
     }
 

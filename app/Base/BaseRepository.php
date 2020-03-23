@@ -112,12 +112,15 @@ abstract class BaseRepository {
         throw new Exception("Method $name is not defined");
     }
 
+    /**
+     * return 
+     */
     private function _autoResourceGetModel($resource,string $crud='r')
     {
         if(is_array($resource) && isset($resource[$crud])){
             $resource = $resource[$crud];
         }
-        return is_callable($resource)?$resource:new $resource;
+        return is_string($resource)?new $resource:$resource;
     }
 
     /**
@@ -170,7 +173,7 @@ abstract class BaseRepository {
         $model = substr($name, 6);
         if(isset($this->autoResource[$model])){
             $data = isset($arguments[0])?$arguments[0]:[];
-            if(isset($this->autoResourceUpdateValidate[$model])){
+            if(isset($this->autoResourceCreateValidate[$model])){
                 //jika error/tidak valid
                 if(!$this->_createValidate($this->autoResourceCreateValidate[$model], $data)){
                     return false;
@@ -476,9 +479,17 @@ abstract class BaseRepository {
         }
         if(is_array($dVal)){
             if($isOr){
-                $model = $model->orWhereIn($field,$dVal);
+                if($op=='='){
+                    $model = $model->orWhereIn($field,$dVal);
+                }else{                    
+                    $model = $model->orWhereNotIn($field,$dVal);
+                }
             }else{
-                $model = $model->whereIn($field,$dVal);
+                if($op=='='){
+                    $model = $model->whereIn($field,$dVal);
+                }else{
+                    $model = $model->whereNotIn($field,$dVal);
+                }
             }                    
         }else{
             if($isOr){
@@ -799,11 +810,18 @@ abstract class BaseRepository {
      * @param array $data data input nya
      * @return boolean valid atau tidak valid
      */
-    final protected function _updateValidate(array $rules, array $data)
+    final protected function _updateValidate(array $rules, array &$data)
     {       
         $validateRule = [];
         foreach($rules as $field => $rule){
-            if(isset($data[$field]))$validateRule[$field] = $rule;
+            if(isset($data[$field])){
+                //jika rule nya kosong berarti tandanya jangan dimasukan
+                if(empty($rule)){
+                    unset($data[$field]);
+                }else{
+                    $validateRule[$field] = $rule;
+                }
+            }
         }
         $validator = Validator::make($data,$validateRule);
         if ($validator->fails()) {

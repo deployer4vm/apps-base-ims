@@ -44,7 +44,7 @@ class ResExport implements ShouldQueue
     public function failed(Exception $exception)
     {        
         $repo = new $this->repo;        
-        $repo->initExportOnJob($this->addsJobsParam,$this->homeUrl);
+        $repo->initExportOnJob($this->addsJobsParam);
         $repo->setExportHomeUrl($this->homeUrl);
         $repo->setExportJobFailed($exception);
     }

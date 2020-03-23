@@ -3,12 +3,15 @@
  * GENERAL TEMPLATE LANGUAGE
  */
 return [
+    'add' => 'Tambah',
+    'add_attribute' => 'Tambah :attribute baru',
     'save_change' => 'Simpan Perubahan',
     'save' => 'Simpan',
     'change' => 'Ubah',
     'reset' => 'Reset',
     'cancel' => 'Batal',
     'no' => 'Tidak',
+    'not' => 'Bukan',
     'close' => 'Tutup',
     'ok' => 'Ok',
     'yes' => 'Ya',
@@ -16,6 +19,7 @@ return [
     'back' => 'Kembali',
     'delete' => 'Delete',
     'edit' => 'Edit',
+    'edit_attribute' => 'Edit :attribute',
     'search' => 'Cari',
     'view_all' => 'Tampilkan Semua',
     'data_not_found' => 'Data tidak ditemukan',

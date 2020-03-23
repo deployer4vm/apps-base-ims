@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Facades\Excel;
 use App\Jobs\ResExport;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Excel Export/download Trait - fungsi-fungsi untuk handling download
@@ -39,6 +40,7 @@ trait ResExportTrait {
      */
     public function initExport(string $exportGroup = '', $model=null, array $addsJobsParam=[], string $template = '')
     {
+        Log::info('init addsJobsParam : '.var_export($addsJobsParam,true));
         $this->_exportGroup = $exportGroup; 
 
         $this->setExportModel($model);
@@ -169,23 +171,25 @@ trait ResExportTrait {
     /**
      * Start export process
      */
-    public function startExport()
+    public function startExport(array $addsJobsParam = [])
     {
         if(!$this->_exportFunctionInitialize){
             return false;
         }
-        
+
         //jika sedang ada proses export
         if(!$this->isExportReady()){
             return $this->getExportStatus();
         }
+
+        if(!empty($addsJobsParam))$this->setExportJobsParam($addsJobsParam);
 
         $this->setExportStartProcess();  
         $config =  $this->getExportStatus();   
 
         ResExport::dispatch(
             self::class,
-            $this->_exportAddsJobsParam,
+            $this->getExportJobsParam(),
             url('')
         );
 
@@ -242,6 +246,7 @@ trait ResExportTrait {
             $fileName = $this->_exportUploadPath.$config['filename'];
             $config['urlFilename'] = $this->_exportHomeUrl.$fileName;        
             $this->saveExportStatus($config); 
+
             $this->appendExportLog('<span class="text-info">Jobs started at : <b>'.now()->format('Y-m-d H:i:s').'</b></span><br>');
             $this->appendExportLog('Url will be at : '.$config['urlFilename'].'<br>');
             $reader = Excel::load($this->_exportTemplate?$this->_exportTemplate:'generalExport.xlsx', 'Xlsx');
@@ -254,6 +259,7 @@ trait ResExportTrait {
         }else{
             $this->appendExportLog('<span class="text-info">Continueing process from previous jobs</span>...<br>');
             $this->appendExportLog('<span class="text-info">Jobs started at : <b>'.now()->format('Y-m-d H:i:s').'</b></span><br>');
+
             $fileName = $this->_exportUploadPath.$config['filename'];
             $reader = Excel::load(public_path($fileName), 'Xlsx', false);
             $data = $this->_exportModel->offset($this->_resumeParams['lastTableRow'])->limit($config['count']+1000)->get();
@@ -269,12 +275,12 @@ trait ResExportTrait {
          */
         
         $reader->setActiveSheetIndex(0);
-        $headerColumn = [];
+        $headerColumn = [];               
+        $data = $this->formatExportMainData($data->toArray());
         
-        foreach ($data as $value) {
+        foreach ($data as $val) {
             $this->appendExportLog('. ');
             $this->exportIncrementProcessedCount();
-            $val = $value->toArray();
 
             //jika tanpa template dan row 1 maka simpan nama2 kolomnya, untuk dijadikan header caption
             if($firstRow && empty($this->_exportTemplate)){                
@@ -287,6 +293,7 @@ trait ResExportTrait {
                 $reader = Excel::setCell($reader, $headerColumn);
                 $reader = Excel::setBorder($reader,'A1:'.Excel::excol($countHeader).'1');
                 $reader = Excel::setFontBold($reader,'A1:'.Excel::excol($countHeader).'1');
+                $reader = Excel::setBackground($reader,'A1:'.Excel::excol($countHeader).'1','CCCCCC');
                 $firstRow = false;//tandai flag first row agar tidak masuk ke sini lg di row selanjutnya
             }
 
@@ -341,6 +348,7 @@ trait ResExportTrait {
     {
 
     }
+
     /**
      * saat jobs dipecah ke jobs selanjurnya
      */
@@ -369,6 +377,16 @@ trait ResExportTrait {
             $this->_exportHomeUrl,
             $resumParams
         );
+    }
+
+    /**
+     * OVERRIDEABLE
+     * format list data utama sebelum looping
+     * 
+     */
+    public function formatExportMainData(array $data)
+    {
+        return $data;
     }
 
     public function formatExportExcelHeader(array $row1 = [])

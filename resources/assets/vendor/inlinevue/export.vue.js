@@ -10,12 +10,12 @@ var template = `
                 </template>  
             </div>
             <div class="col text-right">
-                <button @click="requestDownload" class="btn btn-success btn-md d-inline-blcok" :disabled="downloadStatus.status==1">
+                <button @click="requestDownload" :class="config.btnVariant" :disabled="downloadStatus.status==1">
                     <span class="ion ion-md-cloud-download"></span>&nbsp; Generate Download Terbaru
                 </button>
             </div>
         </div>
-        <div class="alert alert-success show pr-0" style="max-height: 150px; overflow-x: auto;">
+        <div class="alert alert-success show pr-0" style="max-height: 150px; overflow-x: auto;" v-if="config.showLog">
             <template v-if="downloadStatus.status==1 || downloadStatus.status==3">
                 <i v-if="downloadStatus.status==1">
                     File download sedang digenerate, mohon tunggu...
@@ -47,7 +47,9 @@ var cExport = Vue.component("c-export", {
         "on-start",
         "on-get-status",
         "on-success",
-        "on-fail"
+        "on-fail",
+        "component-config",
+        "adds-jobs-params"
     ],
     $_veeValidate: {
         validator: "new"
@@ -61,19 +63,43 @@ var cExport = Vue.component("c-export", {
                 urlFilename: '',//url Export file terakhir, setelah generate maka file lama dihapus
                 date: ''//filename
             },
+            config: {
+                btnVariant: {
+                    btn: true, 'btn-success':true, 'btn-md':true, 'd-inline-blcok': true
+                },
+                showLog: true
+            }
+            
         };
     },
     created() {
         this.getDownloadStatus();
+        if(this.componentConfig){
+            if(this.componentConfig.btnVariant){
+                this.config.btnVariant = this.componentConfig.btnVariant;
+            }
+            if(this.componentConfig.showLog!=undefined){
+                this.config.showLog = this.componentConfig.showLog;
+            }
+        }
     },
     methods: {
         //request generate Export
-        requestDownload(){                
-            axios.post( this.apiExportGenerate)
+        requestDownload(){
+            var param = '';            
+            if(this.addsJobsParams){
+                param = params(this.addsJobsParams)
+                if(this.apiExportGenerate.indexOf('?')){
+                    param = '&' + param;
+                }else{
+                    param = '?' + param;
+                }
+            }
+            axios.post(this.apiExportGenerate + param)
                 .then((res)=>{
                     this.downloadStatus = res.data.data;
                     this.onStart(this.downloadStatus);
-                    showAlert({text: "File stock opname sedang disiapkan untuk didownload, tunggu hingga proses selesai.",type: "info"});
+                    showAlert({text: "File export sedang disiapkan untuk didownload, tunggu hingga proses selesai.",type: "info"});
                     this.getDownloadStatus();
                 }).catch((res)=>{
                     showAlert({text: "Generate file download gagal : " + res.message,type: "warning"});
@@ -95,7 +121,7 @@ var cExport = Vue.component("c-export", {
                     //jika berhasil                        
                     }else if(this.downloadStatus.status == 2 && lastStatus == 1){
                         this.onSuccess(this.downloadStatus);
-                        showAlert({text: "File stock opname telah selesai dipersiapkan, silahkan didownload.",type: "success"});
+                        showAlert({text: "File export telah selesai dipersiapkan, silahkan didownload.",type: "success"});
                     //jika gagal
                     }else if(this.downloadStatus.status == 3 && lastStatus == 1){
                         this.onFail(this.downloadStatus);

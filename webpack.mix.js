@@ -67,11 +67,13 @@ const sassOptions = {
 // Core javascripts
 if(systemVar.web_admin.web || systemVar.web_admin.full_vue)
     mixAssetsDir("vendor/js/**/*.js", (src, dest) => mix.scripts(src, dest));//web & full vue
-if(systemVar.web_admin.web)
-    mixAssetsDir("vendor/webjs/**/*.js", (src, dest) => mix.scripts(src, dest));//web
 
 // Web Libs
 if(systemVar.web_admin.web){
+    // Core javascripts
+    mixAssetsDir("vendor/webjs/**/*.js", (src, dest) => mix.scripts(src, dest));//web
+    //inline vue
+    mixAssetsDir("vendor/inlinevue/*", (src, dest) => mix.scripts(src, dest));//web
     mixAssetsDir(
         'vendor/weblibs/**/*.js', 
         (src, dest) => mix.scripts(src, dest));//web
