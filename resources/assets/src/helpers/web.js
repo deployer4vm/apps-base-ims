@@ -169,10 +169,16 @@ export default {
     {
         this.store.commit("setNavbarTitle", newTitle);
     },
+    setShowNavbar(showNavbar) {
+        this.store.commit("setShowNavbar", showNavbar);
+    },
     //---------------sidenav-------------------
     getSidenavMenu() 
     {
         return this.store.getters.getSidenavMenu;
+    },
+    setShowSidenav(showSidenav) {
+        this.store.commit("setShowSidenav", showSidenav);
     },
     //---------------body-------------------
     addBreadcrumb(item, isAdmin = true) {
@@ -180,6 +186,10 @@ export default {
     },
     setBodyWithPadding(isWithPadding) {
         this.store.commit("setBodyWithPadding", isWithPadding);
+    },
+    //---------------footer-------------------
+    setShowFooter(showFooter) {
+        this.store.commit("setShowFooter", showFooter);
     },
     /*
     tampilkan alert instan

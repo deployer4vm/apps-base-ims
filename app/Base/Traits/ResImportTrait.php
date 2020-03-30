@@ -211,6 +211,7 @@ trait ResImportTrait {
                     $addsData['import_log'] = '';
                     $addsData['import_status'] = 0;
                     $addsData['is_import'] = 1;
+                    $addsData['created_at'] = now();
                     $result = $this->_importModelHeader->create($addsData);                    
                     if(!$result){
                         $this->error = 'Insert error.';
@@ -370,6 +371,7 @@ trait ResImportTrait {
             //jika kosong berarti error, maka skip
             if(empty($insertRow))continue;
             
+            $insertRow['created_at'] = now();
             $result = $this->_importModelDetail->create($insertRow);
 
             //cek apakah insert berhasil

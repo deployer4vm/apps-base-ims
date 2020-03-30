@@ -30,6 +30,7 @@ const state = {
     admin: {
         title: globals().AppConfig.system.template.admin.title,//digunakan sebagai brand title
         navbar: {
+            show: true,
             title: "",
             appsbar: {
 
@@ -49,9 +50,12 @@ const state = {
                 link: "/"
             }            
         ],
-        sidenav: {},
+        sidenav: {
+            show: true,
+            menu: {}
+        },
         body: {
-            withPadding: true
+            withPadding: true,
         },
         footer: {
             show: globals().AppConfig.system.template.admin.footer.show,
@@ -77,18 +81,22 @@ const getters = {
     getTabs(state) {
         return state.admin.navbar.tabs;
     },
+    isNavbarShowed(state) {
+        return state.admin.navbar.show;
+    },
     //---------------sidenav-------------------
     getSidenavMenu(state) {
-        return state.admin.sidenav;
+        return state.admin.sidenav.menu;
     },
-    
+    isSidenavShowed(state) {
+        return state.admin.sidenav.show;
+    },
     //---------------body-------------------
-    getBreadcrumb(state) {
-        return state.admin.sidenav;
-    },
+    // getBreadcrumb(state) {
+    //     return state.admin.sidenav;
+    // },
     isBodyWithPadding(state) {
         return state.admin.body.withPadding;
-
     },        
     //---------------footer-------------------
     isFooterShowed(state) {
@@ -133,21 +141,31 @@ const mutations = {
     setNavbarTitle (state, newTitle) {
         state.admin.navbar.title = newTitle;
     },    
+    setShowNavbar(state,setShowNavbar) {
+        state.admin.navbar.show = setShowNavbar?true:false;
+    },
     //---------------sidenav-------------------
     setSidenavMenu (state) {
-        state.admin.sidenav = globals().AppConfig.sidenav;
+        state.admin.sidenav.menu = globals().AppConfig.sidenav;
         // _.forEach(globals().AppConfig.packageLocal, (value, index) => {
         //     if(value.access.has_acl == 0 ||(value.access &&  value.enable &&  value.access.has_access)){
         //         state.admin.sidenav[index] =value.access;
         //     }
         // });
     },
+    setShowSidenav(state,setShowSidenav) {
+        state.admin.sidenav.show = setShowSidenav?true:false;
+    },
     //---------------body-------------------
     addBreadcrumb (state, data) {
         state.example_data = data;
     },
     setBodyWithPadding(state,isWithPadding) {
-        state.admin.body.withPadding = isWithPadding;
+        state.admin.body.withPadding = isWithPadding?true:false;
+    }, 
+    //---------------footer-------------------
+    setShowFooter(state,setShowFooter) {
+        state.admin.footer.show = setShowFooter?true:false;
     }
 };
 

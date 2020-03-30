@@ -1,10 +1,10 @@
 <template>
     <div class="layout-wrapper layout-2">
         <div class="layout-inner" v-if="showComponent">
-            <app-layout-navbar />
+            <app-layout-navbar v-if="showNavbar" />
 
-            <div class="layout-container">
-                <app-layout-sidenav />
+            <div :class="{'layout-container':true,'no-sidenav':!showSidenav,'no-navbar':!showNavbar}">
+                <app-layout-sidenav v-if="showSidenav" />
 
                 <div class="layout-content">
                     <div
@@ -76,6 +76,13 @@
     display: inline;
 }
 
+.layout-container.no-sidenav {
+    padding-left:0 !important;
+}
+
+.layout-container.no-navbar {
+    padding-top:0 !important;    
+}
 /* *****************************************************************************
  * Navbar
  */
@@ -126,13 +133,20 @@ export default {
         this.layoutHelpers.update();
         this.layoutHelpers.setAutoUpdate(true);
     },
-
+    created() {
+    },
     beforeDestroy() {
         this.layoutHelpers.destroy();
     },
     computed: {
         bodyWithPadding() {
             return this.$store.getters.isBodyWithPadding;
+        },
+        showNavbar() {
+            return this.$store.getters.isNavbarShowed;
+        },
+        showSidenav() {
+            return this.$store.getters.isSidenavShowed;
         },
         showFooter() {
             return this.$store.getters.isFooterShowed;
