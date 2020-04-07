@@ -29,34 +29,45 @@ class AppServiceProvider extends ServiceProvider
             );
         }
         
-        //bind controller rebind global
-        foreach(config('AppConfig.binding.controller',[]) as $controller => $newController){
-            $this->app->extend($controller, function ($service, $app) use ($newController) {
-                return new $newController($service);
+        //bind class rebind global
+        foreach(config('AppConfig.binding.class',[]) as $class => $newClass){
+            // $this->app->extend($class, function ($service, $app) use ($newClass) {
+            //     return new $newClass($service);
+            // });
+            $this->app->bind($class, function ($app,$args) use ($newClass) {
+                if(empty($args))return new $newClass();
+                return new $newClass(...$args);
             });
         }
 
         // bind config binding per tenant
-        // if(config('AppConfig.system.web_admin.multitenant.active')){
-            $this->app->bind('bindTenant', function ($app,$params) {           
-                
-                //bind interface global
-                foreach(config('AppConfig.system.binding.tenant.'.$params['tenant_id'].'.interface',[]) as $contract => $service){
-                    $this->app->bind(
-                        $contract,
-                        $service
-                    );
-                }
-                
-                //bind controller rebind global
-                foreach(config('AppConfig.system.binding.tenant.'.$params['tenant_id'].'.controller',[]) as $controller => $newController){
-                    $this->app->extend($controller, function ($service, $app) use ($newController) {
-                        return new $newController($service);
-                    });
-                }
-            });
-        // }
+        if(config('AppConfig.system.web_admin.multitenant.active'))$this->bindTenant();
 
+    }
+
+    protected function bindTenant()
+    {
+        $this->app->bind('bindTenant', function ($app,$params) {           
+                
+            //bind interface global
+            foreach(config('AppConfig.system.binding.tenant.'.$params['tenant_id'].'.interface',[]) as $contract => $service){
+                $this->app->bind(
+                    $contract,
+                    $service
+                );
+            }
+            
+            //bind class rebind global
+            foreach(config('AppConfig.system.binding.tenant.'.$params['tenant_id'].'.class',[]) as $controller => $newClass){
+                // $this->app->extend($class, function ($service, $app) use ($newClass) {
+                //     return new $newClass($service);
+                // });
+                $this->app->bind($class, function ($app,$args) use ($newClass) {
+                    if(empty($args))return new $newClass();
+                    return new $newClass(...$args);
+                });
+            }
+        });
     }
 
     /**

@@ -1,3 +1,5 @@
+import globals from "@/globals";
+
 /*
 Template helper
 diakses via this.Web di vue instance
@@ -40,7 +42,7 @@ export default {
     */
     isOnEndpoint(path = null) {
         //get url yg sedang diakses sekarang
-        let endpoint = path.replace(':group_app',this.router.currentRoute.params.group_app);
+        let endpoint = this.getEndpoint(path);
         //ceka apakah diawali dengan 'path'
         return this.router.currentRoute.path.indexOf(endpoint + '/') === 0;
     },
@@ -50,7 +52,7 @@ export default {
             path = this.router.currentRoute.path;
         }
         //get url/path auth
-        let atuhEndpoint = this.endpoint[app]["auth"].replace(':group_app',this.router.currentRoute.params.group_app);
+        let atuhEndpoint = this.getEndpoint(this.endpoint[app]["auth"]);
         //cek apakah parameter auth yg diinputkan berarawalan path auth
         return path.indexOf(atuhEndpoint) === 0;
     },
@@ -60,7 +62,7 @@ export default {
         if (path == null) {
             path = this.router.currentRoute.path;
         }
-        let adminEndpoint = this.endpoint.admin.app.replace(':group_app',this.router.currentRoute.params.group_app);
+        let adminEndpoint = this.getEndpoint(this.endpoint.admin.app);
         
         return path.indexOf(adminEndpoint) === 0;
     },
@@ -70,15 +72,26 @@ export default {
         this.router.push(this.multitenantConfig.default_route);
     },    
     goToCurrentTenant() {
-        this.router.push({name: "dashboard",params:{group_app: this.getTenantGroupApp()}});
+        // console.log('go to current tenant : ',this.getTenantGroupApp(), this.router.resolve({name: "home",params:{group_app: this.getTenantGroupApp()}}).href);
+        this.goTo("home");
     },   
     goToTenant(groupApp) {
-        this.router.push({name: "dashboard",params:{group_app: groupApp}});
+        this.goTo("home",groupApp);
+    },  
+    goTo(routeName,groupApp=false) {
+        if(groupApp==false)groupApp = this.getTenantGroupApp();
+        this.router.push({name: routeName,params:{group_app: groupApp}});
     },   
     /*
     tenant
     =======================================================================
     */
+    isMultiTenant() {
+        return this.multitenantConfig.active?true:false;
+    },
+    getEndpoint(endPoint) {
+        return endPoint.replace(':group_app',this.router.currentRoute.params.group_app);
+    },
     loadTenant (groupApp) {
         if(!this.store.getters.isTenantLoaded || groupApp != this.store.getters.getTenantGroupApp){
             return this.store.dispatch('reloadTenant',groupApp).then((val)=>{
@@ -141,6 +154,60 @@ export default {
             this.store.commit("setMessagePageLoading",message);
             this.store.commit("setPageLoading",showLoading);
         }
+    },
+    /**
+     * set show / hide element yg bisa hide/show berdasarkan config per module
+     * 
+     * @param {string} module nama module
+     */
+    setShow(module)
+    {
+        if(
+            globals().AppConfig.packageLocal[module].template && 
+            globals().AppConfig.packageLocal[module].template.admin && 
+            globals().AppConfig.packageLocal[module].template.admin
+        ) {
+            //hide / show navbar (header)
+            if(globals().AppConfig.packageLocal[module].template.admin.navbar){
+                this.setShowNavbar(true);
+            }else{
+                this.setShowNavbar(false);                
+            }
+
+            //hide / show sidenave (menu utama)
+            if(globals().AppConfig.packageLocal[module].template.admin.sidenav){
+                this.setShowSidenav(true);
+            }else{
+                this.setShowSidenav(false);                
+            }
+
+            //hide / show footer
+            if(globals().AppConfig.packageLocal[module].template.admin.footer){
+                this.setShowFooter(true);
+            }else{
+                this.setShowFooter(false);                
+            }
+        }else{
+            this.setShowAll();
+        }
+    },
+    /**
+     * tampilkan semua element yg hide/show
+     */
+    setShowAll()
+    {
+        this.setShowNavbar(true);
+        this.setShowSidenav(true);
+        this.setShowFooter(true);
+    },
+    /**
+     * sembunyikan semua element yg hide/show
+     */
+    setHideAll()
+    {
+        this.setShowNavbar(false);
+        this.setShowSidenav(false);
+        this.setShowFooter(false);
     },
     //---------------navbar (header)-------------------
     //admin title digunakan di meta title dan brand/apps bar

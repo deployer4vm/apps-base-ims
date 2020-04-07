@@ -18,9 +18,9 @@ class AppGroupCheck
     public function handle($request, Closure $next)
     {
         if(config('AppConfig.system.web_admin.multitenant.active')){
-            if($appGroup = $request->header('App-Group')){
-                if(!($appGroup = $request->route('app_group'))){ 
-                    $appGroup = $request->input('app_group');
+            if(!($appGroup = $request->header('Group-App'))){
+                if(!($appGroup = $request->route('group_app'))){ 
+                    $appGroup = $request->input('group_app');
                 }
             }    
             if($appGroup && $tenant = Tenant::where('group_app',$appGroup)->first()){                

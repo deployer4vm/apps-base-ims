@@ -34,10 +34,10 @@ const router = new Router({
 
 router.afterEach((to, from) => {
     console.log('to param : ',to.params);
-    if(globals().LocalApi.defaults.headers.common["App-Group"] != to.params.group_app)
-        globals().LocalApi.defaults.headers.common["App-Group"] = to.params.group_app;
+    if(globals().LocalApi.defaults.headers.common["Group-App"] != to.params.group_app)
+        globals().LocalApi.defaults.headers.common["Group-App"] = to.params.group_app;
         
-    //jika tenant berubah
+    //jika tenant berubah atau jika saat pertama kali akses
     if(globals().AppConfig.system.web_admin.multitenant.active && to.params.group_app != globals().Web.getTenantGroupApp()){
         console.log('tenant berubah : old=',globals().Web.getTenantGroupApp(),' , new=',to.params.group_app);
         //jika pertama kali akses dan tidak mengakses tenant maka redirect ke default tenant
@@ -51,7 +51,7 @@ router.afterEach((to, from) => {
             globals().Web.goToCurrentTenant();
             return;
 
-        //jika tenant berubah
+        //jika tenant berubah atau saat pertama kali akses
         }else{
             console.log('load tenant baru : ',to.params);
             globals().Web.loadTenant(to.params.group_app).then((val)=>{
@@ -64,11 +64,8 @@ router.afterEach((to, from) => {
                     }else{                        
                         globals().Web.goToDefaultTenant();
                     }
-                }else{
-                    globals().Web.goToCurrentTenant();
                 }
             });
-            return;
         }
     }
 
@@ -88,11 +85,11 @@ router.afterEach((to, from) => {
             return;
         //jika sudah login tapi mengakses halaman auth maka redirect
         }else if( globals().UserAuth.isLogin() && globals().Web.isAuthEdnpoint() ){
-            globals().UserAuth.goToDashboard();
+            globals().UserAuth.goToHome();
             return;
         }      
         
-        //jika berpindah tenant maka logout kan dahulu, jika hanya mengakses halaman utama maka redirect ke dashboard
+        //jika berpindah tenant maka logout kan dahulu, jika hanya mengakses halaman utama maka redirect ke home
         if(
             globals().UserAuth.isLogin() 
             && globals().AppConfig.system.web_admin.multitenant.active 

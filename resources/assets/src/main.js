@@ -76,6 +76,14 @@ var VM = new Vue({
     router,
     store,
     created() {
+        //init helper app web
+        this.Web.store = this.$store;
+        this.Web.router = this.$router;
+        this.Web.notify = this.$notify;
+        this.Web.bvModal = this.$bvModal;
+        this.Web.endpoint = this.AppConfig.endpoint; 
+        this.Web.multitenantConfig = this.AppConfig.system.web_admin.multitenant;
+        
         //initiate language helper
         this.Trans.store = this.$store;
         this.Trans.router = this.$router;
@@ -92,14 +100,6 @@ var VM = new Vue({
             if(this.Trans.get('alert.session_expired')!='alert.session_expired')
                 this.LocalApi.errAlertText.text = this.Trans.get('alert.session_expired');
         },300);        
-
-        //init helper app web
-        this.Web.store = this.$store;
-        this.Web.router = this.$router;
-        this.Web.notify = this.$notify;
-        this.Web.bvModal = this.$bvModal;
-        this.Web.endpoint = this.AppConfig.endpoint; 
-        this.Web.multitenantConfig = this.AppConfig.system.web_admin.multitenant;
 
         //jika ada fitur auth dan sedang posisi login maka implementAcl
         if(

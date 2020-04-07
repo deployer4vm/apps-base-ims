@@ -1,5 +1,5 @@
 import globals from "@/globals";
-var apiConfig = globals().AppConfig.endpoint.api.app + globals().AppConfig.system.config_endpoint;
+
 const state = {
     allConfig: {},
     isConfigSet: null,
@@ -12,6 +12,9 @@ const getters = {
     },
     getConfig(state) {
         return state.allConfig;
+    },
+    apiEndpoint(state) {        
+        return globals().Web.getEndpoint(globals().AppConfig.endpoint.api.app) + globals().AppConfig.system.config_endpoint;
     }
 };
 
@@ -26,16 +29,16 @@ const mutations = {
 };
 
 const actions = {
-    reloadConfig({commit},data={}){
-        return axios.get(apiConfig,{params: data}).then((val)=>{
+    reloadConfig({commit,getters},data={}){
+        return axios.get(getters.apiEndpoint,{params: data}).then((val)=>{
             commit('setConfig',val.data);            
             return true;
         }).catch((err)=>{
             console.log('Config file error.');
         });
     },
-    saveConfig({commit},data={}){
-        return axios.post(apiConfig,{data: data}).then((val)=>{
+    saveConfig({commit,getters},data={}){
+        return axios.post(getters.apiEndpoint,{data: data}).then((val)=>{
             commit('setConfig',val.data);            
             return true;
         }).catch((err)=>{

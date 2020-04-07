@@ -9,7 +9,7 @@
         <i class="ion ion-md-menu align-middle"></i>
       </span>
       <router-link
-        :to="{name : 'dashboard'}"
+        :to="{name : 'home'}"
         class="app-brand-text demo sidenav-text font-weight-normal ml-2"
       >{{ title }}</router-link>
       <a

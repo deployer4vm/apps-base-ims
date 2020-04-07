@@ -37,7 +37,7 @@ const actions = {
     reloadLang({commit,state},newLang=null){
         var params = {lang: null};
         var apiPath = 
-            globals().AppConfig.endpoint.api.app + 
+        globals().Web.getEndpoint(globals().AppConfig.endpoint.api.app) + 
             globals().AppConfig.system.lang_endpoint;
 
         params.lang = state.lang;

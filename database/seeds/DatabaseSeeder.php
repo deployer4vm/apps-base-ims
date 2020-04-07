@@ -15,9 +15,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        $modulePath = Utilities::listModulePath(config('hpsynapse.namespaces'), function($namespace,$pathToModule){            
+        $modulePath = Utilities::listModulePath(config('hpsynapse.namespaces'), function($namespace,$pathToModule){              
+            $moduleNamespace = explode('\\',trim($namespace,'\\'));
+            $moduleNamespace = array_pop($moduleNamespace);     
             $pathToModule .= DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'SeedList.php';
-            if(file_exists($pathToModule)){
+            if(config('AppConfig.packageLocal.'.$moduleNamespace.'.database.run_seed',true) && file_exists($pathToModule)){
                 return $pathToModule;
             }
         });

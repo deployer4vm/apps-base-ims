@@ -7,12 +7,17 @@ seluruh class disini bisa diakses via window dan diinitialize dari vue instace u
 export default {
     store: null,
     router: null,
+    
+    //apakah menggunakan fitur UserAuth
+    isActive() {
+        return this.store != null?true:false;
+    },
     //implement acl role user yang online ke navside menu
     implementAcl() {
         return this.store.dispatch('implementAcl');
     },
     hasAccess(key,subkey='has_access') {
-        if(this.store.getters.getAuthRole.rule==null)return true;
+        if(!this.isActive() || this.store.getters.getAuthRole.rule==null)return true;
         let access = 1;
         access = this.store.getters.getAuthRole.rule[key];
         if(access!=undefined)access = access[subkey];
@@ -83,7 +88,7 @@ export default {
     goToMyProfile() {
         this.router.push({name: "myprofile", params: {group_app: this.store.getters.getTenantGroupApp}});
     },
-    goToDashboard() {        
-        this.router.push({name: "dashboard", params: {group_app: this.store.getters.getTenantGroupApp}});
+    goToHome() {        
+        this.router.push({name: "home", params: {group_app: this.store.getters.getTenantGroupApp}});
     }
 };

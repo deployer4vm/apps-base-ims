@@ -51,7 +51,8 @@ export default {
     },
     created() {        
         this.noitfLimit = this.limit?this.limit:this.noitfLimit;
-        this.loadNotif();    
+        if(this.UserAuth.isActive())
+            this.loadNotif();    
     },
     methods: {
         loadNotif() {

@@ -107,7 +107,20 @@ $endpoint = [
         'app' => $homeSlug.$client['endpoint'][$system['mode']]['api'],
         'auth' => $homeSlug
     ],
-    
+    'laravel'  => [        
+        'admin' => [
+            'app' => $client['endpoint'][$system['mode']]['admin'],
+            'auth' => ''
+        ],
+        'frontend' => [
+            'app' => $client['endpoint'][$system['mode']]['frontend'],
+            'auth' => ''
+        ],
+        'api' => [
+            'app' => $client['endpoint'][$system['mode']]['api'],
+            'auth' => ''
+        ]
+    ]   
 ];
 $packageLocal = []; //untuk di load di config
 $newPackageLocal = []; //untuk filtered packageLocal.json yang akan disave ulang
@@ -119,7 +132,7 @@ $sidenav = [];
 
 $tmpBindings = include(__DIR__.DIRECTORY_SEPARATOR.'hpsynapse.php');
 $binding = empty($tmpBindings['bindings'])?[
-    'controller'=>[],
+    'class'=>[],
     'interface'=>[],
     'route'=>[]
 ]:$tmpBindings['bindings'];
@@ -298,16 +311,19 @@ foreach ($package as $item) {
         //jika module endpoint diawal "/" berarti tidak menggunakan apps endpoint
         if($moduleEndpoint == '' || $moduleEndpoint[0]!='/'){
             $endpoint[$app][$item['package_namespace']] = $endpoint[$app]['app'].'/'.$moduleEndpoint;
+            $endpoint['laravel'][$app][$item['package_namespace']] = $endpoint['laravel'][$app]['app'].'/'.$moduleEndpoint;
         }else{
             $endpoint[$app][$item['package_namespace']] = $homeSlug.$moduleEndpoint;
+            $endpoint['laravel'][$app][$item['package_namespace']] = $moduleEndpoint;
         }    
         //jika memiliki fitur auth dan module user maka assign auth endpointnya
         if($system['has_auth'] && isset($packageLocal['moduser']) && $packageLocal['moduser']['enable']){
             $authEndpoint = $packageLocal['moduser']['auth_endpoint'][$system['mode']];            
             if($authEndpoint[0]!='/'){
-                $endpoint[$app]['auth'] = $endpoint[$app]['app'].'/'.$authEndpoint;
+                $endpoint[$app]['auth'] = $endpoint['laravel'][$app]['auth'] = $endpoint[$app]['app'].'/'.$authEndpoint;
             }else{
                 $endpoint[$app]['auth'] = $homeSlug.$authEndpoint;
+                $endpoint['laravel'][$app]['auth'] = $authEndpoint;
             }
             
         }
@@ -376,11 +392,11 @@ if(isset($system['binding']) && isset($system['binding']['interface'])){
             $binding['interface'][$contract] = $service;
     }        
 }
-//binding controller
-if(isset($system['binding']) && isset($system['binding']['controller'])){
-    foreach($system['binding']['controller'] as $contract => $service){
-        if(!isset($binding['controller'][$contract]))
-            $binding['controller'][$contract] = $service;
+//binding class
+if(isset($system['binding']) && isset($system['binding']['class'])){
+    foreach($system['binding']['class'] as $contract => $service){
+        if(!isset($binding['class'][$contract]))
+            $binding['class'][$contract] = $service;
     }        
 }
 //binding route

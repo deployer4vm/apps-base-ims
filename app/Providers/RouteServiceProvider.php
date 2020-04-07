@@ -25,7 +25,7 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->bootMigration();
+        if($this->app->runningInConsole())$this->bootMigration();
         parent::boot();
     }
 
@@ -38,8 +38,10 @@ class RouteServiceProvider extends ServiceProvider
         $appPath = app_path('MainApp'.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations');       
         
         $modulePath = Utilities::listModulePath($this->app['config']['hpsynapse']['namespaces'], function($namespace,$pathToModule){            
+            $moduleNamespace = explode('\\',trim($namespace,'\\'));
+            $moduleNamespace = array_pop($moduleNamespace);            
             $pathToModule .= DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
-            if(file_exists($pathToModule)){
+            if(config('AppConfig.packageLocal.'.$moduleNamespace.'.database.run_migration',true) && file_exists($pathToModule)){
                 return $pathToModule;
             }
         });
@@ -72,15 +74,15 @@ class RouteServiceProvider extends ServiceProvider
     public function map()
     {        
 
-        $homeSlug = trim(config('AppConfig.client.endpoint.'.config('AppConfig.system.mode').'.home_slug',''),'/');
-        if($homeSlug) $homeSlug = '/'.$homeSlug;
+        // $homeSlug = trim(config('AppConfig.client.endpoint.'.config('AppConfig.system.mode').'.home_slug',''),'/');
+        // if($homeSlug) $homeSlug = '/'.$homeSlug;
 
         $config = $this->app['config']['hpsynapse'];
         // $middleware = $config['protection_middleware'];        
         // if(isset($config['protection_middleware'])){
         //     $middleware = array_merge($middleware,$config['protection_middleware']);
         // }
-        Utilities::listModulePath($config['namespaces'], function($namespace,$pathToModule) use ($homeSlug) {
+        Utilities::listModulePath($config['namespaces'], function($namespace,$pathToModule) {
             
             $fileNames = [
                 'routes_api' => true,
@@ -101,7 +103,7 @@ class RouteServiceProvider extends ServiceProvider
                     $pathBinding = app_path('MainApp' . DIRECTORY_SEPARATOR . $pathBinding);
                     if (file_exists($pathBinding)) {
                         Route::middleware($isApi ? ['api'] : ['web'])
-                            ->prefix($isApi && $moduleNamespace != 'moduser' ? str_replace($homeSlug,'',config('AppConfig.endpoint.api.'.$moduleNamespace)) : '')
+                            ->prefix($isApi && $moduleNamespace != 'moduser' ? config('AppConfig.endpoint.laravel.api.'.$moduleNamespace) : '')
                             ->namespace($namespace)
                             ->group($pathBinding);
                     }
@@ -110,9 +112,9 @@ class RouteServiceProvider extends ServiceProvider
                 if (!file_exists($path)) {
                     continue;
                 }
-
+                
                 Route::middleware($isApi ? ['api'] : ['web'])
-                    ->prefix($isApi && $moduleNamespace != 'moduser' ? str_replace($homeSlug,'',config('AppConfig.endpoint.api.'.$moduleNamespace)) : '')
+                    ->prefix($isApi && $moduleNamespace != 'moduser' ? config('AppConfig.endpoint.laravel.api.'.$moduleNamespace) : '')
                     ->namespace($namespace)
                     ->group($path);
             }
@@ -127,7 +129,7 @@ class RouteServiceProvider extends ServiceProvider
         
         //jika full_vue aktif maka load route config nya
         if(config('AppConfig.system.web_admin.full_vue')){
-            $adminEndpoint = config('AppConfig.client.endpoint.'.config('AppConfig.system.mode').'.admin');
+            $adminEndpoint = config('AppConfig.client.endpoint.laravel.'.config('AppConfig.system.mode').'.admin');
             if($adminEndpoint!='/' && !empty($adminEndpoint)){
                 Route::get($adminEndpoint, function(){
                     return view('layouts.full_vue.main');
@@ -166,7 +168,7 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function mapApiRoutes()
     {
-        Route::prefix(config('AppConfig.endpoint.api.app'))
+        Route::prefix(config('AppConfig.endpoint.laravel.api.app'))
              ->middleware('api')
              ->namespace($this->namespace)
              ->group(base_path('routes/api.php'));
