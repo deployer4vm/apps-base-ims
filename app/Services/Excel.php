@@ -184,7 +184,18 @@ class Excel
     public function setCell(&$reader,$data){
 
         foreach ($data as $key => $value) {
-            if(is_string($value)){
+            $option = ['quote'=>'auto'];
+
+            //jika array berarti menggunakan format sendiri
+            if(is_array($value)){
+                $option['type'] = isset($value['option']['type'])?$value['option']['type']:'default';
+                if(isset($value['option']['quote']))$option['quote'] = $value['option']['quote']?'yes':'no';
+                $value = $value['value'];
+            }else{
+                $option['type'] = is_string($value)?'string':'default';
+            }
+
+            if($option['type']=='string'){
                 //jika formula
                 if(strpos($value,'=')===0){
                     $reader->getActiveSheet()->setCellValueExplicit(
@@ -193,7 +204,7 @@ class Excel
                         \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_FORMULA
                     );
                 }else{
-                    $this->setCellString($reader,$key,$value);
+                    $this->setCellString($reader,$key,$value,$option['quote']);
                 }
             }else{
                 $reader->getActiveSheet()->setCellValue($key, $value);
@@ -207,12 +218,13 @@ class Excel
         return $reader;
     }
 
-    private function setCellString(&$reader,$key,$value)
+    private function setCellString(&$reader,$key,$value,string $quote='auto')
     {        
         //jika value diawali dengan - atau angka maka kasih quote
-        if(strpos($value,'-')===0 || preg_match('/^\d/', $value) === 1){
+        if($quote!='no' && ($quote=='yes' || strpos($value,'-')===0 || preg_match('/^\d/', $value) === 1)){
             $value = "'".$value;
         }           
+
         $reader->getActiveSheet()->setCellValueExplicit(
             $key, 
             $value,
