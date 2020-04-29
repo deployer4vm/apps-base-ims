@@ -26,7 +26,7 @@ const vuexPersist = new VuexPersist({
             'auth':state.auth
             // ,'trans':state.trans
         };
-        if (globals().AppConfig.system.web_admin.multitenant.active) {
+        if (globals().AppConfig.system.multitenant.active) {
             newState.tenant = state.tenant;
         }
         //registrasikan vuexPersist jika diaktikan

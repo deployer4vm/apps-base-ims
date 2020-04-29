@@ -57,8 +57,8 @@ const actions = {
     reloadTenant({commit},groupApp){
         var apiPath = 
             globals().Web.getEndpoint(globals().AppConfig.endpoint.api.app) + 
-            globals().AppConfig.system.web_admin.multitenant.api_endpoint.tenant + 
-            globals().AppConfig.system.web_admin.multitenant.api_endpoint.tenant_active;
+            globals().AppConfig.system.multitenant.api_endpoint.tenant + 
+            globals().AppConfig.system.multitenant.api_endpoint.tenant_active;
         return axios.get(apiPath,{
             params: {
                 group_app: groupApp
@@ -78,8 +78,8 @@ const actions = {
     listTenantGroup({commit},params={}) {
         var apiPath = 
             globals().Web.getEndpoint(globals().AppConfig.endpoint.api.app) + 
-            globals().AppConfig.system.web_admin.multitenant.api_endpoint.tenant + 
-            globals().AppConfig.system.web_admin.multitenant.api_endpoint.tenant_group;
+            globals().AppConfig.system.multitenant.api_endpoint.tenant + 
+            globals().AppConfig.system.multitenant.api_endpoint.tenant_group;
         return axios.get(apiPath,{
             params: params
         }).then((val)=>{

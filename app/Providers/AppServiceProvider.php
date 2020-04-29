@@ -41,7 +41,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // bind config binding per tenant
-        if(config('AppConfig.system.web_admin.multitenant.active'))$this->bindTenant();
+        if(config('AppConfig.system.multitenant.active'))$this->bindTenant();
 
     }
 

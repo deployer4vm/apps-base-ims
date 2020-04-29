@@ -17,7 +17,7 @@ class AppGroupCheck
      */
     public function handle($request, Closure $next)
     {
-        if(config('AppConfig.system.web_admin.multitenant.active')){
+        if(config('AppConfig.system.multitenant.active')){
             if(!($appGroup = $request->header('Group-App'))){
                 if(!($appGroup = $request->route('group_app'))){ 
                     $appGroup = $request->input('group_app');

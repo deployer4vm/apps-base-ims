@@ -258,7 +258,8 @@ mix.sass(
         "dist/css/uikit.css"
     )//web & full vue
     .copyDirectory("app/MainApp/resources/assets", publicPath + "/assets")//web & full vue
-    .copyDirectory("resources/assets/src/inlinevue", publicPath + "/dist/inlinevue");//web & full vue
+    .copyDirectory("resources/assets/src/inlinevue", publicPath + "/dist/inlinevue")//web & full vue
+    .copyDirectory("resources/assets/vendor/libs", publicPath + "/dist/vendor/libs");//web & full vue
 }
 
 if(systemVar.web_admin.full_vue){

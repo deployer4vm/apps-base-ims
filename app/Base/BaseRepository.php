@@ -5,6 +5,7 @@ namespace App\Base;
 use Exception;
 use Illuminate\Support\Facades\Validator;
 use App\Base\Traits\ResCacheTrait;
+use PHPUnit\Framework\Constraint\IsTrue;
 
 abstract class BaseRepository {
 
@@ -97,6 +98,10 @@ abstract class BaseRepository {
     {
         if(strpos($name,'list')===0){
             return $this->_autoResourceList($name,$arguments);
+        }else if(strpos($name,'getReadModel')===0){
+            return $this->_autoResourceGetModel($name,true);
+        }else if(strpos($name,'getWriteModel')===0){
+            return $this->_autoResourceGetModel($name,false);
         }else if(strpos($name,'get')===0){
             return $this->_autoResourceGet($name,$arguments);
         }else if(strpos($name,'create')===0){
@@ -113,9 +118,9 @@ abstract class BaseRepository {
     }
 
     /**
-     * return 
+     * initialize model 
      */
-    private function _autoResourceGetModel($resource,string $crud='r')
+    private function _autoResourceInitModel($resource,string $crud='r')
     {
         if(is_array($resource) && isset($resource[$crud])){
             $resource = $resource[$crud];
@@ -123,6 +128,19 @@ abstract class BaseRepository {
         return is_string($resource)?new $resource:$resource;
     }
 
+    /**
+     * get model
+     */
+    protected function _autoResourceGetModel($name,$isRead=true)
+    {
+        $model = substr($name, $isRead?12:13);
+        if(isset($this->autoResource[$model])){
+            return $this->autoResource[$model];
+        }
+        
+        throw new Exception("Method $name is not defined");
+    }
+    
     /**
      * resource list
      */
@@ -140,7 +158,7 @@ abstract class BaseRepository {
                     $this->searchField;
 
             return $this->_list(
-                $this->_autoResourceGetModel($this->autoResource[$model]), 
+                $this->_autoResourceInitModel($this->{'getReadModel'.$model}()), 
                 $filter, 
                 isset($arguments[1])?$arguments[1]:0, 
                 isset($arguments[2])?$arguments[2]:0, 
@@ -158,7 +176,7 @@ abstract class BaseRepository {
         $model = substr($name, 3);
         if(isset($this->autoResource[$model])){
             return $this->_getOne(
-                $this->_autoResourceGetModel($this->autoResource[$model]), 
+                $this->_autoResourceInitModel($this->{'getReadModel'.$model}()), 
                 isset($arguments[0])?$arguments[0]:null);
         }
         
@@ -172,16 +190,17 @@ abstract class BaseRepository {
     {
         $model = substr($name, 6);
         if(isset($this->autoResource[$model])){
+            $createModel = $this->_autoResourceInitModel($this->{'getWriteModel'.$model}());
+
             $data = isset($arguments[0])?$arguments[0]:[];
+            $data = $this->_filterAllowField($data,$createModel->getFillable());
             if(isset($this->autoResourceCreateValidate[$model])){
                 //jika error/tidak valid
                 if(!$this->_createValidate($this->autoResourceCreateValidate[$model], $data)){
                     return false;
                 }
             }
-            return $this->_create(
-                $this->_autoResourceGetModel($this->autoResource[$model]), 
-                $data);
+            return $this->_create($createModel,$data);
         }
         
         throw new Exception("Method $name is not defined");
@@ -194,7 +213,9 @@ abstract class BaseRepository {
     {
         $model = substr($name, 6);
         if(isset($this->autoResource[$model])){
+            $updateModel = $this->_autoResourceInitModel($this->{'getWriteModel'.$model}());
             $data = isset($arguments[1])?$arguments[1]:[];
+            $data = $this->_filterAllowField($data,$updateModel->getFillable());
             if(isset($this->autoResourceUpdateValidate[$model])){
                 //jika error/tidak valid
                 if(!$this->_updateValidate($this->autoResourceUpdateValidate[$model], $data)){
@@ -202,7 +223,7 @@ abstract class BaseRepository {
                 }
             }
             return $this->_update(
-                $this->_autoResourceGetModel($this->autoResource[$model]), 
+                $updateModel, 
                 isset($arguments[0])?$arguments[0]:null, 
                 $data);
         }
@@ -218,7 +239,7 @@ abstract class BaseRepository {
         $model = substr($name, 6);
         if(isset($this->autoResource[$model])){
             return $this->_delete(
-                $this->_autoResourceGetModel($this->autoResource[$model]), 
+                $this->_autoResourceInitModel($this->{'getWriteModel'.$model}()), 
                 isset($arguments[0])?$arguments[0]:null);
         }
         
@@ -233,7 +254,7 @@ abstract class BaseRepository {
         $model = ucfirst(substr($name,0, -6));
         if(isset($this->autoResource[$model])){
             return $this->_exists(
-                $this->_autoResourceGetModel($this->autoResource[$model]), 
+                $this->_autoResourceInitModel($this->{'getReadModel'.$model}()), 
                 isset($arguments[0])?$arguments[0]:null);
         }
         
@@ -431,7 +452,7 @@ abstract class BaseRepository {
 
         foreach ($where as $value) {
             //jika value[1] tidak ada kemungkinan ada yang keliru input format, maka langsung tolak
-            if(!isset($value[1]))return $model;
+            if(!array_key_exists(1,$value))return $model;
 
             //jika sudah tidak nested maka langsung proses
             if (is_array($value) && !is_array($value[0]) && strtolower($value[0]) != 'or') {
@@ -746,7 +767,7 @@ abstract class BaseRepository {
         //get QueryExeption
         try { 
             if ($data = $model->create($data)) {
-                return $data->toArray();
+                return $model->find($data->id)->toArray();
             }
         }catch (\Illuminate\Database\QueryException $ex){
             $this->error = $ex->getMessage();
@@ -814,6 +835,7 @@ abstract class BaseRepository {
     {       
         $validateRule = [];
         foreach($rules as $field => $rule){
+            //jika data disertakan maka proses validasinya
             if(isset($data[$field])){
                 //jika rule nya kosong berarti tandanya jangan dimasukan
                 if(empty($rule)){
@@ -823,6 +845,7 @@ abstract class BaseRepository {
                 }
             }
         }
+        
         $validator = Validator::make($data,$validateRule);
         if ($validator->fails()) {
             $this->error = __('alert.form_must_complete_title');

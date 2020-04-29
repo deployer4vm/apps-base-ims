@@ -38,7 +38,7 @@ router.afterEach((to, from) => {
         globals().LocalApi.defaults.headers.common["Group-App"] = to.params.group_app;
         
     //jika tenant berubah atau jika saat pertama kali akses
-    if(globals().AppConfig.system.web_admin.multitenant.active && to.params.group_app != globals().Web.getTenantGroupApp()){
+    if(globals().AppConfig.system.multitenant.active && to.params.group_app != globals().Web.getTenantGroupApp()){
         console.log('tenant berubah : old=',globals().Web.getTenantGroupApp(),' , new=',to.params.group_app);
         //jika pertama kali akses dan tidak mengakses tenant maka redirect ke default tenant
         if(to.params.group_app==undefined && globals().Web.getTenantGroupApp()==''){
@@ -92,7 +92,7 @@ router.afterEach((to, from) => {
         //jika berpindah tenant maka logout kan dahulu, jika hanya mengakses halaman utama maka redirect ke home
         if(
             globals().UserAuth.isLogin() 
-            && globals().AppConfig.system.web_admin.multitenant.active 
+            && globals().AppConfig.system.multitenant.active 
             && to.params.group_app != globals().Web.getTenantGroupApp()
         ){
             globals().UserAuth.logout();

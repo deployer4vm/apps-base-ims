@@ -82,7 +82,7 @@ var VM = new Vue({
         this.Web.notify = this.$notify;
         this.Web.bvModal = this.$bvModal;
         this.Web.endpoint = this.AppConfig.endpoint; 
-        this.Web.multitenantConfig = this.AppConfig.system.web_admin.multitenant;
+        this.Web.multitenantConfig = this.AppConfig.system.multitenant;
         
         //initiate language helper
         this.Trans.store = this.$store;

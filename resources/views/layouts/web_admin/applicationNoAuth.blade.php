@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+
+<html lang="{{ app()->getLocale() }}" class="default-style">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="IE=edge,chrome=1">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <title>{{ config('AppConfig.system.template.admin.title') }}</title>
+
+    <!-- Main font -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i,900" rel="stylesheet">
+
+    <!-- Icons. Uncomment required icon fonts -->
+    <link rel="stylesheet" href="{{ asset('/dist/vendor/fonts/fontawesome.css') }}">
+    <link rel="stylesheet" href="{{ asset('/dist/vendor/fonts/ionicons.css') }}">
+    <link rel="stylesheet" href="{{ asset('/dist/vendor/fonts/linearicons.css') }}">
+    <link rel="stylesheet" href="{{ asset('/dist/vendor/fonts/open-iconic.css') }}">
+    <link rel="stylesheet" href="{{ asset('/dist/vendor/fonts/pe-icon-7-stroke.css') }}">
+
+    <!-- Core stylesheets -->
+    <link rel="stylesheet" href="{{ asset('/dist/css/bootstrap.css') }}">
+    <link rel="stylesheet" href="{{ asset('/dist/css/appwork.css') }}">
+    <link rel="stylesheet" href="{{ asset('/dist/css/theme-app.css') }}">
+    <link rel="stylesheet" href="{{ asset('/dist/css/colors.css') }}">
+    <link rel="stylesheet" href="{{ asset('/dist/css/uikit.css') }}">
+    
+    @if(config('AppConfig.system.web_admin.assets_link'))
+    @foreach (config('AppConfig.system.web_admin.assets_link') as $value)
+    <link rel="stylesheet" href="{{ asset($value) }}">
+    @endforeach
+    @endif
+    <link rel="stylesheet" href="{{ asset('/assets/css/style.css') }}">
+
+    <!-- Load polyfills -->
+    <script src="{{ asset('/dist/vendor/webjs/polyfills.js') }}"></script>
+    <script>
+        document['documentMode']===10&&document.write('<script src="https://polyfill.io/v3/polyfill.min.js?features=Intl.~locale.en"><\/script>');
+        <?php /*var localUrl = {
+            logout: "{{route('auth.logout')}}",
+            login: "{{route('auth.login')}}"
+        };*/ ?>
+    </script>
+
+    <!-- Layout helpers -->
+    <script src="{{ asset('/dist/vendor/js/layout-helpers.js') }}"></script>
+
+    <!-- Libs -->
+
+    <!-- `perfect-scrollbar` library required by SideNav plugin -->
+    <link rel="stylesheet" href="{{ asset('/dist/vendor/weblibs/perfect-scrollbar/perfect-scrollbar.css') }}">
+    <link rel="stylesheet" href="{{ asset('/dist/vendor/weblibs/toastr/toastr.css') }}">
+
+    @yield('styles')
+
+    <!-- Application stylesheets -->
+    <!-- <link rel="stylesheet" href="{{ asset('/dist/css/application.css') }}"> -->
+
+</head>
+<body>
+
+    @yield('layout-content')
+    
+    @if(config('AppConfig.system.web_admin.assets_js'))
+    @foreach (config('AppConfig.system.web_admin.assets_js') as $value)
+    <script src="{{ asset($value) }}"></script>
+    @endforeach
+    @endif
+
+    <!-- Core scripts -->
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script> -->
+
+    <script src="{{ asset('/dist/vendor/weblibs/jquery/3.2.1/jquery.min.js') }}"></script>
+    <script src="{{ asset('/dist/vendor/weblibs/popper/popper.js') }}"></script>
+    <script src="{{ asset('/dist/vendor/webjs/bootstrap.js') }}"></script>
+    <!-- <script src="{{ asset('/dist/vendor/webjs/sidenav.js') }}"></script> -->
+
+    <!-- Libs -->
+
+    <!-- `perfect-scrollbar` library required by SideNav plugin -->
+    <script src="{{ asset('/dist/vendor/weblibs/perfect-scrollbar/perfect-scrollbar.js') }}"></script>
+    <script src="{{ asset('/dist/vendor/weblibs/toastr/toastr.js') }}"></script>
+
+    <!-- Application javascripts -->
+    <script src="{{ asset('/dist/webapp.js') }}"></script>
+
+    @include("alertModal")
+
+    <script>
+        <?php /*@if(UserAuth::isLogin())
+        //set token di LocalApi
+        window.axios.defaults.headers.common['Authorization'] = 'Bearer <?php echo UserAuth::getToken('api_token') ?>'; 
+        @endif*/ ?>
+        //convert array to query string
+        function params(object) {
+            var parameters = [];
+            for (var property in object) {
+                if (object.hasOwnProperty(property)) {
+                    if(object[property]!=null)
+                        parameters.push(encodeURI(property + '=' + object[property]));
+                }
+            }
+
+            return parameters.join('&');
+        }
+
+        //convert query string to array
+        function parseQuery(queryString) {
+            var query = {};
+            var pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
+            for (var i = 0; i < pairs.length; i++) {
+                var pair = pairs[i].split('=');
+                if(pair[0]!="")
+                    query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+            }
+            return query;
+        }
+
+        //parsing error local api
+        function localApiErrorParse(res) {
+            
+            let err = { status: 400, message: "request error" , errors: []};
+            //jika error server
+            if (!res.data) {
+                err.message = res.message;
+            } else {
+                err.message = res.data.message;
+                err.status = res.data.status;
+
+                if(res.data.errors){
+                    err.errors = res.data.errors;
+                    _.forEach(res.data.errors,(v,i)=>{
+                        if(v!=true)err.message += "<br> - " + v;
+                    });
+                }
+            }
+
+            return err;
+        }
+    </script>
+    
+    @if(config('AppConfig.system.has_editor',true))
+    <script>
+        var editorUrl = {
+            filemanager: '{{config("AppConfig.system.multitenant.active",false)?route("sys.editor.filemanager",["group_app"=>config("tenant.group_app")]):route("sys.editor.filemanager")}}',
+            upload: '{{config("AppConfig.system.multitenant.active",false)?route("sys.editor.upload",["group_app"=>config("tenant.group_app")]):route("sys.editor.upload")}}'
+        };
+    </script>
+    <script src="{{ asset('/dist/vendor/libs/kindeditor/kindeditor.js') }}"></script>
+    <script src="{{ asset('/dist/vendor/libs/kindeditor/lang/en.js') }}"></script>
+    @endif
+    
+    @yield('scripts')
+
+</body>
+</html>
