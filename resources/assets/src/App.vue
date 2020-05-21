@@ -1,7 +1,7 @@
 <template>
     <div id="app">
         <transition name="fade">
-            <router-view></router-view>
+            <router-view :key="$route.fullPath"></router-view>
         </transition>
         
         <BlockUI :message="message" :html="html" v-if="loading" />

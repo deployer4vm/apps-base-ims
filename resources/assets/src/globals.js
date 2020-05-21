@@ -117,7 +117,10 @@ formater.config = {
         prefix: '',allowDecimal : false, thousandsSeparatorSymbol: '.'
     },
     decimalMask : {
-        prefix: '',allowDecimal : true, decimalSymbol:',',thousandsSeparatorSymbol: '.',decimalLimit: 2
+        prefix: '',allowDecimal : true, 
+        decimalSymbol:',',
+        thousandsSeparatorSymbol: '.',
+        decimalLimit: 2
     },
     formatDate : 'DD-MM-YYYY'
 };
@@ -202,6 +205,7 @@ formater.formatDate = function(dateString) {
 };
 
 formater.resetNumber = function(number) {
+    if(!(typeof number === 'string'))return number;
     number = String(number);
     number = number.replace(formater.config.currencyMask.prefix, "");
     number = number.replace(/[^0-9,.]/g, "");

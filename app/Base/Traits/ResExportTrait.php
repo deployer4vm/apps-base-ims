@@ -24,6 +24,7 @@ trait ResExportTrait {
     
     private $_exportGroup = '';
     private $_exportTemplate = '';//file template sebagai base export nya, string kosong maka auto generate
+    private $_exportTemplateMainAppDoc = true;//apakah file template yg diinput dari mainapp doc
     private $_exportTemplateStartRow = 2;//start data mulai diinsert
     private $_exportModel = null;//instansi model builder yg diexport
     private $_exportAddsJobsParam = [];//parameter tambahan ke jobs parameter
@@ -64,9 +65,10 @@ trait ResExportTrait {
         return $this->_exportTemplateStartRow;
     }
 
-    public function setExportTemplate(string $template = '',int $startRow=0)
+    public function setExportTemplate(string $template = '',int $startRow=0, bool $mainAppDoc = true)
     {
         if($template)$this->_exportTemplate = $template;
+        if($mainAppDoc)$this->_exportTemplateMainAppDoc = $mainAppDoc;
         if($startRow)$this->_exportTemplateStartRow = $startRow;
     }
 
@@ -249,7 +251,7 @@ trait ResExportTrait {
 
             $this->appendExportLog('<span class="text-info">Jobs started at : <b>'.now()->format('Y-m-d H:i:s').'</b></span><br>');
             $this->appendExportLog('Url will be at : '.$config['urlFilename'].'<br>');
-            $reader = Excel::load($this->_exportTemplate?$this->_exportTemplate:'generalExport.xlsx', 'Xlsx');
+            $reader = Excel::load($this->_exportTemplate?$this->_exportTemplate:'generalExport.xlsx', 'Xlsx',$this->_exportTemplateMainAppDoc);
 
             $row=$this->getExportTemplateStartRow();
             $deleteRow=$row;//row yg harus didelete, kenapa didelete untuk memastikan style header tidak terbawa

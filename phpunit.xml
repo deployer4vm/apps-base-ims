@@ -16,6 +16,34 @@
         <testsuite name="Feature">
             <directory suffix="Test.php">./tests/Feature</directory>
         </testsuite>
+
+        <testsuite name="MainApp Test Suite">
+            <directory suffix="Test.php">./app/MainApp/Tests</directory>
+        </testsuite>
+
+        <testsuite name="MainApp Modules Test Suite">
+            <directory suffix="Test.php">./app/MainApp/Modules/*/Tests</directory>
+        </testsuite>
+
+        <testsuite name="MainApp Modules Feature Test Suite">
+            <directory suffix="Test.php">./app/MainApp/Modules/*/Tests/Feature</directory>
+        </testsuite>
+
+        <testsuite name="MainApp Modules Unit Test Suite">
+            <directory suffix="Test.php">./app/MainApp/Modules/*/Tests/Unit</directory>
+        </testsuite>
+        
+        <testsuite name="HP-Synapse Modules Test Suite">
+            <directory suffix="Test.php">./vendor/hp-synapse/*/src/Tests</directory>
+        </testsuite>
+
+        <testsuite name="HP-Synapse Modules Feature Test Suite">
+            <directory suffix="Test.php">./vendor/hp-synapse/*/src/Tests/Feature</directory>
+        </testsuite>
+        
+        <testsuite name="HP-Synapse Modules Unit Test Suite">
+            <directory suffix="Test.php">./vendor/hp-synapse/*/src/Tests/Unit</directory>
+        </testsuite>
     </testsuites>
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
@@ -29,5 +57,7 @@
         <server name="MAIL_DRIVER" value="array"/>
         <server name="QUEUE_CONNECTION" value="sync"/>
         <server name="SESSION_DRIVER" value="array"/>
+        <server name="DB_CONNECTION" value="sqlite"/>
+        <server name="DB_DATABASE" value=":memory:"/>
     </php>
 </phpunit>

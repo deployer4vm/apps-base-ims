@@ -98,11 +98,12 @@ class Excel
     /**
      * @param string $template path dokumen
      * @param string $format format excel, "Xls" atau "Xlsx"
+     * @param boolean $mainAppDoc true jika path MainApp/resources/doc/*
      */
-    public function load($template, string $format = 'Xls', bool $isTemplate = true)
+    public function load($template, string $format = 'Xls', bool $mainAppDoc = true)
 	{
         $format = ucfirst(strtolower($format))=='Xls'?'Xls':'Xlsx';
-        if($isTemplate){
+        if($mainAppDoc){
             $template = app_path('MainApp/resources/doc/'.$template);
         }
         $reader = IOFactory::createReader($format);

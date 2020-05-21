@@ -4,12 +4,12 @@ namespace App\Base;
 
 use Exception;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Traits\Macroable;
 use App\Base\Traits\ResCacheTrait;
-use PHPUnit\Framework\Constraint\IsTrue;
 
 abstract class BaseRepository {
 
-    use ResCacheTrait;
+    use Macroable, ResCacheTrait;
 
     //default model
     protected $model;
@@ -31,9 +31,7 @@ abstract class BaseRepository {
         'limit' => 0,
         'currentPage' => 1,
         'pageCount' => 1
-
     ];//default data untuk $pagination
-
 
     /**
      * BLOCK CLASS DEPENDENCY
@@ -61,7 +59,7 @@ abstract class BaseRepository {
             return $this->dependencyLoaded[$name];
         }
         throw new Exception("Property $name is not defined");
-    }  
+    }
     /**
      * -------------------------------------------------------------------------------------
      * / BLOCK CLASS DEPENDENCY
@@ -76,10 +74,8 @@ abstract class BaseRepository {
     protected $autoResource = [
         // 'Workshop' => 'hpsynapse\modworkshop\Models\Ws' // 1 general model
         // 'Workshop' => [
-        //     'c' => 'hpsynapse\modworkshop\Models\Ws',
         //     'r' => 'hpsynapse\modworkshop\Models\Ws',
-        //     'u' => 'hpsynapse\modworkshop\Models\Ws',
-        //     'd' => 'hpsynapse\modworkshop\Models\Ws'
+        //     'w' => 'hpsynapse\modworkshop\Models\Ws',
         // ]
     ];
     protected $autoResourceSearchField = [
@@ -102,6 +98,10 @@ abstract class BaseRepository {
             return $this->_autoResourceGetModel($name,true);
         }else if(strpos($name,'getWriteModel')===0){
             return $this->_autoResourceGetModel($name,false);
+        }else if(strpos($name,'getCreateValidation')===0){
+            return $this->_autoResourceGetValidation($name,true);
+        }else if(strpos($name,'getUpdateValidation')===0){
+            return $this->_autoResourceGetValidation($name,false);
         }else if(strpos($name,'get')===0){
             return $this->_autoResourceGet($name,$arguments);
         }else if(strpos($name,'create')===0){
@@ -118,24 +118,37 @@ abstract class BaseRepository {
     }
 
     /**
-     * initialize model 
-     */
-    private function _autoResourceInitModel($resource,string $crud='r')
-    {
-        if(is_array($resource) && isset($resource[$crud])){
-            $resource = $resource[$crud];
-        }
-        return is_string($resource)?new $resource:$resource;
-    }
-
-    /**
      * get model
      */
     protected function _autoResourceGetModel($name,$isRead=true)
     {
         $model = substr($name, $isRead?12:13);
-        if(isset($this->autoResource[$model])){
-            return $this->autoResource[$model];
+        $rw = $isRead?'r':'w';
+        if(is_array($this->autoResource[$model]) && isset($this->autoResource[$model][$rw])){
+            return 
+                is_string($this->autoResource[$model][$rw])?
+                new $this->autoResource[$model][$rw]:
+                $this->autoResource[$model][$rw];
+        }else if(!is_array($this->autoResource[$model])){
+            return 
+                is_string($this->autoResource[$model])?
+                new $this->autoResource[$model]:
+                $this->autoResource[$model];
+        }
+        
+        throw new Exception("Method $name is not defined");
+    }
+	
+    /**
+     * get validation
+     */
+    protected function _autoResourceGetValidation($name,$isCreate=true)
+    {
+        $model = substr($name,19);
+        if($isCreate && isset($this->autoResourceCreateValidate[$model])){
+            return $this->autoResourceCreateValidate[$model];
+        }else if(isset($this->autoResourceUpdateValidate[$model])){
+            return $this->autoResourceUpdateValidate[$model];
         }
         
         throw new Exception("Method $name is not defined");
@@ -158,7 +171,7 @@ abstract class BaseRepository {
                     $this->searchField;
 
             return $this->_list(
-                $this->_autoResourceInitModel($this->{'getReadModel'.$model}()), 
+                $this->{'getReadModel'.$model}(), 
                 $filter, 
                 isset($arguments[1])?$arguments[1]:0, 
                 isset($arguments[2])?$arguments[2]:0, 
@@ -176,7 +189,7 @@ abstract class BaseRepository {
         $model = substr($name, 3);
         if(isset($this->autoResource[$model])){
             return $this->_getOne(
-                $this->_autoResourceInitModel($this->{'getReadModel'.$model}()), 
+                $this->{'getReadModel'.$model}(), 
                 isset($arguments[0])?$arguments[0]:null);
         }
         
@@ -190,7 +203,7 @@ abstract class BaseRepository {
     {
         $model = substr($name, 6);
         if(isset($this->autoResource[$model])){
-            $createModel = $this->_autoResourceInitModel($this->{'getWriteModel'.$model}());
+            $createModel = $this->{'getWriteModel'.$model}();
 
             $data = isset($arguments[0])?$arguments[0]:[];
             $data = $this->_filterAllowField($data,$createModel->getFillable());
@@ -213,10 +226,11 @@ abstract class BaseRepository {
     {
         $model = substr($name, 6);
         if(isset($this->autoResource[$model])){
-            $updateModel = $this->_autoResourceInitModel($this->{'getWriteModel'.$model}());
+            $updateModel = $this->{'getWriteModel'.$model}();
             $data = isset($arguments[1])?$arguments[1]:[];
+            
             $data = $this->_filterAllowField($data,$updateModel->getFillable());
-            if(isset($this->autoResourceUpdateValidate[$model])){
+            if(isset($this->autoResourceUpdateValidate[$model])){          
                 //jika error/tidak valid
                 if(!$this->_updateValidate($this->autoResourceUpdateValidate[$model], $data)){
                     return false;
@@ -239,8 +253,9 @@ abstract class BaseRepository {
         $model = substr($name, 6);
         if(isset($this->autoResource[$model])){
             return $this->_delete(
-                $this->_autoResourceInitModel($this->{'getWriteModel'.$model}()), 
-                isset($arguments[0])?$arguments[0]:null);
+                $this->{'getWriteModel'.$model}(), 
+                isset($arguments[0])?$arguments[0]:null
+			);
         }
         
         throw new Exception("Method $name is not defined");
@@ -254,8 +269,9 @@ abstract class BaseRepository {
         $model = ucfirst(substr($name,0, -6));
         if(isset($this->autoResource[$model])){
             return $this->_exists(
-                $this->_autoResourceInitModel($this->{'getReadModel'.$model}()), 
-                isset($arguments[0])?$arguments[0]:null);
+                $this->{'getReadModel'.$model}(), 
+                isset($arguments[0])?$arguments[0]:null
+			);
         }
         
         throw new Exception("Method $name is not defined");
@@ -267,11 +283,11 @@ abstract class BaseRepository {
      */
 
     protected $tenantId = 0;
+	
     public function setTenantId(int $tenantId=0)
     {
         $this->tenantId = $tenantId;
     } 
-
     
     protected $error = '';//error message string
     protected $errorValidator = [];//error validator/request
@@ -282,6 +298,16 @@ abstract class BaseRepository {
         $this->errorValidator=[];
         $this->errorCode=0;
     }
+    
+    
+    public function errorFull() {
+        $errorValidator = '';
+        if($this->errorValidator){
+            $errorValidator = '<br><ul>'.implode("\n",array_map(function($v){return '<li>'.$v.'</li>';},$this->errorValidator)).'</ul>';
+        }
+        
+        return $this->error.$errorValidator;
+    }
     /**
      * get error string
      * 
@@ -290,6 +316,7 @@ abstract class BaseRepository {
     public function error() {
         return $this->error;
     }
+	
     /**
      * get error string
      * 
@@ -298,6 +325,7 @@ abstract class BaseRepository {
     public function errorValidator() {
         return $this->errorValidator;
     }
+	
     /**
      * get error code
      * 
@@ -487,10 +515,12 @@ abstract class BaseRepository {
         $op = '=';
         $field = $where[0];
         $isOr = false;
+		
         if(stripos($where[0],'or ')===0){
             $field = str_ireplace('or ','', $where[0]);
             $isOr = true;
         }
+		
         //jika ada 3 item berarti menyertakan operator nya juga
         if(count($where)==3){
             $op = $where[1];
@@ -498,6 +528,8 @@ abstract class BaseRepository {
         }else{
             $dVal = $where[1];
         }
+		
+		//jika valuenya array berarti diprses menggunakan IN
         if(is_array($dVal)){
             if($isOr){
                 if($op=='='){
@@ -563,8 +595,8 @@ abstract class BaseRepository {
     {
 
         if (!empty($orderBy)) {
-
-            if(!is_array($orderBy[0]))$orderBy=[$orderBy];
+            if(!is_array($orderBy[0]))
+				$orderBy=[$orderBy];
 
             foreach($orderBy as $oBitem){
                 $model = $model->orderBy($oBitem[0], $oBitem[1]);
@@ -645,21 +677,18 @@ abstract class BaseRepository {
             $searchField = $filter['searchField'];
             unset($filter['searchField']);
         }
-
         if (isset($filter['function'])) {
             $model = $filter['function']($model);
             unset($filter['function']);
         }            
 
         //hiddenColumn digunakan di filter saat result
-        if (isset($filter['hiddenColumn'])) {
+        if (isset($filter['hiddenColumn']))
             unset($filter['hiddenColumn']);
-        }
-
-        if (isset($filter)) {
-            $model = $this->_where($model, $filter);
-        }
         
+        if (isset($filter))
+            $model = $this->_where($model, $filter);
+                
         if ($qSearch) {
             $searchField = $searchField ? $searchField : $this->searchField;
             $model = $this->_searchString($model, $qSearch, $searchField);
@@ -716,13 +745,13 @@ abstract class BaseRepository {
      */
     final protected function _getOneModel($model, $where)
     {
-        if(empty($model))return $model;
+        if(empty($model))
+			return $model;
 
         //jika array berarti berisi where
-        if (!is_array($where)) {
+        if (!is_array($where))
             $where = [['id',$where]];
-        }
-
+        
         $data = $this->_where($model, $where);
         $data = $data->first();
         
@@ -743,14 +772,15 @@ abstract class BaseRepository {
      */
     final protected function _exists($model, $where): bool
     {
-        if(empty($model))return false;
-        //jika array berarti berisi filter
-        if (!is_array($where)) {
+        if(empty($model))
+			return false;
+		
+        //jika array berarti berisi where
+        if (!is_array($where))
             $where = ['id',$where];
-        }
-
+        
         $data = $this->_where($model, $where);
-
+        
         return $data->exists();
     }
 
@@ -808,9 +838,9 @@ abstract class BaseRepository {
         $this->clearError();
         //get QueryExeption
         try { 
-            if (!is_array($where)) {
+            if (!is_array($where))
                 $where = [['id', $where]];
-            }
+            
             $model = $this->_where($model, $where);
         
             if ($model){
@@ -845,8 +875,9 @@ abstract class BaseRepository {
                 }
             }
         }
-        
+
         $validator = Validator::make($data,$validateRule);
+        
         if ($validator->fails()) {
             $this->error = __('alert.form_must_complete_title');
             $this->errorValidator = $validator->errors()->all();
@@ -866,9 +897,11 @@ abstract class BaseRepository {
      */
     final protected function _delete($model, $where): bool
     {
-        if(empty($model))return false;
+        if(empty($model))
+			return false;
 
         $model = $this->_where($model, $where);
+		
         if ($model != false) {
             if ($model->delete()) {
                 return true;
@@ -876,6 +909,7 @@ abstract class BaseRepository {
         }else{
             $this->error = __('lang.data_not_found');
         }
+		
         return false;
     }
 
