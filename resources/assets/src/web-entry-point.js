@@ -1,3 +1,7 @@
+import AppConfig from '@/appconfig.js';
+import Echo from 'laravel-echo';
+
+window.AppConfig = AppConfig;
 window.Vue = require('vue');
 window._ = {};
 window._.forEach = require("lodash/forEach");
@@ -34,7 +38,6 @@ $(function() {
  * to our Laravel back-end. This library automatically handles sending the
  * CSRF token as a header based on the value of the "XSRF" token cookie.
  */
-
 
 window.axios.parseError = function (errResponse) {
     
@@ -109,13 +112,28 @@ if (token) {
  * allows your team to easily build robust real-time web applications.
  */
 
-// import Echo from 'laravel-echo'
+if(AppConfig.system.broadcast && AppConfig.system.broadcast.services_enabled.pusher){
+    /**
+     * Echo exposes an expressive API for subscribing to channels and listening
+     * for events that are broadcast by Laravel. Echo and event broadcasting
+     * allows your team to easily build robust real-time web applications.
+     */
+    var echoConfig = {
+        broadcaster: 'pusher',
+        key: process.env.MIX_PUSHER_APP_KEY,
+        cluster: process.env.MIX_PUSHER_APP_CLUSTER,
+        enabledTransports: ['ws','wss'],
+        disableStats: true,
+        forceTLS: process.env.LARAVEL_WEBSOCKETS_SSL?true:false
+    };
 
-// window.Pusher = require('pusher-js');
+    if(AppConfig.system.broadcast.local_server_enabled){
+        echoConfig.wsHost = window.location.hostname;
+        echoConfig.wssPort = window.location.hostname;
+        echoConfig.wsPort = process.env.LARAVEL_WEBSOCKETS_PORT?process.env.LARAVEL_WEBSOCKETS_PORT:6001;
+        echoConfig.wssPort = process.env.LARAVEL_WEBSOCKETS_PORT?process.env.LARAVEL_WEBSOCKETS_PORT:6001;
+    }
 
-// window.Echo = new Echo({
-//     broadcaster: 'pusher',
-//     key: process.env.MIX_PUSHER_APP_KEY,
-//     cluster: process.env.MIX_PUSHER_APP_CLUSTER,
-//     encrypted: true
-// });
+    window.Pusher = require('pusher-js');
+    window.Echo = new Echo(echoConfig);
+}

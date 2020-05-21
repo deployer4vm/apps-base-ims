@@ -31,8 +31,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('queue:work --daemon --tries=3 --queue=verification,email')->everyMinute()->withoutOverlapping();
         $schedule->command('queue:work --daemon --tries=3 --queue=default,low')->everyMinute()->withoutOverlapping();
         
-        if(config('AppConfig')){
-
+        // jika websockets aktif maka aktifkan
+        if(config('AppConfig.packageLocal.moduser.broadcast.local_server_enabled')){
+            $schedule->command('websockets:serve')->everyMinute()->withoutOverlapping();
         }
     }
 

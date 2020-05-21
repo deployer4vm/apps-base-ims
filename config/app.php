@@ -1,5 +1,5 @@
 <?php
-$system = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/system.json'), true);
+$system = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/_system.json'), true);
 
 return [
 
@@ -81,7 +81,7 @@ return [
     |
     */
 
-    'locale' => $system['locale'],
+    'locale' => $system['fallback_locale'],
 
     /*
     |--------------------------------------------------------------------------
@@ -166,13 +166,14 @@ return [
         /*
          * Package Service Providers...
          */
+        // hpsynapse\modworkorder\Providers\EventServiceProvider::class,
 
         /*
          * Application Service Providers...
          */
         App\Providers\AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
-        // App\Providers\BroadcastServiceProvider::class,
+        App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\ViewServiceProvider::class,
         App\Providers\TranslationServiceProvider::class,

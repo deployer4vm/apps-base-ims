@@ -84,6 +84,14 @@ var cExport = Vue.component("c-export", {
         }
     },
     methods: {
+        showAlert(params)
+        {
+            if(this.Web==undefined){
+                showAlert(params);
+            }else{
+                this.Web.showAlert(params);
+            }
+        },
         //request generate Export
         requestDownload(){
             var param = '';            
@@ -99,10 +107,10 @@ var cExport = Vue.component("c-export", {
                 .then((res)=>{
                     this.downloadStatus = res.data.data;
                     this.onStart(this.downloadStatus);
-                    showAlert({text: "File export sedang disiapkan untuk didownload, tunggu hingga proses selesai.",type: "info"});
+                    this.showAlert({text: "File export sedang disiapkan untuk didownload, tunggu hingga proses selesai.",type: "info"});
                     this.getDownloadStatus();
                 }).catch((res)=>{
-                    showAlert({text: "Generate file download gagal : " + res.message,type: "warning"});
+                    this.showAlert({text: "Generate file download gagal : " + res.message,type: "warning"});
                 });
         },
         //get status terakhir Export
@@ -121,15 +129,15 @@ var cExport = Vue.component("c-export", {
                     //jika berhasil                        
                     }else if(this.downloadStatus.status == 2 && lastStatus == 1){
                         this.onSuccess(this.downloadStatus);
-                        showAlert({text: "File export telah selesai dipersiapkan, silahkan didownload.",type: "success"});
+                        this.showAlert({text: "File export telah selesai dipersiapkan, silahkan didownload.",type: "success"});
                     //jika gagal
                     }else if(this.downloadStatus.status == 3 && lastStatus == 1){
                         this.onFail(this.downloadStatus);
-                        showAlert({text: "Generate download gagal, silahkan coba kembali.",type: "warning"});
+                        this.showAlert({text: "Generate download gagal, silahkan coba kembali.",type: "warning"});
                     }
                     
                 }).catch((res)=>{
-                    showAlert({text: "Access status download gagal : " + res.message,type: "danger"});
+                    this.showAlert({text: "Access status download gagal : " + res.message,type: "danger"});
                 });
         }
     }

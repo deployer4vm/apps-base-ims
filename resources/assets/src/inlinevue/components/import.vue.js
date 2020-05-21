@@ -98,32 +98,47 @@ var cImport = Vue.component("c-import", {
                 filename: '',
                 filenamePath: '',
                 count:0,
-                processedCount:0,
-                transactionDate
-            }
+                processedCount:0
+            },
+            lastDate: null
         };
     },
     created() {
         this.form.transactionDate = moment().format('YYYY-MM-DD');
-        if(!this.lastTransactionDate) this.lastTransactionDate = moment().format('YYYY-MM-DD');
+        if(this.lastTransactionDate){
+            this.lastDate = this.lastTransactionDate;
+        }else{
+            this.lastDate = moment().format('YYYY-MM-DD');
+        }
         if(!this.transactionDateCaption) this.transactionDateCaption = 'Tanggal Transaksi';
         this.showTransactionDate = this.showTransactionDate||this.showTransactionDate==undefined?true:false;
 
         this.getImportStatus(true);        
     },
     mounted: function() {  
-        var that = this;                     
-        $('.datepicker-base.transaction-date').datepicker({
-            format: 'yyyy-mm-dd',
-            startDate: this.lastTransactionDate,
-            endDate: moment().format('YYYY-MM-DD'), 
-            autoclose: true
-        });
-        $('.datepicker-base.transaction-date').change(function(v){
-            that.form.transactionDate = $(this).val();
-        });
+        var that = this;    
+        
+        if(this.Web==undefined){                 
+            $('.datepicker-base.transaction-date').datepicker({
+                format: 'yyyy-mm-dd',
+                startDate: this.lastDate,
+                endDate: moment().format('YYYY-MM-DD'), 
+                autoclose: true
+            });
+            $('.datepicker-base.transaction-date').change(function(v){
+                that.form.transactionDate = $(this).val();
+            });
+        }
     },
     methods: {
+        showAlert(params)
+        {
+            if(this.Web==undefined){
+                showAlert(params);
+            }else{
+                this.Web.showAlert(params);
+            }
+        },
         handleFileUpload(){
             this.form.importFile = this.$refs.file.files[0];
         },
@@ -147,13 +162,13 @@ var cImport = Vue.component("c-import", {
                 // var lastStatus = this.importStatus.status;
                 this.importStatus = res.data.data;
                 this.onStart(this.importStatus);
-                showAlert({text: "File import berhasil diupload dan sedang diproses, silahkan tunggu hingga proses import selesai",type: "success"});
+                this.showAlert({text: "File import berhasil diupload dan sedang diproses, silahkan tunggu hingga proses import selesai",type: "success"});
                 setTimeout(function() {
                     that.getImportStatus();
                 },1000); 
             }).catch((res)=>{
                 this.onImportProcess = false;
-                showAlert({text: "Upload file import gagal : " + res.message,type: "warning"});
+                this.showAlert({text: "Upload file import gagal : " + res.message,type: "warning"});
             });
         },
         //get status terakhir import
@@ -174,30 +189,30 @@ var cImport = Vue.component("c-import", {
                     }else if(this.importStatus.status==3 && !firstLoad){
                         if(this.onFinish!=undefined)
                             this.onFinish(this.importStatus);
-                        showAlert({text: "Proses import selesai.",type: "success"});
+                        this.showAlert({text: "Proses import selesai.",type: "success"});
                     //jika import selesai dan gagal
                     }else if(this.importStatus.status==4 && !firstLoad){
                         if(this.onFail!=undefined)
                             this.onFail(this.importStatus);
-                        showAlert({text: "Proses import gagal.",type: "danger"});
+                        this.showAlert({text: "Proses import gagal.",type: "danger"});
                     //jika approve import selesai dan berhasil                          
                     }else if(this.importStatus.status==0 && oldStatus.status == 5 && !firstLoad){
                         if(this.onApproveFinish!=undefined)
                             this.onApproveFinish(this.importStatus);
                         this.importStatus = oldStatus;
-                        showAlert({text: "Proses Approve selesai.",type: "success"});
+                        this.showAlert({text: "Proses Approve selesai.",type: "success"});
                     //jika pembatalan import selesai dan berhasil                          
                     }else if(this.importStatus.status==0 && oldStatus.status == 6 && !firstLoad){
                         if(this.onCancelFinish!=undefined)
                             this.onCancelFinish(this.importStatus);
                         this.importStatus = oldStatus;
-                        showAlert({text: "Proses pembatalan selesai.",type: "success"});
+                        this.showAlert({text: "Proses pembatalan selesai.",type: "success"});
                     //jika status 0 berarti sudah tidak ada proses
                     }else{
                         this.form.importFile = null;
                     }                      
                 }).catch((res)=>{
-                    showAlert({text: "Access status import gagal : " + res.message,type: "warning"});
+                    this.showAlert({text: "Access status import gagal : " + res.message,type: "warning"});
                 });
         },
         approveImport(){
@@ -207,12 +222,12 @@ var cImport = Vue.component("c-import", {
                     this.importStatus = res.data.data;
                     if(this.onApprove!=undefined)
                         this.onApprove(this.importStatus);
-                    showAlert({text: "Data import diapprove.",type: "success"});
+                    this.showAlert({text: "Data import diapprove.",type: "success"});
                     setTimeout(function() {
                         that.getImportStatus();
                     },1000);
                 }).catch((res)=>{
-                    showAlert({text: "Request approve gagal : " + res.message,type: "warning"});
+                    this.showAlert({text: "Request approve gagal : " + res.message,type: "warning"});
                 });
         },
         cancelImport(){
@@ -222,12 +237,12 @@ var cImport = Vue.component("c-import", {
                     this.importStatus = res.data.data;
                     if(this.onCancel!=undefined)
                         this.onCancel(this.importStatus);
-                    showAlert({text: "Data import dibatalkan.",type: "success"});
+                    this.showAlert({text: "Data import dibatalkan.",type: "success"});
                     setTimeout(function() {
                         that.getImportStatus();
                     },1000);
                 }).catch((res)=>{
-                    showAlert({text: "Request pembatalan gagal : " + res.message,type: "warning"});
+                    this.showAlert({text: "Request pembatalan gagal : " + res.message,type: "warning"});
                 });
         }
     }

@@ -170,5 +170,19 @@
     <script src="{{ asset('/dist/vendor/js/layout-helpers.js') }}"></script>
     <script src="{{ mix('/dist/app.js') }}"></script>
 
+    @if(config('AppConfig.system.has_editor',true))
+    <script>
+        var editorUrl = {
+            filemanager: '{{config("AppConfig.system.multitenant.active",false)?route("sys.editor.filemanager",["group_app"=>config("tenant.group_app")]):route("sys.editor.filemanager")}}',
+            upload: '{{config("AppConfig.system.multitenant.active",false)?route("sys.editor.upload",["group_app"=>config("tenant.group_app")]):route("sys.editor.upload")}}'
+        };
+        // Echo.channel('notif')
+        //     .listen('SendNotif', (e) => {
+        //         console.log('masuk cuy',e.message);
+        //     });
+    </script>
+    <script src="{{ asset('/dist/vendor/libs/kindeditor/kindeditor.js') }}"></script>
+    <script src="{{ asset('/dist/vendor/libs/kindeditor/lang/en.js') }}"></script>
+    @endif
 </body>
 </html>

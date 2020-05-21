@@ -10,7 +10,8 @@
         "lang_endpoint",
         "binding",
         "has_artisan_web_access",
-        "artisan_web_endpoint"
+        "artisan_web_endpoint",
+        "broadcast"
     ],
     "protected_packageLocal_key": [
         "name",

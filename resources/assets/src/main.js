@@ -11,6 +11,33 @@ import Vuelidate from 'vuelidate';
 import Notifications from 'vue-notification';
 // import 'node_modules/nprogress/nprogress.css';
 import Toasted from 'vue-toasted';
+import Echo from 'laravel-echo';
+
+if(globals().AppConfig.system.broadcast.services_enabled.pusher){
+    /**
+     * Echo exposes an expressive API for subscribing to channels and listening
+     * for events that are broadcast by Laravel. Echo and event broadcasting
+     * allows your team to easily build robust real-time web applications.
+     */
+    var echoConfig = {
+        broadcaster: 'pusher',
+        key: process.env.MIX_PUSHER_APP_KEY,
+        cluster: process.env.MIX_PUSHER_APP_CLUSTER,
+        enabledTransports: ['ws','wss'],
+        disableStats: true,
+        forceTLS: process.env.LARAVEL_WEBSOCKETS_SSL?true:false
+    };
+
+    if(globals().AppConfig.system.broadcast.local_server_enabled){
+        echoConfig.wsHost = window.location.hostname;
+        echoConfig.wssPort = window.location.hostname;
+        echoConfig.wsPort = process.env.LARAVEL_WEBSOCKETS_PORT?process.env.LARAVEL_WEBSOCKETS_PORT:6001;
+        echoConfig.wssPort = process.env.LARAVEL_WEBSOCKETS_PORT?process.env.LARAVEL_WEBSOCKETS_PORT:6001;
+    }
+
+    window.Pusher = require('pusher-js');
+    window.Echo = new Echo(echoConfig);
+}
 
 // vue general global event bus
 window.EventBus = new Vue({store});
@@ -82,7 +109,7 @@ var VM = new Vue({
         this.Web.notify = this.$notify;
         this.Web.bvModal = this.$bvModal;
         this.Web.endpoint = this.AppConfig.endpoint; 
-        this.Web.multitenantConfig = this.AppConfig.system.web_admin.multitenant;
+        this.Web.multitenantConfig = this.AppConfig.system.multitenant;
         
         //initiate language helper
         this.Trans.store = this.$store;
@@ -114,7 +141,7 @@ var VM = new Vue({
             
             //set token LocalApi jika sudah login
             if(this.UserAuth.isLogin()){
-                this.LocalApi.defaults.headers.common['Authorization'] = 'Bearer ' + this.UserAuth.getToken();
+                this.LocalApi.defaults.headers.common['Authorization'] = 'Bearer ' + this.UserAuth.getToken();                
             }
 
             if(this.AppConfig.system.has_acl && this.UserAuth.isLogin()){
@@ -132,7 +159,7 @@ var VM = new Vue({
             //initialsize vuex template
             this.Web.initTemplateState();
         }
-
+        //this.Brodcast.init();
         EventBus.$emit('onCreated');
     },
     render: h => h(App)

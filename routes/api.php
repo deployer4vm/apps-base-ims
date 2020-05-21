@@ -56,9 +56,9 @@ $group = [
 ];
 Route::group($group,function(){  
     // /api/sys/tenant/active
-    Route::get(config('AppConfig.system.web_admin.multitenant.api_endpoint.tenant_active'),'TenantController@activeTenant');    
+    Route::get(config('AppConfig.system.multitenant.api_endpoint.tenant_active'),'TenantController@activeTenant');    
     // /api/sys/tenant/group
-    Route::get(config('AppConfig.system.web_admin.multitenant.api_endpoint.tenant_group'),'TenantController@tenantGroupList');
+    Route::get(config('AppConfig.system.multitenant.api_endpoint.tenant_group'),'TenantController@tenantGroupList');
     //----read tenant resource
     //list tenant - /api/sys/tenant
     Route::get('/','TenantController@listTenant');
@@ -71,3 +71,10 @@ Route::group($group,function(){
 // /api/sys/lang
 Route::get(config('AppConfig.system.lang_endpoint'),'LangController@readList');
 Route::get('sys/lang','LangController@readList');
+
+/**
+ * kindeditor
+ * -------------------------------------------------
+ */
+Route::match(['post','get'],config('AppConfig.system.editor_endpoint.upload','sys/editor/upload'),'KindeditorController@upload')->name('sys.editor.upload');
+Route::match(['post','get'],config('AppConfig.system.editor_endpoint.filemanager','sys/editor/filemanager'),'KindeditorController@filemanager')->name('sys.editor.filemanager');

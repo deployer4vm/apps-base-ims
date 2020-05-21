@@ -128,16 +128,18 @@ class RouteServiceProvider extends ServiceProvider
          */
         
         //jika full_vue aktif maka load route config nya
-        if(config('AppConfig.system.web_admin.full_vue')){
-            $adminEndpoint = config('AppConfig.client.endpoint.laravel.'.config('AppConfig.system.mode').'.admin');
+        if(config('AppConfig.system.web_admin.full_vue')){            
+            $adminEndpoint = config('AppConfig.endpoint.laravel.admin.app');
             if($adminEndpoint!='/' && !empty($adminEndpoint)){
-                Route::get($adminEndpoint, function(){
+                Route::middleware('web')
+                ->get($adminEndpoint, function(){
                     return view('layouts.full_vue.main');
                 });
             }else{
                 $adminEndpoint = '';
             }
-            Route::get($adminEndpoint.'{any}', function(){
+            Route::middleware('web')
+            ->get($adminEndpoint.'{any}', function(){
                 return view('layouts.full_vue.main');
             })->where('any', '.*');
         }

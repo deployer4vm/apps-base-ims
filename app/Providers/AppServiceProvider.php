@@ -2,8 +2,12 @@
 
 namespace App\Providers;
 
+use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+
+use App\Mixins\RouterMixin;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,7 +45,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // bind config binding per tenant
-        if(config('AppConfig.system.web_admin.multitenant.active'))$this->bindTenant();
+        if(config('AppConfig.system.multitenant.active'))$this->bindTenant();
 
     }
 
@@ -62,7 +66,7 @@ class AppServiceProvider extends ServiceProvider
                 // $this->app->extend($class, function ($service, $app) use ($newClass) {
                 //     return new $newClass($service);
                 // });
-                $this->app->bind($class, function ($app,$args) use ($newClass) {
+                $this->app->bind($controller, function ($app,$args) use ($newClass) {
                     if(empty($args))return new $newClass();
                     return new $newClass(...$args);
                 });
@@ -78,5 +82,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         Schema::defaultStringLength(191);
+        Router::mixin(new RouterMixin());
     }
 }
