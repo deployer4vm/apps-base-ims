@@ -36,4 +36,14 @@ class BaseModel extends Model
             return !in_array($v,$guarded);
         });
     }
+    
+    public function createdby()
+    {
+        return $this->belongsTo('hpsynapse\moduser\Models\User', 'created_by', 'id');
+    }
+        
+    public function updatedby()
+    {
+        return $this->belongsTo('hpsynapse\moduser\Models\User', 'updated_by', 'id');
+    }
 }

@@ -58,7 +58,13 @@ localapi.defaults.baseURL = "/";//AppConfig.client.endpoint[AppConfig.system.mod
 localapi.defaults.headers.get["Accepts"] = "application/json";
 localapi.defaults.headers.common['Content-Type'] = 'multipart/form-data';
 localapi.interceptors.response.use((response) => response, (error) => {    
-    if(error.response && error.response.data && error.response.data.message && error.response.data.errors && error.response.data.status) {
+    if(
+        error.response && 
+        error.response.data && 
+        error.response.data.message && 
+        error.response.data.errors && 
+        error.response.data.status
+    ) {
         let err = localapi.parseError(error.response);
         //jika error token expired/auth gagal maka logoutkan
         if(err.status == 401){
@@ -77,8 +83,8 @@ localapi.interceptors.response.use((response) => response, (error) => {
             }
         }else{
             err.errClass = error;
-            throw err;
         }
+        throw err;
     }else{
         throw error;
     }
@@ -111,16 +117,25 @@ let formater = {}
  */
 formater.config = {
     currencyMask : {
-        prefix: 'Rp. ',allowDecimal : true, decimalSymbol:',',thousandsSeparatorSymbol: '.',decimalLimit: 2
+        prefix: 'Rp. ',
+        allowDecimal : true, 
+        decimalSymbol:',',
+        thousandsSeparatorSymbol: '.',
+        decimalLimit: 2,
+        allowNegative: true
     },
     numberMask : {
-        prefix: '',allowDecimal : false, thousandsSeparatorSymbol: '.'
+        prefix: '',
+        allowDecimal : false, 
+        thousandsSeparatorSymbol: '.',
+        allowNegative: true
     },
     decimalMask : {
         prefix: '',allowDecimal : true, 
         decimalSymbol:',',
         thousandsSeparatorSymbol: '.',
-        decimalLimit: 2
+        decimalLimit: 2,
+        allowNegative: true
     },
     formatDate : 'DD-MM-YYYY'
 };
@@ -132,6 +147,14 @@ formater.format = {
         formater.config.currencyMask.decimalLimit = limit;
         formater.config.decimalMask.decimalLimit = limit;
         formater.format.currencyMask = textMaskAddons.createNumberMask(formater.config.currencyMask);
+        formater.format.decimalMask = textMaskAddons.createNumberMask(formater.config.decimalMask);
+    },
+    setAllowNegative(allowNegative=true) {
+        formater.config.currencyMask.allowNegative = allowNegative;
+        formater.config.numberMask.allowNegative = allowNegative;
+        formater.config.decimalMask.allowNegative = allowNegative;
+        formater.format.currencyMask = textMaskAddons.createNumberMask(formater.config.currencyMask);
+        formater.format.numberMask = textMaskAddons.createNumberMask(formater.config.numberMask);
         formater.format.decimalMask = textMaskAddons.createNumberMask(formater.config.decimalMask);
     },
     setThousandsSeparatorSymbol(simbol) {
@@ -149,17 +172,31 @@ formater.format = {
         formater.config.decimalMask.decimalSymbol = simbol;
         formater.format.currencyMask = textMaskAddons.createNumberMask(formater.config.currencyMask);
         formater.format.decimalMask = textMaskAddons.createNumberMask(formater.config.decimalMask);
-    },
-    currencyMask: textMaskAddons.createNumberMask(formater.config.currencyMask),        
-    numberMask: textMaskAddons.createNumberMask(formater.config.numberMask),//mask without decimal
-    decimalMask: textMaskAddons.createNumberMask(formater.config.decimalMask)//mask with decimal
+    },    
+    // -- set mask dengan global config
+    currencyMask: textMaskAddons.createNumberMask(formater.config.currencyMask),
+    numberMask: textMaskAddons.createNumberMask(formater.config.numberMask),//mask without decimal 
+    decimalMask: textMaskAddons.createNumberMask(formater.config.decimalMask),//mask with decimal 
+    // -- set mask dengan config tambahan/update an
+    currencyMaskWithConfig: function(addsConfig){
+        let config = _.merge(formater.config.currencyMask,addsConfig);
+        return textMaskAddons.createNumberMask(config);
+    },    
+    numberMaskWithConfig: function(addsConfig){
+        let config = _.merge(formater.config.numberMask,addsConfig);
+        return textMaskAddons.createNumberMask(config);
+    },    
+    decimalMaskWithConfig: function(addsConfig){
+        let config = _.merge(formater.config.decimalMask,addsConfig);
+        return textMaskAddons.createNumberMask(config);
+    },     
 };
 
 /**
  * format function nya
  */
 
-formater.formatPrice = function(number) {
+formater.formatCurrency = function(number) {
     if(isNaN(number))number = formater.resetNumber(number);
 
     if(formater.config.currencyMask.decimalSymbol == ','){
@@ -174,6 +211,8 @@ formater.formatPrice = function(number) {
             {guide: false}
         ).conformedValue;
 };
+
+formater.formatPrice = formater.formatCurrency;
 
 formater.formatNumber = function(number) {
     if(isNaN(number))number = formater.resetNumber(number);
@@ -208,7 +247,7 @@ formater.resetNumber = function(number) {
     if(!(typeof number === 'string'))return number;
     number = String(number);
     number = number.replace(formater.config.currencyMask.prefix, "");
-    number = number.replace(/[^0-9,.]/g, "");
+    number = number.replace(/[^0-9,.-]/g, "");
 
     if(formater.config.decimalMask.decimalSymbol == ','){
         number = number.replace(/\./g, "").replace(/,/g,'.');
@@ -243,6 +282,7 @@ export default function () {
 
         //formater
         Format: formater,
+        moment: window.moment,
 
         //downloader
         download: function(path,filename) {    

@@ -5,6 +5,8 @@ namespace App\Console;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
+use App\Jobs\PruneTelescope;
+
 class Kernel extends ConsoleKernel
 {
     /**
@@ -35,6 +37,9 @@ class Kernel extends ConsoleKernel
         if(config('AppConfig.packageLocal.moduser.broadcast.local_server_enabled')){
             $schedule->command('websockets:serve')->everyMinute()->withoutOverlapping();
         }
+
+        // run telescope prune 1 minggu sekali (sunday at 00:00)
+        $schedule->job(new PruneTelescope)->weekly()->withoutOverlapping();
     }
 
     /**

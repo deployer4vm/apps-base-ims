@@ -178,6 +178,7 @@ return [
         App\Providers\ViewServiceProvider::class,
         App\Providers\TranslationServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        App\Providers\TelescopeServiceProvider::class,
         App\MainApp\Providers\AppServiceProvider::class,
 
     ],

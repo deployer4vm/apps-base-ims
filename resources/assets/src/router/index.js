@@ -109,7 +109,7 @@ router.afterEach((to, from) => {
             if (op <= 0.1){
                 clearInterval(timer);
                 splashScreen.style.opacity = 0; 
-                splashScreen.parentNode.removeChild(splashScreen);
+                if(splashScreen.parentNode)splashScreen.parentNode.removeChild(splashScreen);
             }
             splashScreen.style.opacity = op;
             splashScreen.style.filter = 'alpha(opacity=' + op * 100 + ")";

@@ -13,6 +13,10 @@ let AppConfig = {
     acl: require("../../../app/MainApp/config/_acl.json")
 };
 
+AppConfig.isModuleEnable = function(module) {
+    return AppConfig.packageLocal[module] && AppConfig.packageLocal[module].enable;
+};
+
 AppConfig['sidenavOri'] = JSON.parse(JSON.stringify(AppConfig.sidenav));
 
 // let varPackageLocal = require("../../../app/MainApp/config/packageLocal.json");

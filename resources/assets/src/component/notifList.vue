@@ -35,6 +35,9 @@
     </b-card>
 </template>
 <script>
+/**
+ * NOTIF LIST DI DASHBOARD
+ */
 export default {
     props: ['limit'],
     data() {
@@ -60,7 +63,8 @@ export default {
             let filterParams = {params: {limit: this.noitfLimit}};
             this.LocalApi.get(this.AppConfig.endpoint.api.moduser + "/notification" , filterParams)
                 .then(res => {
-                    that.notif = res.data.data;
+                    if(res)
+                        that.notif = res.data.data;
                 });
         }
     }
