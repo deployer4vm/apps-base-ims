@@ -58,7 +58,7 @@ trait ResExportTrait {
      */
     public function getExportTemplate()
     {
-        return $this->_exportAddsJobsParam;
+        return $this->_exportTemplate;
     }
     public function getExportTemplateStartRow()
     {

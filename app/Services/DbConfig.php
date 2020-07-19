@@ -1,0 +1,220 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\MConfig;
+use App\Base\BaseRepository;
+
+class DbConfig extends BaseRepository
+{   
+    private $tenantId = 0;//defaultnya all tenant
+
+    /**
+     * set default tenant id yg digukana jika tenant tidak/belum diload
+     */
+    public function setDefaultTenantId(int $tenantId = 0)
+    {
+        $this->tenantId = $tenantId;
+    }
+
+    /**
+     * get / set config
+     * 
+     * @param string    $group          grup config
+     * @param string    $key            key config
+     * @param mix       $default        default value yang diset jika key tidak ada, isi null jika
+     *                                  tidak set default value
+     * @param boolean   $saveDefault    default value yang diset jika key tidak ada
+     * 
+     * @return mix|null                 null jika gagal, $default value yang diset jika berhasil
+     */
+    public function getConfig(string $group,string $key,$default=null,$saveDefault=true)  
+    {        
+        return $this->_getConfig($group,$key,$default,$saveDefault,config('tenant.id',$this->tenantId));
+    }
+
+    /**
+     * get / set config
+     * 
+     * @param string    $group          grup config
+     * @param string    $key            key config
+     * @param mix       $default        default value yang diset jika key tidak ada, isi null jika
+     *                                  tidak set default value
+     * @param boolean   $saveDefault    default value yang diset jika key tidak ada
+     * 
+     * @return mix|null                 null jika gagal, $default value yang diset jika berhasil
+     */
+    public function getGlobalConfig(string $group,string $key,$default=null,$saveDefault=true)  
+    {        
+        return $this->_getConfig($group,$key,$default,$saveDefault,0);
+    }
+
+
+    /**
+     * main get / set config function
+     * 
+     * @param string    $group          grup config
+     * @param string    $key            key config
+     * @param mix       $default        default value yang diset jika key tidak ada, isi null jika
+     *                                  tidak set default value
+     * @param boolean   $saveDefault    default value yang diset jika key tidak ada
+     * @param integer   $tenantId       tenant id, 0 jika global (all tenant)
+     * 
+     * @return mix|null                 null jika gagal, $default value yang diset jika berhasil
+     */
+    private function _getConfig(string $group,string $key,$default=null,$saveDefault=true, $tenantId = 0)  
+    {        
+        $model = MConfig::whereIn('tenant_id',$tenantId)->where('group',$group)->where('key',$key)->first();
+        if($model){
+            $default = $model->value;
+        }else{
+            if($default!=null && $saveDefault && $key)
+                $this->setGlobalConfig($group,$key,$default); 
+        }
+        return $default;
+    }
+
+    /**
+     * amblis list config per group
+     * 
+     * @param string    $group      grup config
+     * 
+     * @return array                array list config, dengan format [['key'=>'value']]
+     */
+    public function listConfig(string $group)  
+    {        
+        return $this->_listConfig($group,config('tenant.id',$this->tenantId)) ;
+    }
+
+    /**
+     * amblis list config per group
+     * 
+     * @param string    $group      grup config
+     * 
+     * @return array                array list config, dengan format [['key'=>'value']]
+     */
+    public function listGlobalConfig(string $group)  
+    {   
+        return $this->_listConfig($group,0) ;
+    }
+
+    /**
+     * main list config per group function
+     * 
+     * @param string    $group      grup config
+     * @param integer   $tenantId       tenant id, 0 jika global (all tenant)
+     * 
+     * @return array                array list config, dengan format [['key'=>'value']]
+     */
+    private function _listConfig(string $group,$tenantId = 0)  
+    {        
+        $list = $this->_list(new Mconfig, [
+            ['tenant_id',$tenantId],
+            ['group',$group]
+        ]);
+
+        $data = [];
+
+        if($list['count']){
+            foreach ($list['data'] as $key => $value) {
+                $data[$value['key']] = $value['value'];
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * save config
+     * 
+     * @param string            $group      grup config
+     * @param string            $key        key config
+     * @param mix               $value      value yang diset
+     * 
+     * @return mix|boolean                  false jika gagal, value yang diset jika berhasil
+     */
+    public function setConfig(string $group,string $key, $value) 
+    {        
+        return $this->_setConfig($group,$key, $value,config('tenant.id',$this->tenantId));
+    }
+
+    
+    /**
+     * save config di all tenant
+     * 
+     * @param string            $group      grup config
+     * @param string            $key        key config
+     * @param mix               $value      value yang diset
+     * 
+     * @return mix|boolean                  false jika gagal, value yang diset jika berhasil
+     */
+    public function setGlobalConfig(string $group,string $key, $value) 
+    {        
+        return $this->_setConfig($group,$key, $value,0);
+    }
+
+    /**
+     * main save config function
+     * 
+     * @param string            $group      grup config
+     * @param string            $key        key config
+     * @param mix               $value      value yang diset
+     * @param integer           $tenantId   tenant id, 0 jika all tenant
+     * 
+     * @return mix|boolean                  false jika gagal, value yang diset jika berhasil
+     */
+    private function _setConfig(string $group,string $key, $value, $tenantId = 0) 
+    {        
+        $oldConfig = $this->getConfig($group,$key);
+
+        //jika config sudah ada maka update data nya
+        if($oldConfig){
+            return $this->_update(new Mconfig,[
+                ['tenant_id',$tenantId],
+                ['group',$group],
+                ['key',$key],
+            ],[
+                'value' => $value
+            ]);
+        //jika belum ada maka create
+        }else{
+            return $this->_create(new Mconfig,[
+                'tenant_id' => $tenantId,
+                'group' => $group,
+                'key' => $key,
+                'value' => $value
+            ]);
+
+        }
+    }
+
+    /**
+     * delete config
+     * 
+     * @param string            $group      grup config
+     * @param string            $key        key config
+     */
+    public function deleteConfig(string $group,string $key) 
+    {                
+        return $this->_delete(new Mconfig,[
+            ['tenant_id',config('tenant.id',$this->tenantId)],
+            ['group',$group],
+            ['key',$key],
+        ]); 
+    }
+
+    /**
+     * delete config di all tenant
+     * 
+     * @param string            $group      grup config
+     * @param string            $key        key config
+     */
+    public function deleteGlobalConfig(string $group,string $key) 
+    {                
+        return $this->_delete(new Mconfig,[
+            ['tenant_id',0],
+            ['group',$group],
+            ['key',$key],
+        ]); 
+    }
+}

@@ -29,7 +29,11 @@ return [
     'bindings' => [
         'controller'=>[],
         'interface'=>[
-            'App\\Contracts\\Excel'=>'App\\Services\\Excel'
+            'App\\Contracts\\Tenant'=>'App\\Services\\Tenant',
+            'App\\Contracts\\Excel'=>'App\\Services\\Excel',
+            'App\\Contracts\\Backup'=>'App\\Services\\Backup',
+            'App\\Contracts\\CacheConfig'=>'App\\Services\\CacheConfig',
+            'App\\Contracts\\DbConfig'=>'App\\Services\\DbConfig'
         ],
         'route'=>[]
     ],

@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 // use Illuminate\Support\Facades\Auth;
-use App\Models\Tenant;
+use App\Facades\Tenant;
 
 class AppGroupCheck
 {
@@ -23,11 +23,8 @@ class AppGroupCheck
                     $appGroup = $request->input('group_app');
                 }
             }    
-            if($appGroup && $tenant = Tenant::where('group_app',$appGroup)->first()){                
-                resolve('bindTenant',['tenant_id'=>$tenant->id]);
-                $config = app('config');
-                $config->set('tenant',$tenant->toArray());
-            }    
+            if($appGroup)
+                Tenant::setActiveTenantByGroup($appGroup);  
         }
         return $next($request);
     }

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Models\MConfig;
+use App\Facades\DbConfig;
+use App\Facades\CacheConfig;
 
 use App\Base\BaseController;
 
@@ -85,14 +87,20 @@ class ConfigController extends BaseController
 
      public function accessConfig(Request $request)
      {
-        if(!($config = $this->_getCache('generalconfig','accesss'))){
-            $config = [
-                'allow_login' => 1,
-                'allow_login_exept' => [],
-                'allow_login_only' => []
-            ];           
-            $this->_saveCache('generalconfig','accesss',$config); 
-        }
+        // if(!($config = $this->_getCache('generalconfig','accesss'))){
+        //     $config = [
+        //         'allow_login' => 1,
+        //         'allow_login_exept' => [],
+        //         'allow_login_only' => []
+        //     ];           
+        //     $this->_saveCache('generalconfig','accesss',$config); 
+        // }
+
+        $config = CacheConfig::getConfig('accesss',[
+            'allow_login' => 1,
+            'allow_login_exept' => [],
+            'allow_login_only' => []
+        ]);
 
         $this->output['data'] = $config;//UserAuth::getAccessConfig();
          return $this->done();
@@ -105,7 +113,7 @@ class ConfigController extends BaseController
      {        
          $this->forceApiOutput();
  
-         UserAuth::unlockLogin();
+         \hpsynapse\moduser\Facades\UserAuth::unlockLogin();
          // $this->output['data'] = ;
          return $this->done();
      }

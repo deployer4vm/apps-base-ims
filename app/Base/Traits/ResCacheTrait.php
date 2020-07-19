@@ -233,6 +233,7 @@ trait ResCacheTrait {
         $fullPrefixKey = $fullPrefix.'.'.$key;
         
         Cache::store($this->cacheEngine)->forget($fullPrefixKey);
+        return true;
     }
     /*
      * CACHE ENGINE
