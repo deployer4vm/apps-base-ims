@@ -24,11 +24,13 @@ class ConfigController extends BaseController
     }
 
     /**
-     * GET - api list config (config yang disimpan didatabase)
+     * GET - /sys/config/
+     * api list config (config yang disimpan didatabase)
      * 
      * @param Request $request
      *      group *optional
      *      key *optional
+     *      tenant_id *optional
      *
      * @return array list data config
      */
@@ -36,11 +38,22 @@ class ConfigController extends BaseController
     {
         $model = new MConfig;
     
-        if($request->input('group',false)){
-            $model = $model->where('group',$request->input('group'));
+        $model = $model->where('tenant_id',$request->input('tenant_id',config('tenant.id',0)));
+
+        if($group = $request->input('group',false)){
+            if(is_array($group)){
+                $model = $model->whereIn('group',$group);
+            }else{
+                $model = $model->where('group',$group);
+            }
         }
-        if($request->input('key',false)){
-            $model = $model->where('key',$request->input('key'));
+        
+        if($key = $request->input('key',false)){
+            if(is_array($key)){
+                $model = $model->whereIn('key',$key);
+            }else{
+                $model = $model->where('key',$key);
+            }
         }
     
         $data = $model->get();           
@@ -49,7 +62,8 @@ class ConfigController extends BaseController
     }
 
     /**
-     * POST - create dan update
+     * POST - /sys/config/
+     * create or update
      * 
      * @param Request $request
      *      data array list data config yang akan di create / update
@@ -58,6 +72,7 @@ class ConfigController extends BaseController
      */
     public function createUpdate(Request $request)
     {
+        $tenantId = $request->input('tenant_id',config('tenant.id',0));
         if($data = $request->input('data',false)){
             foreach($data as $value){
                 $updateData = [];
@@ -66,7 +81,9 @@ class ConfigController extends BaseController
                 if(isset($value['value']))
                     $updateData['value'] = $value['value'];
                 if($updateData){
-                    $model = MConfig::where('group',$value['group'])->where('key',$value['key']);
+                    $model = MConfig::where('group',$value['group'])
+                        ->where('key',$value['key'])
+                        ->where('tenant_id',$tenantId);
                     if($model->exists()){
                         $model->update($updateData);
                     }else{
@@ -82,40 +99,44 @@ class ConfigController extends BaseController
     }
 
     /**
+     * GET - /sys/config/access
+     * 
      * manage access config
+     * 
+     * @return SynapseReturnFormat
      */
+    public function accessConfig(Request $request)
+    {
+    // if(!($config = $this->_getCache('generalconfig','accesss'))){
+    //     $config = [
+    //         'allow_login' => 1,
+    //         'allow_login_exept' => [],
+    //         'allow_login_only' => []
+    //     ];           
+    //     $this->_saveCache('generalconfig','accesss',$config); 
+    // }
 
-     public function accessConfig(Request $request)
-     {
-        // if(!($config = $this->_getCache('generalconfig','accesss'))){
-        //     $config = [
-        //         'allow_login' => 1,
-        //         'allow_login_exept' => [],
-        //         'allow_login_only' => []
-        //     ];           
-        //     $this->_saveCache('generalconfig','accesss',$config); 
-        // }
+    $config = CacheConfig::getConfig('accesss',[
+        'allow_login' => 1,
+        'allow_login_exept' => [],
+        'allow_login_only' => []
+    ]);
 
-        $config = CacheConfig::getConfig('accesss',[
-            'allow_login' => 1,
-            'allow_login_exept' => [],
-            'allow_login_only' => []
-        ]);
+    $this->output['data'] = $config;//UserAuth::getAccessConfig();
+        return $this->done();
+    }
 
-        $this->output['data'] = $config;//UserAuth::getAccessConfig();
-         return $this->done();
-     }
+    /**
+     * PUT - /sys/config/access
+     * Reset locking
+     */
+    public function unlockAccess(Request $request)
+    {        
+        $this->forceApiOutput();
 
-     /**
-      * Reset locking
-      */
-     public function unlockAccess(Request $request)
-     {        
-         $this->forceApiOutput();
- 
-         \hpsynapse\moduser\Facades\UserAuth::unlockLogin();
-         // $this->output['data'] = ;
-         return $this->done();
-     }
+        \hpsynapse\moduser\Facades\UserAuth::unlockLogin();
+        // $this->output['data'] = ;
+        return $this->done();
+    }
 
 }

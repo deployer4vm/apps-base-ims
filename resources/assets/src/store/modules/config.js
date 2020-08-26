@@ -30,20 +30,22 @@ const mutations = {
 
 const actions = {
     reloadConfig({commit,getters},data={}){
-        return axios.get(getters.apiEndpoint,{params: data}).then((val)=>{
-            commit('setConfig',val.data);            
-            return true;
-        }).catch((err)=>{
-            console.log('Config file error.');
-        });
+        return globals()
+            .LocalApi.get(getters.apiEndpoint,{params: data}).then((val)=>{
+                commit('setConfig',val.data);            
+                return true;
+            }).catch((err)=>{
+                console.log('Config file error.');
+            });
     },
     saveConfig({commit,getters},data={}){
-        return axios.post(getters.apiEndpoint,{data: data}).then((val)=>{
-            commit('setConfig',val.data);            
-            return true;
-        }).catch((err)=>{
-            console.log('Config file error.');
-        });
+        return globals()
+            .LocalApi.post(getters.apiEndpoint,{data: data}).then((val)=>{
+                commit('setConfig',val.data);            
+                return true;
+            }).catch((err)=>{
+                console.log('Config file error.');
+            });
     }
 };
 

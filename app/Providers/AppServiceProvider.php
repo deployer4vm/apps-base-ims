@@ -7,6 +7,9 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 use App\Mixins\RouterMixin;
 
 class AppServiceProvider extends ServiceProvider
@@ -83,5 +86,16 @@ class AppServiceProvider extends ServiceProvider
     {
         Schema::defaultStringLength(191);
         Router::mixin(new RouterMixin());
+        
+        // DB::listen(function ($query) {
+        //     // $query->sql
+        //     // $query->bindings
+        //     // $query->time
+        //     if(true){//stripos($query->sql,'absensi')!=false && stripos($query->sql,'select')===false){
+        //         $sql = str_replace('?', "'?'", $query->sql);
+        //         $sql = vsprintf(str_replace('?', '%s', $sql), $query->bindings);                
+        //         Log::info('[QUERY] : '.$sql);
+        //     }
+        // });
     }
 }

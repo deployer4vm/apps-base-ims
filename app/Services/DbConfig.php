@@ -7,10 +7,10 @@ use App\Base\BaseRepository;
 
 class DbConfig extends BaseRepository
 {   
-    private $tenantId = 0;//defaultnya all tenant
+    protected $tenantId = 0;//defaultnya all tenant
 
     /**
-     * set default tenant id yg digukana jika tenant tidak/belum diload
+     * set default tenant id yg digunakan jika tenant tidak/belum diload
      */
     public function setDefaultTenantId(int $tenantId = 0)
     {
@@ -60,18 +60,25 @@ class DbConfig extends BaseRepository
      * @param boolean   $saveDefault    default value yang diset jika key tidak ada
      * @param integer   $tenantId       tenant id, 0 jika global (all tenant)
      * 
-     * @return mix|null                 null jika gagal, $default value yang diset jika berhasil
+     * @return string|null                 null jika gagal, $default value yang diset jika berhasil
      */
     private function _getConfig(string $group,string $key,$default=null,$saveDefault=true, $tenantId = 0)  
     {        
-        $model = MConfig::whereIn('tenant_id',$tenantId)->where('group',$group)->where('key',$key)->first();
-        if($model){
-            $default = $model->value;
+        // $model = MConfig::where('tenant_id',$tenantId)->where('group',$group)->where('key',$key)->first();
+        $data = $this->_getOne(new MConfig,[
+            ['tenant_id',$tenantId],
+            ['group',$group],
+            ['key',$key]
+        ]);
+
+        if($data){
+            $default = $data['value'];
         }else{
             if($default!=null && $saveDefault && $key)
-                $this->setGlobalConfig($group,$key,$default); 
+                $this->_setConfig($group,$key,$default,$tenantId); 
         }
-        return $default;
+
+        return isset($default['value'])?$default['value']:$default;
     }
 
     /**
@@ -79,7 +86,7 @@ class DbConfig extends BaseRepository
      * 
      * @param string    $group      grup config
      * 
-     * @return array                array list config, dengan format [['key'=>'value']]
+     * @return array                array list config, dengan format [['key'=>record config]]
      */
     public function listConfig(string $group)  
     {        
@@ -91,7 +98,7 @@ class DbConfig extends BaseRepository
      * 
      * @param string    $group      grup config
      * 
-     * @return array                array list config, dengan format [['key'=>'value']]
+     * @return array                array list config, dengan format [['key'=>record config]]
      */
     public function listGlobalConfig(string $group)  
     {   
@@ -104,7 +111,7 @@ class DbConfig extends BaseRepository
      * @param string    $group      grup config
      * @param integer   $tenantId       tenant id, 0 jika global (all tenant)
      * 
-     * @return array                array list config, dengan format [['key'=>'value']]
+     * @return array                array list config, dengan format [['key'=>record config]]
      */
     private function _listConfig(string $group,$tenantId = 0)  
     {        
@@ -117,7 +124,7 @@ class DbConfig extends BaseRepository
 
         if($list['count']){
             foreach ($list['data'] as $key => $value) {
-                $data[$value['key']] = $value['value'];
+                $data[$value['key']] = $value;
             }
         }
 
@@ -129,11 +136,11 @@ class DbConfig extends BaseRepository
      * 
      * @param string            $group      grup config
      * @param string            $key        key config
-     * @param mix               $value      value yang diset
+     * @param string|array      $value      value yang diset
      * 
      * @return mix|boolean                  false jika gagal, value yang diset jika berhasil
      */
-    public function setConfig(string $group,string $key, $value) 
+    public function setConfig(string $group,string $key,$value) 
     {        
         return $this->_setConfig($group,$key, $value,config('tenant.id',$this->tenantId));
     }
@@ -144,7 +151,7 @@ class DbConfig extends BaseRepository
      * 
      * @param string            $group      grup config
      * @param string            $key        key config
-     * @param mix               $value      value yang diset
+     * @param string|array      $value      value yang diset
      * 
      * @return mix|boolean                  false jika gagal, value yang diset jika berhasil
      */
@@ -158,7 +165,7 @@ class DbConfig extends BaseRepository
      * 
      * @param string            $group      grup config
      * @param string            $key        key config
-     * @param mix               $value      value yang diset
+     * @param string|array             $value      value yang diset
      * @param integer           $tenantId   tenant id, 0 jika all tenant
      * 
      * @return mix|boolean                  false jika gagal, value yang diset jika berhasil
@@ -174,7 +181,7 @@ class DbConfig extends BaseRepository
                 ['group',$group],
                 ['key',$key],
             ],[
-                'value' => $value
+                'value' => isset($value['name'])?$value['value']:$value
             ]);
         //jika belum ada maka create
         }else{
@@ -182,7 +189,8 @@ class DbConfig extends BaseRepository
                 'tenant_id' => $tenantId,
                 'group' => $group,
                 'key' => $key,
-                'value' => $value
+                'name' => isset($value['name'])?$value['name']:'',
+                'value' => isset($value['value'])?$value['value']:$value
             ]);
 
         }

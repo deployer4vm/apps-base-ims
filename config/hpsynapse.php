@@ -33,7 +33,8 @@ return [
             'App\\Contracts\\Excel'=>'App\\Services\\Excel',
             'App\\Contracts\\Backup'=>'App\\Services\\Backup',
             'App\\Contracts\\CacheConfig'=>'App\\Services\\CacheConfig',
-            'App\\Contracts\\DbConfig'=>'App\\Services\\DbConfig'
+            'App\\Contracts\\DbConfig'=>'App\\Services\\DbConfig',
+            'App\\Contracts\\Helper'=>'App\\Services\\Helper'
         ],
         'route'=>[]
     ],

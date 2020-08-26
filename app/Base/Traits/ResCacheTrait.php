@@ -86,8 +86,8 @@ trait ResCacheTrait {
      */
     protected function _saveCache($prefix,$key,$data,$expireDate=false)
     {        
-        if($this->skipCache)return false;   
-        if(!$this->cacheActive)return false;//$this->_saveCacheOnEngine($prefix,$key,$data,$expireDate);
+        if($this->skipCache)return null;   
+        if(!$this->cacheActive)return null;//$this->_saveCacheOnEngine($prefix,$key,$data,$expireDate);
         
         $fullPrefix = $this->cacheMainPrefix.'.'.$prefix;
         $fullPrefixKey = $fullPrefix.'.'.$key;
@@ -149,7 +149,7 @@ trait ResCacheTrait {
     protected function _getCache($prefix,$key,$defaultValue=null)
     {
         if($this->skipCache)return null;        
-        if(!$this->cacheActive)return false;//$this->_getCacheOnEngine($prefix,$key,$defaultValue);
+        if(!$this->cacheActive)return null;//$this->_getCacheOnEngine($prefix,$key,$defaultValue);
         
         $fullPrefix = $this->cacheMainPrefix.'.'.$prefix;
         $fullPrefixKey = $fullPrefix.'.'.$key;

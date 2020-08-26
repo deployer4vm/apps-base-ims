@@ -24,10 +24,18 @@ use Illuminate\Support\Facades\Route;
  */
 
 $group = [
-    'prefix' => config('AppConfig.system.config_endpoint'),
+    'prefix' => config('AppConfig.system.config_endpoint'),// default : /sys/config
 ];
 
 Route::group($group,function(){
+
+    //access config
+    Route::group(['prefix' => 'access'],function(){
+        Route::get('/', 'ConfigController@accessConfig');
+        Route::get('/unlock', 'ConfigController@unlockAccess');
+        Route::middleware('auth:api')->put('/', 'ConfigController@unlockAccess');
+    });
+    
     //db config
     Route::group([
             'middleware' => 'auth:api'
@@ -35,13 +43,6 @@ Route::group($group,function(){
         Route::get('/', 'ConfigController@readList');
         //create atau update config
         Route::post('/', 'ConfigController@createUpdate');
-    });
-
-    //access config
-    Route::group(['prefix' => 'access'],function(){
-        Route::get('/', 'ConfigController@accessConfig');
-        Route::get('/unlock', 'ConfigController@unlockAccess');
-        Route::middleware('auth:api')->put('/', 'ConfigController@unlockAccess');
     });
 
 });

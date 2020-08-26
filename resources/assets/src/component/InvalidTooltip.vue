@@ -1,5 +1,5 @@
 <template>
-    <div class="invalid-tooltip" v-if="inputItem.$error">
+    <div class="invalid-tooltip" style="display: block;" v-if="inputItem.$error">
         <ul class="m-0 pl-3">
             <li v-for="(item, key) in inputItem.$params" v-if="!inputItem[key]">
                 {{ alertItem[key] }}

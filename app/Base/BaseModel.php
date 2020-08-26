@@ -6,6 +6,8 @@ use DateTimeInterface;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
 
+use App\Facades\CacheConfig;
+
 class BaseModel extends Model
 {
     /**
@@ -29,6 +31,18 @@ class BaseModel extends Model
 
     public function setAutoFillable()
     {
+        // $tableName = $this->getTable();
+        // $guarded = $this->getGuarded();
+        // $fillable = CacheConfig::getConfig('autoFillable-'.$tableName,false,false);
+        // if(!$fillable){
+        //     $fields = Schema::getColumnListing($tableName);
+        //     $fillable = array_filter($fields,function($v) use ($guarded) {
+        //         return !in_array($v,$guarded);
+        //     });
+        //     CacheConfig::setConfig('autoFillable-'.$tableName,$fillable);
+        //     dd($fillable);
+        // }
+        // return $fillable;
         //set fillable sesuai field didatabasenya
         $fields = Schema::getColumnListing($this->getTable());
         $guarded = $this->getGuarded();

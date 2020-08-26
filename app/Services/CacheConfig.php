@@ -7,6 +7,7 @@ use App\Base\BaseRepository;
 class CacheConfig extends BaseRepository
 {   
     protected $cacheActive = true;
+    protected $skipCache = false;
     private $groupKey = 'generalconfig';
 
     /**
@@ -21,9 +22,10 @@ class CacheConfig extends BaseRepository
      */
     public function getConfig($key,$default=null,$saveDefault=true) 
     {
-        if(!($config = $this->_getCache($this->groupKey,$key))){
-            if($default!=null && $saveDefault)
+        if(is_null($config = $this->_getCache($this->groupKey,$key))){
+            if(!is_null($default) && $saveDefault)
                 $this->_saveCache($this->groupKey,$key,$default); 
+            $config = $default;
         }
         return $config;
     }

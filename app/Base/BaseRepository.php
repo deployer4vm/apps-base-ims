@@ -361,6 +361,18 @@ abstract class BaseRepository {
         return $this->paginationDefault;
     }
 
+    protected $triggerEvent = true;
+    
+    public function enableEvent()
+    {
+        $this->triggerEvent = true;
+    }
+
+    public function disableEvent()
+    {
+        $this->triggerEvent = false;
+    }
+
     /*
      * MAIN FUNCTION
      * -------------------------------------------------------------------------
@@ -578,10 +590,12 @@ abstract class BaseRepository {
      * 
      * @param eloquen instance $model model data yang digunakan
      * @param array $filter filter data jika ada
-     *      q string jika menyertakan ini maka akan dilakuan string filter berdasarkan field $searchField     * 
-     *      function function($model) filter tambahan jika diperlukan
-     *      searchField array list field/column yg termasuk kedalam filter search
-     *      hiddenColumn array list field/column yg di hidde * -- HINDARI PENGGUNAAN HIDDEN COLUMN UNTUK DATA BESAR
+     *      tenantId|tenant_id       bigint              id tenant yang di filter
+     *      q                       string              jika menyertakan ini maka akan dilakuan string filter berdasarkan field $searchField     * 
+     *      function                function($model)    filter tambahan jika diperlukan
+     *      searchField             array               list field/column yg termasuk kedalam filter search
+     *      hiddenColumn            array               list field/column yg di hidde * -- HINDARI PENGGUNAAN HIDDEN COLUMN UNTUK DATA BESAR
+     *      append                  array|string        lilst custom attribute yg akan ditampilkan
      *     
      *      ADDITIONAL_PARAM array where untuk default filter
      * 
@@ -604,11 +618,16 @@ abstract class BaseRepository {
         }
 
         $hiddenColumn = null;
+        $appendAttribut = null;
         if (!empty($filter)) {
             $model = $this->_filter($model,$filter);            
             if (isset($filter['hiddenColumn'])) {                
                 $hiddenColumn = $filter['hiddenColumn'];
                 unset($filter['hiddenColumn']);
+            }          
+            if (isset($filter['append'])) {                
+                $appendAttribut = $filter['append'];
+                unset($filter['append']);
             }
             unset($filter);
         }
@@ -634,7 +653,12 @@ abstract class BaseRepository {
         if ($model) {
             // $this->pagination['query'] = $model->toSql();
             // $this->pagination['queryBindings'] = $model->getBindings();
-            $this->pagination['data'] = $model->get()->toArray();
+            if($appendAttribut){
+                $this->pagination['data'] = $model->get()->append($appendAttribut)->toArray();
+            }else{
+                $this->pagination['data'] = $model->get()->toArray();
+            }
+            
             //jika menyertakan hiddeColumn berarti ada column yg di hide
             if ($hiddenColumn) {
                 $collection = collect($this->pagination['data']);
@@ -662,8 +686,13 @@ abstract class BaseRepository {
         if(empty($filter['q']))
             unset($filter['q']);
 
-        if(empty($filter['hiddenColumn']))
+        //hiddenColumn digunakan di filter saat result
+        if(isset($filter['hiddenColumn']) || empty($filter['hiddenColumn']))
             unset($filter['hiddenColumn']);
+
+        //append digunakan di filter saat result
+        if (isset($filter['append']))
+            unset($filter['append']);
 
         if(empty($filter['searchField']))
             unset($filter['searchField']);
@@ -673,19 +702,24 @@ abstract class BaseRepository {
             unset($filter['q']);
         }
 
+        if (isset($filter['tenant_id'])) {
+            $filter[] = ['tenant_id',$filter['tenant_id']];
+            unset($filter['tenant_id']);
+        }else if (isset($filter['tenantId'])) {
+            $filter[] = ['tenant_id',$filter['tenantId']];
+            unset($filter['tenantId']);
+        }
+
         if (isset($filter['searchField'])) {
             $searchField = $filter['searchField'];
             unset($filter['searchField']);
         }
+
         if (isset($filter['function'])) {
             $model = $filter['function']($model);
             unset($filter['function']);
-        }            
-
-        //hiddenColumn digunakan di filter saat result
-        if (isset($filter['hiddenColumn']))
-            unset($filter['hiddenColumn']);
-        
+        }
+                
         if (isset($filter))
             $model = $this->_where($model, $filter);
                 
