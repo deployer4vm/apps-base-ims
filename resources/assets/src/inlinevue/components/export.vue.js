@@ -65,7 +65,7 @@ var cExport = Vue.component("c-export", {
             },
             config: {
                 btnVariant: {
-                    btn: true, 'btn-success':true, 'btn-md':true, 'd-inline-blcok': true
+                    btn: true, 'btn-success':true, 'btn-sm':true, 'd-inline-blcok': true
                 },
                 showLog: true
             }

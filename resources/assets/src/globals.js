@@ -244,6 +244,7 @@ formater.formatDate = function(dateString) {
 };
 
 formater.resetNumber = function(number) {
+    if(number == 0)return 0;
     if(!(typeof number === 'string'))return number;
     number = String(number);
     number = number.replace(formater.config.currencyMask.prefix, "");
