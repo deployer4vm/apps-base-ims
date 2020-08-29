@@ -7,13 +7,13 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Facades\App\Services\Backup;
+use App\Facades\Backup;
 use Exception;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-use Facades\hpsynapse\moduser\Services\UserAuth;
+use hpsynapse\moduser\Facades\UserAuth;
 
 use Carbon\Carbon;
 

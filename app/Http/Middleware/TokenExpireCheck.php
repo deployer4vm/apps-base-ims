@@ -3,7 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Facades\hpsynapse\moduser\Services\UserAuth;
+use hpsynapse\moduser\Facades\UserAuth;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
