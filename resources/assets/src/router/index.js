@@ -48,6 +48,7 @@ router.afterEach((to, from) => {
 
         //jika tidak mengakses tenant tapi sebelumnya sudah ada tenant yg aktif maka redirect ke tenant tersebut
         }else if(to.params.group_app==undefined){
+            console.log('go to previouse active tenant (from main router)');
             globals().Web.goToCurrentTenant();
             return;
 
@@ -56,6 +57,7 @@ router.afterEach((to, from) => {
             console.log('load tenant baru : ',to.params);
             globals().Web.loadTenant(to.params.group_app).then((val)=>{
                 console.log('tenant baru : ',val);
+                EventBus.$emit('onTenantChange',val);
                 //jika tenant tidak ditemukan
                 if(!val){                    
                     //jika tenant yang tidak ditemukan adalah default tenant maka error

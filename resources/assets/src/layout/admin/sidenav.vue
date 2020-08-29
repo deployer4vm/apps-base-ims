@@ -232,7 +232,7 @@ export default {
             var arr = this.tenantGroup;
             return curGroup.some(r => arr.indexOf(r) >= 0);
         },
-        isMenuActive(route) {
+        isMenuActive(route,viewLog=false) {
             let routePath = "";
             if (typeof route == "string") {
                 routePath = route;
@@ -240,14 +240,15 @@ export default {
                 let routePathObj = this.$router.resolve(route);
                 routePath = routePathObj.route.path;
             }
-            // console.log(routePath,this.Web.curEndpoint,this.Web.isOnEndpoint(routePath));
+            if(viewLog)
+                console.log(routePath,this.Web.curEndpoint,this.$router.currentRoute.path,this.Web.isOnEndpoint(routePath));
             return routePath == "/" && this.Web.curEndpoint != "/"
                 ? false
-                : this.Web.isOnEndpoint(routePath);
+                : routePath==this.Web.curEndpoint || this.Web.isOnEndpoint(routePath);
         },
-        isMenuOpen(route) {
+        isMenuOpen(route,viewLog=false) {
             return (
-                this.isMenuActive(route) && this.orientation !== "horizontal"
+                this.isMenuActive(route,viewLog) && this.orientation !== "horizontal"
             );
         },
         toggleSidenav() {

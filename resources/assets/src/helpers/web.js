@@ -80,6 +80,7 @@ export default {
     },  
     goTo(routeName,groupApp=false) {
         if(groupApp==false)groupApp = this.getTenantGroupApp();
+        console.log('go to : ', this.router.resolve({name: routeName,params:{group_app: groupApp}}));
         this.router.push({name: routeName,params:{group_app: groupApp}});
     },   
     /*

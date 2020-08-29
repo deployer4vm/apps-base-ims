@@ -492,7 +492,7 @@ abstract class BaseRepository {
 
         foreach ($where as $value) {
             //jika value[1] tidak ada kemungkinan ada yang keliru input format, maka langsung tolak
-            if(!array_key_exists(1,$value))return $model;
+            if(!is_array($value) || !array_key_exists(1,$value))return $model;
 
             //jika sudah tidak nested maka langsung proses
             if (is_array($value) && !is_array($value[0]) && strtolower($value[0]) != 'or') {
