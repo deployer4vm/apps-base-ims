@@ -141,9 +141,10 @@ var VM = new Vue({
             
             //set token LocalApi jika sudah login
             if(this.UserAuth.isLogin()){
-                this.LocalApi.defaults.headers.common['Authorization'] = 'Bearer ' + this.UserAuth.getToken();                
+                this.LocalApi.defaults.headers.common['Authorization'] = 'Bearer ' + this.UserAuth.getToken(); 
+                this.LocalApi.defaults.headers.common['Syn-Api-Token'] = this.UserAuth.getToken();
             }
-
+            
             if(this.AppConfig.system.has_acl && this.UserAuth.isLogin()){
                 //set ACL jika memiliki akses ke module user auth 
                 this.UserAuth.implementAcl().then((val)=>{

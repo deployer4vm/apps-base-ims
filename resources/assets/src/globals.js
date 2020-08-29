@@ -74,7 +74,10 @@ localapi.interceptors.response.use((response) => response, (error) => {
                     title: localapi.errAlertText.title,// Trans.get("alert.form_must_complete_title"),
                     text: localapi.errAlertText.text//Trans.get("alert.session_expired")
                 });
-                UserAuth.logout();
+
+                if(UserAuth.isLogin())
+                    UserAuth.logout(Web.isAuthEdnpoint()?false:true);
+
                 localapi.showAllert = false;
                 //munculkan alert session expired hanya setelah 5 detik kemudian, jadi tidak ada pesan error bertubi-tubi
                 setTimeout(function(){

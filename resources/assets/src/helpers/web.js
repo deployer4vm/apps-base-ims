@@ -44,7 +44,7 @@ export default {
         //get url yg sedang diakses sekarang
         let endpoint = this.getEndpoint(path);
         //ceka apakah diawali dengan 'path'
-        return this.router.currentRoute.path.indexOf(endpoint + '/') === 0;
+        return this.router.currentRoute.path == endpoint || this.router.currentRoute.path.indexOf(endpoint + '/') === 0;
     },
     //cek apakah 'path' adalah url auth endpoin di aplikasi 'app'
     isAuthEdnpoint(path = null, app = "admin") {

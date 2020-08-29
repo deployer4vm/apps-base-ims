@@ -242,6 +242,7 @@ export default {
             }
             if(viewLog)
                 console.log(routePath,this.Web.curEndpoint,this.$router.currentRoute.path,this.Web.isOnEndpoint(routePath));
+                
             return routePath == "/" && this.Web.curEndpoint != "/"
                 ? false
                 : routePath==this.Web.curEndpoint || this.Web.isOnEndpoint(routePath);
