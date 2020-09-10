@@ -11,7 +11,7 @@
 </template>
 <script>
 export default {
-  name: "page-header",
+  name: "syncomponent-page-header",
   props: ["headerTitle"]
 };
 </script>

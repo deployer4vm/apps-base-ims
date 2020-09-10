@@ -19,4 +19,5 @@ class MConfig extends Model
      * @var array
      */
     protected $guarded = ['id','created_at'];
+    
 }

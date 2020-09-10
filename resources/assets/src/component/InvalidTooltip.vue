@@ -1,14 +1,17 @@
 <template>
     <div class="invalid-tooltip" style="display: block;" v-if="inputItem.$error">
         <ul class="m-0 pl-3">
-            <li v-for="(item, key) in inputItem.$params" v-if="!inputItem[key]">
-                {{ alertItem[key] }}
-            </li>
+            <template v-for="(item, key) in inputItem.$params">
+                <li v-if="!inputItem[key]" :key="key">
+                    {{ alertItem[key] }}
+                </li>
+            </template>
         </ul>                
     </div>
 </template>
 <script>
 export default {
+    name: "syncomponent-invalid-tool-tip",
     data() {
         return {
             'alertItem': {}
@@ -19,7 +22,7 @@ export default {
         'customAlert',
         'fieldName',//text caption nama fieldnya
         'otherFieldName' //text caption nama field nama field
-        ],
+    ],
     created() {
         _.forEach(this.inputItem.$params,(v,key)=>{
             let attr = {attribute: this.fieldName};

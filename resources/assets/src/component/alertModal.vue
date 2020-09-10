@@ -31,6 +31,7 @@
 
 <script>
 export default {
+    name: "syncomponent-alert-modal",
     computed: {
         title() {
             return this.$store.state.template.alertModal.title;

@@ -3,8 +3,15 @@
  * GENERAL TEMPLATE LANGUAGE
  */
 return [
+    //-- general heading caption 
+    'form' => 'Form',
+    'form_attribute' => 'Form :attribute',
     'add' => 'Add',
+    'add_new' => 'Add New',
     'add_attribute' => 'Add new :attribute',
+    'edit' => 'Edit',
+    'edit_attribute' => 'Edit :attribute',
+    //-- general button caption
     'save_change' => 'Save Changes',
     'save' => 'Save',
     'change' => 'Change',
@@ -18,14 +25,13 @@ return [
     'exit' => 'Exit',
     'back' => 'Back',
     'delete' => 'Delete',
-    'edit' => 'Edit',
-    'edit_attribute' => 'Edit :attribute',
     'search' => 'Search',
     'view_all' => 'View All',
+    //-- general caption
     'data_not_found' => 'Data not found',
     'data_attribute_not_found' => 'Data :attribute not found',
     'no_data' => 'No Data',
-    //home template    
+    //-- home template    
     'system_app_loading_text' => 'Loading application data...',
     'system_app_load_button_text' => 'Reload',
 ];

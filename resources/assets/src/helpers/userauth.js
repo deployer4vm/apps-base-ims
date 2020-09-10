@@ -12,6 +12,10 @@ export default {
     isActive() {
         return this.store != null?true:false;
     },
+    //apakah akses webdev
+    isWebdev(){
+        return this.store.getters.isLogin && this.store.state.auth.role_code == 'webdev'?true:false;
+    },
     //implement acl role user yang online ke navside menu
     implementAcl() {
         return this.store.dispatch('implementAcl');
@@ -43,7 +47,7 @@ export default {
     logout(goToLogin=true){
         this.store.dispatch('logout');
         if(goToLogin){
-            this.router.push({name:"login"});
+            this.router.push({name: "login", params: {group_app: this.store.getters.getTenantGroupApp}});
         }
     },
     //cek apakah sedang login atau tidak
@@ -76,7 +80,8 @@ export default {
     },
     //----------go to------    
     goToLogin() {
-        console.log('go to login : ', this.store.getters.getTenantGroupApp,' - ',this.store.state.tenant);
+        console.log('go to login : ', this.router.resolve({name: "login",params:{group_app: this.store.getters.getTenantGroupApp}}).href);
+        // console.log('go to login : ', this.store.getters.getTenantGroupApp,' - ',this.store.state.tenant);
         this.router.push({name: "login", params: {group_app: this.store.getters.getTenantGroupApp}});
     },   
     goToForgotpassword() {

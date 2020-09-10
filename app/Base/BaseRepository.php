@@ -5,6 +5,7 @@ namespace App\Base;
 use Exception;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Traits\Macroable;
+use Illuminate\Support\Facades\Log;
 use App\Base\Traits\ResCacheTrait;
 
 abstract class BaseRepository {

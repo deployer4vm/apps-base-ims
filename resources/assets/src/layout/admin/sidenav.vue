@@ -1,5 +1,5 @@
 <template>
-  <sidenav :orientation="orientation" :class="curClasses">
+  <sidenav :accordion="false" :orientation="orientation" :class="curClasses">
     <!-- Brand demo (see src/demo.css) -->
     <div class="app-brand demo sidenav-app-brand" v-if="orientation !== 'horizontal'">
       <!-- <span class="app-brand-logo demo bg-primary">

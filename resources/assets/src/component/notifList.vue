@@ -39,6 +39,7 @@
  * NOTIF LIST DI DASHBOARD
  */
 export default {
+    name: "syncomponent-notif-list",
     props: ['limit'],
     data() {
         return {           

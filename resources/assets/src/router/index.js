@@ -33,7 +33,6 @@ const router = new Router({
 });
 
 router.afterEach((to, from) => {
-    console.log('to param : ',to.params);
     if(globals().LocalApi.defaults.headers.common["Group-App"] != to.params.group_app)
         globals().LocalApi.defaults.headers.common["Group-App"] = to.params.group_app;
         

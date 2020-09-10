@@ -1,7 +1,7 @@
 <template>    
     <span>
         <template v-for="(v,i) in allertData">
-            <b-alert show dismissible :variant="v.type" @dismissed="dismissAlert(i)">
+            <b-alert show dismissible :variant="v.type" @dismissed="dismissAlert(i)" :key="i">
                 {{ v.text }}
             </b-alert>
         </template>
@@ -9,6 +9,7 @@
 </template>
 <script>
 export default {
+    name: "syncomponent-alert",
     computed: {
         allertData() {
             return this.$store.state.template.alertData;

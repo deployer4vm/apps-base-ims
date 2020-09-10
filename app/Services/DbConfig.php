@@ -171,8 +171,12 @@ class DbConfig extends BaseRepository
      * @return mix|boolean                  false jika gagal, value yang diset jika berhasil
      */
     private function _setConfig(string $group,string $key, $value, $tenantId = 0) 
-    {        
-        $oldConfig = $this->getConfig($group,$key);
+    {
+        $oldConfig = $this->_getOne(new MConfig,[
+            ['tenant_id',$tenantId],
+            ['group',$group],
+            ['key',$key]
+        ]);
 
         //jika config sudah ada maka update data nya
         if($oldConfig){
@@ -192,7 +196,6 @@ class DbConfig extends BaseRepository
                 'name' => isset($value['name'])?$value['name']:'',
                 'value' => isset($value['value'])?$value['value']:$value
             ]);
-
         }
     }
 
