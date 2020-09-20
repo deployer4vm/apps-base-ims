@@ -21,6 +21,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        // spl_autoload_register([$this, 'autoLoad'],true, true);
+
+        //load alias class
+        if(config('AppConfig.binding.alias'))
+            $this->app->booting(function() {
+                $loader = \Illuminate\Foundation\AliasLoader::getInstance();
+                $classList = config('AppConfig.binding.alias');
+                foreach ($classList as $classAliasName => $className) {
+                    $loader->alias($classAliasName, $className);
+                }
+            });
         
         if(config('AppConfig.system.public_path')){
             $this->app->bind('path.public', function() {
@@ -50,7 +61,15 @@ class AppServiceProvider extends ServiceProvider
         // bind config binding per tenant
         if(config('AppConfig.system.multitenant.active'))$this->bindTenant();
 
-    }
+    }    
+
+    // public function autoLoad($className)
+    // {
+    //     if($className == 'hpsynapse\moduser\Facades\UserAuth' && !class_exists($className) && config('AppConfig.binding.class.'.$className,false)){            
+    //         $loader = \Illuminate\Foundation\AliasLoader::getInstance();
+    //         $loader->alias($className, config('AppConfig.binding.class.'.$className));
+    //     }
+    // }
 
     protected function bindTenant()
     {

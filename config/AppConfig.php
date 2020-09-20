@@ -4,6 +4,7 @@ require app_path('Helpers/Helper.php');
 /**
  * Config utama yang menyimpan semua config aplikasi. Datanya disimpan di app/MainApp/config
  */
+
 $client = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/client.json'), true);
 
 if(file_exists(__DIR__ . '/../app/MainApp/config/clientEnv.json')){
@@ -13,16 +14,20 @@ if(file_exists(__DIR__ . '/../app/MainApp/config/clientEnv.json')){
     $tmpEnvClient = $client;
 }
 //save ulang config pastikan tidak mengandung key yang tidak boleh diedit
-file_put_contents(__DIR__ . '/../app/MainApp/config/clientEnv.json', json_encode($tmpEnvClient, JSON_PRETTY_PRINT));
 $client = recuresive_array_merge($client, $tmpEnvClient);
 
-$listener = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/listener.json'), true);
+//load config listener.json jika ada
+$listener = [];
+if(file_exists(__DIR__ . '/../app/MainApp/config/listener.json')){
+    $listener = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/listener.json'), true);
+}
 
 $keyConfig = json_decode(file_get_contents(__DIR__ . '/../resources/assets/src/config.json'), true);
 
-/*
-Load config system
-*/
+/**
+ * Load config system.json
+ * ---------------------------------------------------------------------------------
+ */
 $system = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/system.json'), true);
 
 if(file_exists(__DIR__ . '/../app/MainApp/config/systemEnv.json')){
@@ -45,10 +50,37 @@ if (count($newEnv) >= 1) {
     $system = recuresive_array_merge($system, $newEnv);
 }
 
-/*
-Proses package & packageLocal config.
-merge config package & packageLocal menjadi packageLocal, karena package akan digunakan untuk default config package (module ataupun lib)
-*/
+/**
+ * Load config system.json project yg aktif (multiproject), jika active dan ada
+ * lalu mergekan dengan system.json utama
+ * ---------------------------------------------------------------------------------
+ */
+if(file_exists(__DIR__ . '/../app/MainApp/Project/'.$client['project_code'].'/system.json')){
+    $perProjectSystem = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/'.$client['project_code'].'/system.json'), true);
+    
+    $newEnv = [];
+    //hanya load systemEnv yang boleh dieditnya saja
+    foreach ($keyConfig['allowed_systemEnv_key'] as $value) {
+        if (isset($perProjectSystem[$value])) {
+            $newEnv[$value] = $perProjectSystem[$value];
+        }
+    }
+    if (count($newEnv) >= 1) {
+        //save ulang config pastikan tidak mengandung key yang tidak boleh diedit
+        file_put_contents(__DIR__ . '/../app/MainApp/'.$client['project_code'].'/system.json', json_encode($newEnv, JSON_PRETTY_PRINT));
+        $system = recuresive_array_merge($system, $newEnv);
+    }
+}
+
+$multiTenantVuePrefix = isset($system['multitenant']['active'])&&$system['multitenant']['active']?'/:group_app':'';
+$multiTenantLaravelPrefix = isset($system['multitenant']['active'])&&$system['multitenant']['active']?'/{group_app}':'';
+
+/**
+ * Proses package & packageLocal config.
+ * merge config package & packageLocal menjadi packageLocal, karena package akan digunakan untuk default config package (module ataupun lib)
+ * -------------------------------------------------------------------------------------------------------------------------------------------
+ */
+
 /*
 load config module & lib
 */
@@ -83,6 +115,9 @@ if(file_exists(__DIR__ . '/../app/MainApp/config/packageLocal.json')){
     $tmpPackageLocal = [];
 }
 
+/**
+ * Load packageLocalEnv.json
+ */
 if(file_exists(__DIR__ . '/../app/MainApp/config/packageLocalEnv.json')){
     $tmpPackageLocalEnv = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/packageLocalEnv.json'), true);
 }else{
@@ -90,18 +125,30 @@ if(file_exists(__DIR__ . '/../app/MainApp/config/packageLocalEnv.json')){
     $tmpPackageLocalEnv = $tmpPackageLocal;
 }
 
+
+/**
+ * Load config packageLocal.json project yg aktif (multiproject), jika active dan ada
+ * untuk di mergekan dengan packageLocal.json utama
+ * ---------------------------------------------------------------------------------
+ */
+$tmpPackageLocalPerProjectEnv = [];
+if(file_exists(__DIR__ . '/../app/MainApp/Project/'.$client['project_code'].'/packageLocal.json')){
+    $tmpPackageLocalPerProjectEnv = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/'.$client['project_code'].'/packageLocal.json'), true);
+}
+
 $homeSlug = isset($client['endpoint'][$system['mode']]['home_slug'])?$client['endpoint'][$system['mode']]['home_slug']:'';
-$homeSlug = $homeSlug?('/'.trim($homeSlug,'/').'/'):'';
+$homeSlug = $homeSlug?('/'.trim($homeSlug,'/')):'';
+
 //initiate config ednpoint.json
 $endpoint = [
     'domain' => $client['endpoint'][$system['mode']]['domain'],
     'admin' => [
-        'app' => $homeSlug.$client['endpoint'][$system['mode']]['admin'],
-        'auth' => $homeSlug
+        'app' => $homeSlug.$multiTenantVuePrefix.$client['endpoint'][$system['mode']]['admin'],
+        'auth' => $homeSlug.$multiTenantVuePrefix
     ],
     'frontend' => [
-        'app' => $homeSlug.$client['endpoint'][$system['mode']]['frontend'],
-        'auth' => $homeSlug
+        'app' => $homeSlug.$multiTenantVuePrefix.$client['endpoint'][$system['mode']]['frontend'],
+        'auth' => $homeSlug.$multiTenantVuePrefix
     ],
     'api' => [
         'app' => $homeSlug.$client['endpoint'][$system['mode']]['api'],
@@ -109,12 +156,12 @@ $endpoint = [
     ],
     'laravel'  => [        
         'admin' => [
-            'app' => $client['endpoint'][$system['mode']]['admin'],
-            'auth' => ''
+            'app' => $multiTenantLaravelPrefix.$client['endpoint'][$system['mode']]['admin'],
+            'auth' => $multiTenantLaravelPrefix
         ],
         'frontend' => [
-            'app' => $client['endpoint'][$system['mode']]['frontend'],
-            'auth' => ''
+            'app' => $multiTenantLaravelPrefix.$client['endpoint'][$system['mode']]['frontend'],
+            'auth' => $multiTenantLaravelPrefix
         ],
         'api' => [
             'app' => $client['endpoint'][$system['mode']]['api'],
@@ -122,21 +169,14 @@ $endpoint = [
         ]
     ]   
 ];
-$packageLocal = []; //untuk di load di config
 $newPackageLocal = []; //untuk filtered packageLocal.json yang akan disave ulang
 $newPackageLocalEnv = []; //untuk filtered packageLocalEnv.json yang akan disave ulang
+$packageLocal = []; //pakcageLocal akhir setelah proses filtering & merging, dan disave ke MainApp/config/_packageLocal.env dan diload sebagai config utama
 
 $acl = [];
 $tmpSidenav = [];
+$tmpSidenavNoPos = [];//package yg tidak diset access.pos nya
 $sidenav = [];
-
-$tmpBindings = include(__DIR__.DIRECTORY_SEPARATOR.'hpsynapse.php');
-$binding = empty($tmpBindings['bindings'])?[
-    'class'=>[],
-    'interface'=>[],
-    'route'=>[]
-]:$tmpBindings['bindings'];
-
 
 /**
  * Filter acl
@@ -163,6 +203,7 @@ if (!function_exists('processAcl')) {
         return $acl;
     }
 }
+
 /**
  * Generate sidenav
  */
@@ -184,18 +225,22 @@ if (!function_exists('processSidenav')) {
     }
 }
 
+// looping semua packageconfig yg ada untuk proses filtering dan pemrosesan yang menghasilkan _packageLocal.json, _sidenav.json dan _acl.json di MainApp/config
 foreach ($package as $item) {
     
+    // get data packageconfig dari packageLocal.json di MainApp/config untuk diproses selanjutnya
     $newPackageLocal[$item['package_namespace']] =
         isset($tmpPackageLocal[$item['package_namespace']])
         ? $tmpPackageLocal[$item['package_namespace']]
         : [];
+
+    // get data packageconfig dari packageLocalEnv.json di MainApp/config untuk diproses selanjutnya
     $newPackageLocalEnv[$item['package_namespace']] =
         isset($tmpPackageLocalEnv[$item['package_namespace']])
         ? $tmpPackageLocalEnv[$item['package_namespace']]
         : [];
 
-    //hapus package key config yang tidak boleh diedit
+    //hapus key packageconfig.json yang tidak boleh diedit, baik yg dari packageLocal.json maupun packageLocalEnv.json
     foreach ($keyConfig['protected_packageLocal_key'] as $value) {
         if(isset($newPackageLocal[$item['package_namespace']][$value]))
             unset($newPackageLocal[$item['package_namespace']][$value]);
@@ -203,16 +248,26 @@ foreach ($package as $item) {
             unset($newPackageLocalEnv[$item['package_namespace']][$value]);
     }
     
+    // merge packageconfig asli dari masing-masing module dengan packageconfig dari packageLocal.json di MainApp/config
     $packageLocal[$item['package_namespace']] = recuresive_array_merge($item, $newPackageLocal[$item['package_namespace']]);
-    if ($system['mode'] == 'dev') {
+
+    
+    // merge packageconfig sebelumnya (hasil merge) dengan packageconfig dari packageLocalEnv.json di MainApp/config
+    // if ($system['mode'] == 'dev') {
         $packageLocal[$item['package_namespace']] = recuresive_array_merge(
             $packageLocal[$item['package_namespace']],
             $newPackageLocalEnv[$item['package_namespace']]
         );
-    }
+    // }    
+    
+    // merge packageconfig sebelumnya (hasil merge) dengan packageconfig dari packageLocal.json di Mmasing-masing config project (jika project multi project)    
+    $packageLocal[$item['package_namespace']] = recuresive_array_merge(
+        $packageLocal[$item['package_namespace']],
+        $tmpPackageLocalPerProjectEnv
+    );
 
     /**
-     * proses generate _acl.json dan _sidenav
+     * proses generate _acl.json dan _sidenav.json
      */
     if($packageLocal[$item['package_namespace']]['enable']){
         //proses _acl.json
@@ -248,11 +303,15 @@ foreach ($package as $item) {
             if(isset($packageLocal[$item['package_namespace']]['access']['position'])){
                 $tmpSidenav[ $packageLocal[$item['package_namespace']]['access']['position'] ] = $tmpSidenavTmp;
             }else{
-                $tmpSidenav[] = $tmpSidenavTmp;
+                $tmpSidenavNoPos[] = $tmpSidenavTmp;
             }
         }
     }
     
+}
+
+foreach ($tmpSidenavNoPos as $value) {
+    $tmpSidenav[] = $value;
 }
 ksort($tmpSidenav);
 foreach ($tmpSidenav as $key => $value) {
@@ -290,6 +349,15 @@ $moduleRouterAdmin = [
 ];
 $moduleRouterAdminNamespace = [];
 
+$tmpBindings = include(__DIR__.DIRECTORY_SEPARATOR.'hpsynapse.php');
+$binding = empty($tmpBindings['bindings'])?[
+    'class'=>[],
+    'interface'=>[],
+    'route'=>[],
+    'alias'=>[]
+]:$tmpBindings['bindings'];
+$providers = [];
+
 foreach ($package as $item) {
     /*
     generate binding masing-masing module
@@ -299,6 +367,14 @@ foreach ($package as $item) {
     if(isset($item['binding']) && isset($item['binding']['interface'])){
         foreach($item['binding']['interface'] as $contract => $service){
             $binding['interface'][$contract] = $service;
+        }        
+    }
+
+    
+    //provider per module
+    if(isset($item['providers']) && $item['is_package']==0){
+        foreach($item['providers']as $provider){
+            $providers[] = $provider;
         }        
     }
 
@@ -313,17 +389,18 @@ foreach ($package as $item) {
             $endpoint[$app][$item['package_namespace']] = $endpoint[$app]['app'].'/'.$moduleEndpoint;
             $endpoint['laravel'][$app][$item['package_namespace']] = $endpoint['laravel'][$app]['app'].'/'.$moduleEndpoint;
         }else{
-            $endpoint[$app][$item['package_namespace']] = $homeSlug.$moduleEndpoint;
-            $endpoint['laravel'][$app][$item['package_namespace']] = $moduleEndpoint;
+            $endpoint[$app][$item['package_namespace']] = $homeSlug.$multiTenantVuePrefix.$moduleEndpoint;
+            $endpoint['laravel'][$app][$item['package_namespace']] = $multiTenantLaravelPrefix.$moduleEndpoint;
         }    
         //jika memiliki fitur auth dan module user maka assign auth endpointnya
         if($system['has_auth'] && isset($packageLocal['moduser']) && $packageLocal['moduser']['enable']){
             $authEndpoint = $packageLocal['moduser']['auth_endpoint'][$system['mode']];            
             if($authEndpoint[0]!='/'){
-                $endpoint[$app]['auth'] = $endpoint['laravel'][$app]['auth'] = $endpoint[$app]['app'].'/'.$authEndpoint;
+                $endpoint[$app]['auth'] = $endpoint[$app]['app'].'/'.$authEndpoint;
+                $endpoint['laravel'][$app]['auth'] = $endpoint['laravel'][$app]['app'].'/'.$authEndpoint;
             }else{
-                $endpoint[$app]['auth'] = $homeSlug.$authEndpoint;
-                $endpoint['laravel'][$app]['auth'] = $authEndpoint;
+                $endpoint[$app]['auth'] = $homeSlug.$multiTenantVuePrefix.$authEndpoint;
+                $endpoint['laravel'][$app]['auth'] = $multiTenantLaravelPrefix.$authEndpoint;
             }
             
         }
@@ -405,6 +482,19 @@ if(isset($system['binding']) && isset($system['binding']['route'])){
         if(!isset($binding['route'][$contract]))
             $binding['route'][$contract] = $service;
     }        
+}
+//binding alias
+if(isset($system['binding']) && isset($system['binding']['alias'])){
+    foreach($system['binding']['alias'] as $contract => $service){
+        if(!isset($binding['alias'][$contract]))
+            $binding['alias'][$contract] = $service;
+    }        
+}
+
+//merge providers
+if(!empty($providers)){
+    if(!isset($system['providers'])) $system['providers'] = [];
+    $system['providers'] = array_merge($system['providers'],$providers);
 }
 
 //---generated config

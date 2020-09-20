@@ -1,5 +1,5 @@
 <template>
-  <div class="sidenav-item" :class="{active: active, disabled: disabled}">
+  <div @click="onClick" class="sidenav-item" :class="{active: active, disabled: disabled}">
     <a :href="href" :target="target" class="sidenav-link" :class="linkClass">
       <i class="sidenav-icon" v-if="icon" :class="icon"></i>
       <div><slot></slot></div>
@@ -37,6 +37,11 @@ export default {
       type: Boolean,
       default: false
     }
+  },
+  methods: {
+      onClick(ev) {
+        this.$emit('click');
+      }
   }
 }
 </script>

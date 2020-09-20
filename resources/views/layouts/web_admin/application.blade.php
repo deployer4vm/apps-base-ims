@@ -32,7 +32,6 @@
     <link rel="stylesheet" href="{{ asset($value) }}">
     @endforeach
     @endif
-    <link rel="stylesheet" href="{{ asset('/assets/css/style.css') }}">
 
     <!-- Load polyfills -->
     <script src="{{ asset('/dist/vendor/webjs/polyfills.js') }}"></script>
@@ -98,11 +97,24 @@
             var parameters = [];
             for (var property in object) {
                 if (object.hasOwnProperty(property)) {
-                    parameters.push(encodeURI(property + '=' + object[property]));
+                    if(object[property]!=null)
+                        parameters.push(encodeURI(property + '=' + object[property]));
                 }
             }
 
             return parameters.join('&');
+        }
+
+        //convert query string to array
+        function parseQuery(queryString) {
+            var query = {};
+            var pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
+            for (var i = 0; i < pairs.length; i++) {
+                var pair = pairs[i].split('=');
+                if(pair[0]!="")
+                    query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+            }
+            return query;
         }
 
         //parsing error local api

@@ -32,7 +32,6 @@
     <link rel="stylesheet" href="{{ asset($value) }}">
     @endforeach
     @endif
-    <link rel="stylesheet" href="{{ asset('/assets/css/style.css') }}">
 
     <!-- Load polyfills -->
     <script src="{{ asset('/dist/vendor/webjs/polyfills.js') }}"></script>

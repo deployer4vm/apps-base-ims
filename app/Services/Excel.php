@@ -103,6 +103,9 @@ class Excel
     public function load($template, string $format = 'Xls', bool $mainAppDoc = true)
 	{
         $format = ucfirst(strtolower($format))=='Xls'?'Xls':'Xlsx';
+        if(empty($template))
+            return $this->create();
+
         if($mainAppDoc){
             $template = app_path('MainApp/resources/doc/'.$template);
         }
@@ -110,6 +113,14 @@ class Excel
         $reader = $reader->load($template);//::createReader("Xlsx")
 
         return $reader;        
+    }
+
+    /**
+     * create new spreadsheet
+     */
+    public function create()
+    {
+        return new \PhpOffice\PhpSpreadsheet\Spreadsheet();
     }
 
     /**

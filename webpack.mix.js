@@ -64,7 +64,7 @@ function mixAssetsDir(query, cb) {
 }
 
 const sassOptions = {
-    precision: 5,
+    // precision: 5,
     implementation: () => require("node-sass")
 };
 
@@ -78,10 +78,12 @@ if(systemVar.web_admin.web)
 if(systemVar.web_admin.web){
     mixAssetsDir(
         'vendor/weblibs/**/*.js', 
-        (src, dest) => mix.scripts(src, dest));//web
+        (src, dest) => mix.scripts(src, dest)
+    );//web
     mixAssetsDir(
         'vendor/weblibs/**/!(_)*.scss', 
-        (src, dest) => mix.sass(src, dest.replace(/\.scss$/, '.css'), sassOptions));//web
+        (src, dest) => mix.sass(src, dest.replace(/\.scss$/, '.css'), sassOptions)
+    );//web
 
 }
 

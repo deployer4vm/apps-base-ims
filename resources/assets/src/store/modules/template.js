@@ -21,11 +21,15 @@ const state = {
         modalButtonCancel: 'Close',
         modalButtonOk: 'Ok'
     },
+    breadcrumb:[
+        {
+            text: "Home",
+            href: "/",
+            active: true
+        }            
+    ],
     frontend: {
         title: globals().AppConfig.system.template.frontend.title,
-        breadcrumb:[
-            
-        ]
     },
     admin: {
         title: globals().AppConfig.system.template.admin.title,//digunakan sebagai brand title
@@ -35,6 +39,7 @@ const state = {
             appsbar: {
 
             },
+            //untuk konsep tampilan multi tab (setiap klik menu akan buka tab baru)
             tabs: [
                 {
                     closable: 0,
@@ -44,14 +49,9 @@ const state = {
             ],
             menu: {}
         },
-        breadcrumb:[
-            {
-                title: "Home",
-                link: "/"
-            }            
-        ],
         sidenav: {
             show: true,
+            isHorizontal: globals().AppConfig.system.web_admin.sidenav_horizontal==1?true:false,//jika null berarti ikut setingan template di system.json nya
             menu: {}
         },
         body: {
@@ -64,12 +64,16 @@ const state = {
         }
     },
     showLoading: false,
-    messageLoading: 'wekdut'
+    messageLoading: 'wekdut',
+    curModule:''//namespace module saat ini, diset manual
 };
 
 const getters = {    
     getMessageLoading(state) {
         return state.messageLoading;
+    },
+    getModule(state) {
+        return state.curModule;
     },
     //---------------navbar (header-------------------
     getAdminTitle(state) {
@@ -78,6 +82,7 @@ const getters = {
     getNavbarTitle(state) {
         return state.admin.navbar.title;
     },
+    //untuk konsep tampilan multi tab (setiap klik menu akan buka tab baru)
     getTabs(state) {
         return state.admin.navbar.tabs;
     },
@@ -91,10 +96,13 @@ const getters = {
     isSidenavShowed(state) {
         return state.admin.sidenav.show;
     },
+    isSidenavHorizontal(state) {
+        return state.admin.sidenav.isHorizontal;
+    },
     //---------------body-------------------
-    // getBreadcrumb(state) {
-    //     return state.admin.sidenav;
-    // },
+    getBreadcrumb(state) {
+        return state.breadcrumb;
+    },
     isBodyWithPadding(state) {
         return state.admin.body.withPadding;
     },        
@@ -132,8 +140,14 @@ const mutations = {
         state.alertModal.onClose = v.onClose;
         state.alertModal.modalButtonCancel = v.modalButtonCancel?v.modalButtonCancel:globals().Trans.get('alert.modal_cancel_caption');
         state.alertModal.modalButtonOk = v.modalButtonOk?v.modalButtonOk:globals().Trans.get('alert.modal_ok_caption');
-    },
-    //---------------navbar (header-------------------
+    },   
+    setModule (state, module) {
+        state.admin.curModule = module;
+    },   
+    /**
+     * NAVBAR (header)
+     * --------------------------------------------------------------
+     */
     // admin title tidak boleh diubah
     // setAdminTitle (state, newTitle) {
     //     state.admin.title = newTitle;
@@ -144,7 +158,10 @@ const mutations = {
     setShowNavbar(state,setShowNavbar) {
         state.admin.navbar.show = setShowNavbar?true:false;
     },
-    //---------------sidenav-------------------
+    /**
+     * SIDENAV (menu utama)
+     * --------------------------------------------------------------
+     */
     setSidenavMenu (state) {
         state.admin.sidenav.menu = globals().AppConfig.sidenav;
         // _.forEach(globals().AppConfig.packageLocal, (value, index) => {
@@ -156,14 +173,28 @@ const mutations = {
     setShowSidenav(state,setShowSidenav) {
         state.admin.sidenav.show = setShowSidenav?true:false;
     },
-    //---------------body-------------------
+    setSidenavHorizontal(state,isHorizontal) {
+        state.admin.sidenav.isHorizontal = isHorizontal?true:false;
+    },
+    /**
+     * BODY (content utama)
+     * --------------------------------------------------------------
+     */
     addBreadcrumb (state, data) {
-        state.example_data = data;
+        if(state.breadcrumb.length>0)
+            state.breadcrumb[state.breadcrumb.length-1].active = false;
+        state.breadcrumb.push(data);
+    },
+    resetBreadcrumb(state) {
+        state.breadcrumb = [];
     },
     setBodyWithPadding(state,isWithPadding) {
         state.admin.body.withPadding = isWithPadding?true:false;
     }, 
-    //---------------footer-------------------
+    /**
+     * FOOTER (content footer utama)
+     * --------------------------------------------------------------
+     */
     setShowFooter(state,setShowFooter) {
         state.admin.footer.show = setShowFooter?true:false;
     }
@@ -183,7 +214,7 @@ const actions = {
         commit('changeData', data);
     },    
     addBreadcrumb({commit}, data){
-
+        commit('addBreadcrumb', data);
     }
 };
 

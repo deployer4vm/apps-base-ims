@@ -127,6 +127,10 @@ router.afterEach((to, from) => {
         setTimeout(() => globals().layoutHelpers.setCollapsed(true, true), 10);
     }
 
+    //reset
+    globals().Web.setSidenavHorizontalDefault();
+    globals().Web.setBodyWithPadding(true);
+
     // Scroll to top of the page
     globals().scrollTop(0, 0);
     globals().Web.setLoadingPage(false);

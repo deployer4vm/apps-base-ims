@@ -1,9 +1,10 @@
 import globals from "@/globals";
 
-/*
-Template helper
-diakses via this.Web di vue instance
-*/
+/**
+ * TEMPLATE MAIN HELPER
+ * Diakses via this.Web di vue instance atau via globals (globals().Web). Setiap proses yg berhubungan dengan template tidak langsung
+ * akses store template.js, tapi via class ini
+ */
 export default {
     mode: "dev",
     store: null,
@@ -17,10 +18,11 @@ export default {
         title: "Alert",
         text: "Someting went wrong!"
     },
-    /*
-    Route & Endpoint
-    =======================================================================
-    */
+    /**
+     * =======================================================================
+     * ROUTE & ENDPOINT RELATED FUNCTION
+     * =======================================================================
+     */
    //get path yg sedang diakses sekarang
     get curEndpoint() {
         return this.router.currentRoute.path;
@@ -83,10 +85,11 @@ export default {
         console.log('go to : ', this.router.resolve({name: routeName,params:{group_app: groupApp}}));
         this.router.push({name: routeName,params:{group_app: groupApp}});
     },   
-    /*
-    tenant
-    =======================================================================
-    */
+    /**
+     * =======================================================================
+     * WEB TENANT MANAGE RELATED FUNCTION
+     * =======================================================================
+     */
     isMultiTenant() {
         return this.multitenantConfig.active?true:false;
     },
@@ -142,10 +145,11 @@ export default {
     getTenantGroupApp() {
         return this.store.getters.getTenantGroupApp;
     },
-    /*
-    template
-    =======================================================================
-    */
+    /**
+     * =======================================================================
+     * TEMPLATE RELATED FUNCTION
+     * =======================================================================
+     */
     //initialize template store vuex
     initTemplateState () {
         return this.store.dispatch("initTemplateState");
@@ -159,10 +163,9 @@ export default {
     /**
      * set show / hide element yg bisa hide/show berdasarkan config per module
      * 
-     * @param {string} module nama module
+     * @param {string} module nama namespace module
      */
-    setShow(module)
-    {
+    setShow(module) {
         if(
             globals().AppConfig.packageLocal[module].template && 
             globals().AppConfig.packageLocal[module].template.admin && 
@@ -195,8 +198,7 @@ export default {
     /**
      * tampilkan semua element yg hide/show
      */
-    setShowAll()
-    {
+    setShowAll() {
         this.setShowNavbar(true);
         this.setShowSidenav(true);
         this.setShowFooter(true);
@@ -204,13 +206,23 @@ export default {
     /**
      * sembunyikan semua element yg hide/show
      */
-    setHideAll()
-    {
+    setHideAll() {
         this.setShowNavbar(false);
         this.setShowSidenav(false);
         this.setShowFooter(false);
     },
-    //---------------navbar (header)-------------------
+    // set module yang sedang dibuka saat ini
+    setModule(module) {
+        this.store.commit("setModule", module);
+
+    },
+    getModule() {
+        return this.store.getters.getModule;
+    },
+    /**
+     * NAVBAR (header)
+     * --------------------------------------------------------------
+     */
     //admin title digunakan di meta title dan brand/apps bar
     getAdminTitle() {
         return this.store.getters.getAdminTitle;
@@ -224,41 +236,68 @@ export default {
     // {
     //     this.store.commit("setAdminTitle", newTitle);
     // },
-    //-----
     //title di navbar atas
     getNavbarTitle() {
         return this.store.getters.getNavbarTitle;
     },
-    appendNavbarTitle(title)
-    {
+    appendNavbarTitle(title) {
         this.store.commit("setNavbarTitle", this.store.getters.getNavbarTitle + ' \\ ' + title);
     },
-    setNavbarTitle(newTitle) 
-    {
+    setNavbarTitle(newTitle) {
         this.store.commit("setNavbarTitle", newTitle);
     },
     setShowNavbar(showNavbar) {
         this.store.commit("setShowNavbar", showNavbar);
     },
-    //---------------sidenav-------------------
-    getSidenavMenu() 
-    {
+    /**
+     * SIDENAV (menu utama)
+     * --------------------------------------------------------------
+     */
+    getSidenavMenu() {
         return this.store.getters.getSidenavMenu;
     },
     setShowSidenav(showSidenav) {
         this.store.commit("setShowSidenav", showSidenav);
     },
-    //---------------body-------------------
-    addBreadcrumb(item, isAdmin = true) {
-        this.store.dispatch("addBreadcrumb", item);
+    setSidenavHorizontal(isHorizontal) {
+        this.store.commit("setSidenavHorizontal", isHorizontal?true:false);
     },
+    setSidenavHorizontalDefault() {
+        this.store.commit("setSidenavHorizontal", globals().AppConfig.system.web_admin.sidenav_horizontal==1?true:false);
+    },
+    /**
+     * BODY (content utama)
+     * --------------------------------------------------------------
+     */
+    getBreadcrumb() 
+    {
+        return this.store.getters.getBreadcrumb;
+    },
+    addBreadcrumb(text, href=false) {
+        this.store.dispatch("addBreadcrumb", {
+            text: text,
+            href: href?href:'#',
+            active: true
+        });
+    },
+    resetBreadcrumb() {
+        this.store.commit("resetBreadcrumb");
+    },
+    //set container utama dengan padding atau tidak
     setBodyWithPadding(isWithPadding) {
         this.store.commit("setBodyWithPadding", isWithPadding);
     },
-    //---------------footer-------------------
+    /**
+     * FOOTER (content footer utama)
+     * --------------------------------------------------------------
+     */
     setShowFooter(showFooter) {
         this.store.commit("setShowFooter", showFooter);
     },
+    /**
+     * WEB FUNCTION
+     * --------------------------------------------------------------
+     */
     /*
     tampilkan alert instan
     params :

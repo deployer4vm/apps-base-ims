@@ -1,18 +1,20 @@
 <template>
-    <div class="layout-wrapper layout-2">
+    <div :class="{'layout-wrapper':true,'layout-2':!isSidenavHorizontal,'layout-without-sidenav':isSidenavHorizontal,'layout-1':isSidenavHorizontal}">
         <div class="layout-inner" v-if="showComponent">
-            <app-layout-navbar v-if="showNavbar" />
+            <app-layout-sidenav v-if="showSidenav && !isSidenavHorizontal" />
+            <app-layout-navbar :sidenavToggle="false"  v-if="showNavbar && isSidenavHorizontal" />
 
             <div :class="{'layout-container':true,'no-sidenav':!showSidenav,'no-navbar':!showNavbar}">
-                <app-layout-sidenav v-if="showSidenav" />
+                <app-layout-navbar v-if="showNavbar && !isSidenavHorizontal" />
 
                 <div class="layout-content">
-                    <div
-                        :class="{
+                    <app-layout-sidenav orientation="horizontal" v-if="showSidenav && isSidenavHorizontal" />
+
+                    <div :class="{
                             'router-transitions': true,
                             'container-fluid': true,
                             'flex-grow-1': true,
-                            'p-3': bodyWithPadding,
+                            'container-p-y': bodyWithPadding,
                             'p-0': !bodyWithPadding,
                             'pt-0': !bodyWithPadding,
                             'pb-0': !bodyWithPadding
@@ -20,7 +22,6 @@
                     >
                         <router-view />
                     </div>
-
                     <app-layout-footer v-if="showFooter" />
                 </div>
             </div>
@@ -50,69 +51,70 @@
 </template>
 
 <style>
-.avatar-header-block {
-    height: 22px;
-    width: 22px;
-}
-.avatar-header-block i.ion {
-    padding-top: 5px;
-}
-.sidenav-app-brand {
-    height: 58px;
-}
-.default-style .sidenav .app-brand.sidenav-app-brand {
-    height: 58px;
-}
-.sidenav-button-onhover {
-    font-size: 180%;
-    padding: 0 25px;
-    display: none;
-}
-.layout-sidenav-hover .sidenav-button-onhover,
-.layout-expanded .sidenav-button-onhover {
-    display: none !important;
-}
-.layout-collapsed .sidenav-button-onhover {
-    display: inline;
-}
+    .avatar-header-block {
+        height: 22px;
+        width: 22px;
+    }
+    .avatar-header-block i.ion {
+        padding-top: 5px;
+    }
+    .sidenav-app-brand {
+        height: 58px;
+    }
+    .default-style .sidenav .app-brand.sidenav-app-brand {
+        height: 58px;
+    }
+    .sidenav-button-onhover {
+        font-size: 180%;
+        padding: 0 25px;
+        display: none;
+    }
+    .layout-sidenav-hover .sidenav-button-onhover,
+    .layout-expanded .sidenav-button-onhover {
+        display: none !important;
+    }
+    .layout-collapsed .sidenav-button-onhover {
+        display: inline;
+    }
 
-.layout-container.no-sidenav {
-    padding-left:0 !important;
-}
+    .layout-container.no-sidenav {
+        padding-left:0 !important;
+    }
 
-.layout-container.no-navbar {
-    padding-top:0 !important;    
-}
-/* *****************************************************************************
- * Navbar
- */
+    .layout-container.no-navbar {
+        padding-top:0 !important;    
+    }
 
-.demo-navbar-messages .dropdown-toggle,
-.demo-navbar-notifications .dropdown-toggle,
-.demo-navbar-user .dropdown-toggle,
-.demo-navbar-messages.b-nav-dropdown .nav-link,
-.demo-navbar-notifications.b-nav-dropdown .nav-link,
-.demo-navbar-user.b-nav-dropdown .nav-link {
-    white-space: nowrap;
-}
+    /* *****************************************************************************
+    * Navbar
+    */
 
-.demo-navbar-messages .dropdown-menu,
-.demo-navbar-notifications .dropdown-menu {
-    overflow: hidden;
-    padding: 0;
-}
+    .demo-navbar-messages .dropdown-toggle,
+    .demo-navbar-notifications .dropdown-toggle,
+    .demo-navbar-user .dropdown-toggle,
+    .demo-navbar-messages.b-nav-dropdown .nav-link,
+    .demo-navbar-notifications.b-nav-dropdown .nav-link,
+    .demo-navbar-user.b-nav-dropdown .nav-link {
+        white-space: nowrap;
+    }
 
-@media (min-width: 992px) {
     .demo-navbar-messages .dropdown-menu,
     .demo-navbar-notifications .dropdown-menu {
-        margin-top: 0.5rem;
-        width: 22rem;
+        overflow: hidden;
+        padding: 0;
     }
 
-    .demo-navbar-user .dropdown-menu {
-        margin-top: 0.25rem;
+    @media (min-width: 992px) {
+        .demo-navbar-messages .dropdown-menu,
+        .demo-navbar-notifications .dropdown-menu {
+            margin-top: 0.5rem;
+            width: 22rem;
+        }
+
+        .demo-navbar-user .dropdown-menu {
+            margin-top: 0.25rem;
+        }
     }
-}
 </style>
 
 <script>
@@ -127,29 +129,36 @@ export default {
         "app-layout-sidenav": sidenav,
         "app-layout-footer": footer
     },
-
     mounted() {
         this.layoutHelpers.init();
         this.layoutHelpers.update();
-        this.layoutHelpers.setAutoUpdate(true);
-    },
-    created() {
+        this.layoutHelpers.setAutoUpdate(true);        
     },
     beforeDestroy() {
         this.layoutHelpers.destroy();
     },
     computed: {
         bodyWithPadding() {
-            return this.$store.getters.isBodyWithPadding;
+            var tmp = this.$store.getters.isBodyWithPadding;
+            return tmp;
         },
+        isSidenavHorizontal() {
+            // var tmp = this.AppConfig.system.web_admin.sidenav_horizontal == 1 ? true : false;
+            var tmp = this.$store.getters.isSidenavHorizontal;
+            return tmp;
+        },
+        //----------------
         showNavbar() {
-            return this.$store.getters.isNavbarShowed;
+            var tmp = this.$store.getters.isNavbarShowed;
+            return tmp;
         },
         showSidenav() {
-            return this.$store.getters.isSidenavShowed;
+            var tmp = this.$store.getters.isSidenavShowed;
+            return tmp;
         },
         showFooter() {
-            return this.$store.getters.isFooterShowed;
+            var tmp = this.$store.getters.isFooterShowed;
+            return tmp;
         },
         showComponent() {
             return this.AppConfig.system.has_acl == 0 || this.UserAuth.isLogin()

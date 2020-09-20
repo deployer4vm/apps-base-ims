@@ -7,6 +7,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Support\Facades\Log;
 
 use Exception;
 use App\MainApp\Modules\UnitToko\Facades\StockOpname;
@@ -20,7 +21,7 @@ class ResExport implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     public $repo,$addsJobsParam,$homeUrl,$resumeParam;
     public $tries = 1;
-    public $retryAfter = 10;
+    // public $retryAfter = 10;
     public $timeout = 3600;
     
     /**
@@ -56,10 +57,15 @@ class ResExport implements ShouldQueue
      */
     public function handle()
     {
-        $repo = new $this->repo;
-        $repo->initExportOnJob($this->addsJobsParam);
-        $repo->setExportHomeUrl($this->homeUrl);
-        $repo->setExportAsResume($this->resumeParam);
-        $repo->processExport();
+        try{
+            $repo = new $this->repo;
+            $repo->initExportOnJob($this->addsJobsParam);
+            $repo->setExportHomeUrl($this->homeUrl);
+            $repo->setExportAsResume($this->resumeParam);
+            $repo->processExport();            
+        } catch (Exception $e) {
+            Log::error('ResExport ERROR : '.$e->getMessage());
+            throw $e;
+        }
     }
 }

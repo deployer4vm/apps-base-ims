@@ -20,6 +20,7 @@ class BaseModel extends Model
     {
         return $date->format('Y-m-d H:i:s');
     }
+    
     /**
      * override fillable
      */
@@ -31,24 +32,31 @@ class BaseModel extends Model
 
     public function setAutoFillable()
     {
-        // $tableName = $this->getTable();
-        // $guarded = $this->getGuarded();
-        // $fillable = CacheConfig::getConfig('autoFillable-'.$tableName,false,false);
-        // if(!$fillable){
-        //     $fields = Schema::getColumnListing($tableName);
-        //     $fillable = array_filter($fields,function($v) use ($guarded) {
-        //         return !in_array($v,$guarded);
-        //     });
-        //     CacheConfig::setConfig('autoFillable-'.$tableName,$fillable);
-        //     dd($fillable);
-        // }
-        // return $fillable;
-        //set fillable sesuai field didatabasenya
-        $fields = Schema::getColumnListing($this->getTable());
+        $fields = Schema::connection($this->getConnectionName())->getColumnListing($this->getTable());
         $guarded = $this->getGuarded();
         $this->fillable = array_filter($fields,function($v) use ($guarded) {
             return !in_array($v,$guarded);
         });
+
+    }
+    
+    /**
+     * BELUM DIGUNAKAN : hasilnya masih belum sesuai, jadi nanti pikirikan lagi
+     * fungsinya untuk load list field tidak live query ke database, tapi ambil dari cache
+     */
+    public function setAutoFillableWithCache()
+    {
+        $tableName = $this->getTable();
+        $guarded = $this->getGuarded();
+        $fillable = CacheConfig::getConfig('autoFillable-'.$tableName,false,false);
+        if(!$fillable){
+            $fields = Schema::connection($this->getConnectionName())->getColumnListing($tableName);
+            $fillable = array_filter($fields,function($v) use ($guarded) {
+                return !in_array($v,$guarded);
+            });
+            CacheConfig::setConfig('autoFillable-'.$tableName,$fillable);
+        }
+        return $fillable;
     }
     
     public function createdby()

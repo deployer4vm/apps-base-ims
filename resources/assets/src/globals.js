@@ -96,13 +96,13 @@ localapi.interceptors.response.use((response) => response, (error) => {
 /*
 jika multi tenant aktif
 */
-if(AppConfig.system.multitenant.active){
-    var newEndpoint = {};
-    _.forEach(AppConfig.endpoint.admin,(v,i)=>{
-        newEndpoint[i] = "/:group_app" + v;
-    });
-    AppConfig.endpoint.admin = newEndpoint;
-}
+// if(AppConfig.system.multitenant.active){
+//     var newEndpoint = {};
+//     _.forEach(AppConfig.endpoint.admin,(v,i)=>{
+//         newEndpoint[i] = "/:group_app" + v;
+//     });
+//     AppConfig.endpoint.admin = newEndpoint;
+// }
 
 /**
  * Downloader

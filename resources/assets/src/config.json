@@ -9,6 +9,7 @@
         "fallback_locale",
         "lang_endpoint",
         "binding",
+        "providers",
         "has_artisan_web_access",
         "artisan_web_endpoint",
         "broadcast"
