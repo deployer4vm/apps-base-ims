@@ -1,6 +1,6 @@
 <template>
     <div :class="{'layout-wrapper':true,'layout-2':!isSidenavHorizontal,'layout-without-sidenav':isSidenavHorizontal,'layout-1':isSidenavHorizontal}">
-        <div class="layout-inner" v-if="showComponent">
+        <div class="layout-inner" v-if="isMainAppReady && showComponent">
             <app-layout-sidenav v-if="showSidenav && !isSidenavHorizontal" />
             <app-layout-navbar :sidenavToggle="false"  v-if="showNavbar && isSidenavHorizontal" />
 
@@ -132,6 +132,7 @@ export default {
     mounted() {
         this.layoutHelpers.init();
         this.layoutHelpers.update();
+        // this.layoutHelpers._bindSidenavMouseEvents();
         this.layoutHelpers.setAutoUpdate(true);        
     },
     beforeDestroy() {
@@ -148,6 +149,10 @@ export default {
             return tmp;
         },
         //----------------
+        isMainAppReady() {
+            var tmp = this.$store.getters.isAppReady;
+            return tmp;
+        },
         showNavbar() {
             var tmp = this.$store.getters.isNavbarShowed;
             return tmp;
@@ -168,6 +173,7 @@ export default {
     },
     methods: {
         closeSidenav() {
+            console.log('icloseSidenav clicked');
             this.layoutHelpers.setCollapsed(true);
         }
     }

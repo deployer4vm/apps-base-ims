@@ -1,10 +1,10 @@
-
 <template>
     <multiselect 
         v-model="modelDataTmp"
         @select="selectData"
         :allow-empty="inlineAllowEmpty"
         :options="options"
+        :disabled="disabled"
         :placeholder="inlinePlaceholder"
         :track-by="inlineTrackBy"
         :label="inlineLabel"
@@ -24,7 +24,8 @@ export default {
         'options',
         'placeholder',
         'track-by',
-        'modelData'
+        'modelData',
+        'disabled'
     ],    
     data: () => ({
         modelDataTmp: {},
@@ -38,18 +39,21 @@ export default {
         this.inlineTrackBy = this.trackBy==undefined?'value':this.trackBy;
         this.inlineAllowEmpty = this.allowEmpty==undefined?false:this.allowEmpty;
         this.inlinePlaceholder = this.placeholder==undefined?'Select':this.placeholder;
+        if(this.modelData>0)this.setSelected(this.modelData);
     },
     watch: {
         'modelData': function(v) {
-            var that = this;            
-            this.modelDataTmp = this.options.find(function( d ) {
-                return d.value == that.modelData
-            });
+            this.setSelected(this.modelData);
         }
     },
     methods: {
         selectData(selectedOption){
             this.$emit('onSelect', selectedOption.value);
+        },
+        setSelected(value) {     
+            this.modelDataTmp = this.options.find(function( d ) {
+                return d.value == value
+            });
         }
     }
 };

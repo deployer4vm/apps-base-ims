@@ -5,6 +5,10 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
+
+/**
+ * update git "repositories" key sesuai mode "dev" atau "prod"
+ */
 class Updater extends Command
 {
 
@@ -14,7 +18,7 @@ class Updater extends Command
      * @var string
      */
     protected $signature = 'syndeploy:update '
-        . '{scope : all, project, appsBase, module} '
+    . '{scope : dev, prod} '
         . '{--project : [OPTIONAL] update project (app/MainApp)} '
         . '{--appsBase : [OPTIONAL] update apps-base (laravel project struture nya)} '
         . '{--appsGenerator : [OPTIONAL] update vendor/hp-synapse/apps-generator (khusus development mode)} '

@@ -1,6 +1,8 @@
 import globals from "@/globals";
 
 const state = {
+    // persistant: true, jika ingin store ini disave di local storage
+    
     allLang: {},//data object language nya
     isLangSet: null,//true jika lang sudah diload
     lastReload: null,//waktu terakhir reload lang

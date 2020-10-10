@@ -1,4 +1,6 @@
 import globals from "@/globals";
+import modulesMultitenant from "@/../../../app/MainApp/resources/js/modulesMultitenant";
+
 
 /**
  * TEMPLATE MAIN HELPER
@@ -146,6 +148,14 @@ export default {
         return this.store.getters.getTenantGroupApp;
     },
     /**
+     * --- multi tenant component & data share
+     */
+    multiTenantLoadMixin(moduleNamepsace, componentName,tenantId=false) {
+        if(!tenantId)
+            tenantId = this.getTenantId();
+        return modulesMultitenant[tenantId] && modulesMultitenant[tenantId][moduleNamepsace] && modulesMultitenant[tenantId][moduleNamepsace][componentName]?modulesMultitenant[tenantId][moduleNamepsace][componentName]:[];
+    },
+    /**
      * =======================================================================
      * TEMPLATE RELATED FUNCTION
      * =======================================================================
@@ -274,11 +284,16 @@ export default {
         return this.store.getters.getBreadcrumb;
     },
     addBreadcrumb(text, href=false) {
-        this.store.dispatch("addBreadcrumb", {
+        var tmpLink = {
             text: text,
-            href: href?href:'#',
             active: true
-        });
+        };
+        if(href.name != undefined){
+            tmpLink.to = href;
+        }else{
+            tmpLink.href = href?href:'#';
+        }
+        this.store.dispatch("addBreadcrumb", tmpLink);
     },
     resetBreadcrumb() {
         this.store.commit("resetBreadcrumb");

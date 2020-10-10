@@ -262,10 +262,13 @@ formater.resetNumber = function(number) {
 };
 
 export default function () {
-    return {
+    return {        
         // Public url
-        publicUrl: '/',
-        
+        publicUrl: AppConfig.system.public_url?AppConfig.system.public_url:'/',
+
+        // Upload url
+        uploadedUrl: AppConfig.system.uploaded_url?AppConfig.system.uploaded_url:'/',
+                
         // Layout helpers
         layoutHelpers,
 

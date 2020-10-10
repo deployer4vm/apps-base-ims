@@ -103,15 +103,17 @@ class BaseController extends LaravelBaseController
      * @return array format :
      *  [
      *      all => seluruh parameter input
-     *      query => [
+     *      query => [ --> digunakan untuk menggenerate link url yg menyimpan informasi filter saat ini
      *          limit
      *          offset
      *          *orderBy --> optional jika menyertakan parameter orderBy atau orderType
      *          *orderType --> optional jika menyertakan parameter orderBy atau orderType
-     *          q
+     *          *q --> optional jika menyertakan parameter q
+     *          ... paramater2 input lainnya jika ada dan $mergeParam == true
      *      ],
      *      filter => [
-     *          q
+     *          q,
+     *          [..] ... paramater2 input lainnya jika ada dan $mergeParam == true
      *      ],
      *      orderBy => []
      *  ]
@@ -141,12 +143,16 @@ class BaseController extends LaravelBaseController
             $params['filter']['q'] = $params['query']['q'];
         }
 
-        //jika merge parameter
+        //jika parameter dimerge langsung dengan query dan filter
         if($mergeParam && !empty($params['all'])){
             foreach ($params['all'] as $key => $param) {
                 if(!in_array($key,$mergeExcept)){
                     $params['query'][$key] = $param;
-                    $params['filter'][] = [$key,$param];
+                    if(isset($param) && in_array(strtoupper($param[0]),['LIKE','!=','<','<=','>','>='])){
+                        $params['filter'][] = [$key,$param[0],$param[1]];
+                    }else{
+                        $params['filter'][] = [$key,$param];
+                    }
                 }
             }            
         }

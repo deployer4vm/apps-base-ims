@@ -20,12 +20,16 @@ export default {
     implementAcl() {
         return this.store.dispatch('implementAcl');
     },
-    hasAccess(key,subkey='has_access') {
+    hasAccess(key,subkey='has_access',defaultAccess=true) {
         if(!this.isActive() || this.store.getters.getAuthRole.rule==null)return true;
         let access = 1;
         access = this.store.getters.getAuthRole.rule[key];
-        if(access!=undefined)access = access[subkey];
-        return access||access==1||access==undefined?true:false;
+        if(access==undefined)
+            return defaultAccess;
+        access = access[subkey];
+        if(access==undefined)
+            return defaultAccess;
+        return access||access==1?true:false;
     },
     getAccess(key) {
         return this.store.getters.getAuthRole.rule[key];

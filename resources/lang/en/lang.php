@@ -3,6 +3,7 @@
  * GENERAL TEMPLATE LANGUAGE
  */
 return [
+	'home' => 'Home',
     //-- general heading caption 
     'form' => 'Form',
     'form_attribute' => 'Form :attribute',

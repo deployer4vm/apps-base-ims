@@ -29,14 +29,15 @@ const vuexPersist = new VuexPersist({
         if (globals().AppConfig.system.multitenant.active) {
             newState.tenant = state.tenant;
         }
-        //registrasikan vuexPersist jika diaktikan
-        if (globals().AppConfig.system.web_state_persistant) {
-            _.forEach(state,(value, index) => {
+        
+        _.forEach(state,(value, index) => {
+            //registrasikan vuexPersist jika diaktikan atau jika diset per store nya
+            if ((globals().AppConfig.system.web_state_persistant && value.persistant == undefined) || value.persistant == true) {
                 if(index != 'template'){
                     newState[index] = value;
                 }
-            });
-        }
+            }
+        });
 
         return newState;
     },

@@ -15,6 +15,7 @@ class Tenant extends BaseRepository
     
     protected $autoResource = [
         'Tenant' => ['r'=>MTenant::class,'w'=>MTenant::class],
+        'Group' => ['r'=>TenantGroupTenant::class,'w'=>TenantGroupTenant::class],
     ];
     
     /**
@@ -155,6 +156,7 @@ class Tenant extends BaseRepository
     {
         $config = app('config');
         $config->set('tenant',$dataTenant);
+        resolve('bindTenant',['tenant_id'=>$dataTenant['id']]);
     }
 
     public function getActiveTenant(string $field = '')
@@ -165,4 +167,29 @@ class Tenant extends BaseRepository
     /**
      * END - GROUP MANAGE ACTIAVE TENANT
      */
+    
+    /**
+     * CRUD tenant
+     */
+    public function createTenant($input)
+    {
+        $return = $this->_autoResourceCreate('createTenant',[$input]);
+        // setelah proses create pastikan _tenant.json diupdate
+        \App\Services\Utilities::artisan('synapse:updateTenantList');
+        return $return;
+    }
+
+    public function deleteTenant($where)
+    {
+        $oldTenant = $this->_autoResourceGet('getTenant',[$where]);
+        if($oldTenant){
+            $return = $this->_autoResourceDelete('deleteTenant',[$where]);
+            $this->_autoResourceDelete('deleteGroup',[['tenant_id',$oldTenant['id']]]);
+            // setelah proses delete pastikan _tenant.json diupdate
+            \App\Services\Utilities::artisan('synapse:updateTenantList');
+            return $return;
+        }
+        $this->error = __('lang.data_attribute_not_found',['attribute'=>'Tenant']);
+        return false;
+    }
 }

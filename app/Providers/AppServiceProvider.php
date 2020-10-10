@@ -75,6 +75,15 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind('bindTenant', function ($app,$params) {           
                 
+            //load alias class
+            if(config('AppConfig.system.binding.tenant.'.$params['tenant_id'].'.alias',false))
+                $this->app->booting(function() use($params) {
+                    $loader = \Illuminate\Foundation\AliasLoader::getInstance();
+                    foreach(config('AppConfig.system.binding.tenant.'.$params['tenant_id'].'.alias',[]) as $classAliasName => $className){
+                        $loader->alias($classAliasName, $className);
+                    }
+                });
+
             //bind interface global
             foreach(config('AppConfig.system.binding.tenant.'.$params['tenant_id'].'.interface',[]) as $contract => $service){
                 $this->app->bind(

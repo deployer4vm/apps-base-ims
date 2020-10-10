@@ -596,7 +596,8 @@ abstract class BaseRepository {
      *      function                function($model)    filter tambahan jika diperlukan
      *      searchField             array               list field/column yg termasuk kedalam filter search
      *      hiddenColumn            array               list field/column yg di hidde * -- HINDARI PENGGUNAAN HIDDEN COLUMN UNTUK DATA BESAR
-     *      append                  array|string        lilst custom attribute yg akan ditampilkan
+     *      append                  array|string        list custom attribute yg akan ditampilkan
+     *      with                    array|string        list custom relation yg akan ditampilkan
      *     
      *      ADDITIONAL_PARAM array where untuk default filter
      * 
@@ -684,6 +685,11 @@ abstract class BaseRepository {
         $qSearch = null;
         $searchField = null;
 
+        if (isset($filter['with'])) {                
+            $model = $model->with($filter['with']);
+            unset($filter['with']);
+        }
+
         if(empty($filter['q']))
             unset($filter['q']);
 
@@ -756,20 +762,26 @@ abstract class BaseRepository {
      * fungsi utama untuk get 1 record data
      * 
      * @param eloquen instance  $model
-     * @param array|int         $filter     synapse array where filter format, atau id table
+     * @param array|int|string      $filter     synapse array filter format, atau id table
      * 
-     * @return false|array    false jika gagal, array record jika ada
+     * @return false|array                      false jika gagal, array record jika ada
      */
-    final protected function _getOne($model, $where)
+    final protected function _getOne($model, $filter)
     {
         if(empty($model))return $model;
-
-        $data = $this->_getOneModel($model, $where);
+        // $data = $this->_getOneModel($model, $filter);
+        
+        // jika bukan array maka diasumsikan yang diinput sebagai parameter adalah value id nya
+        if(!is_array($filter))$filter = [['id',$filter]];
+        $data = $this->_filter($model, $filter)->first();
+        
+        if (isset($filter['append'])) {            
+            $data = $data->append($filter['append']);
+        }    
         return $data ? $data->toArray() : false;
     }
 
     /**
-     * DONE
      * 
      * fungsi utama untuk get 1 record data
      * 

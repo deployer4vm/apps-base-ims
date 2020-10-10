@@ -1,6 +1,9 @@
 import globals from "@/globals";
 
 const state = {
+    // persistant: true, jika ingin store ini disave di local storage
+    isAppReady: false,
+
     nextAlert: { // route yg ditampilkan dihalaman selanjutnya
         show: false,
         alertStyleType: "hover",
@@ -69,6 +72,9 @@ const state = {
 };
 
 const getters = {    
+    isAppReady(state) {
+        return state.isAppReady;
+    },
     getMessageLoading(state) {
         return state.messageLoading;
     },
@@ -118,7 +124,10 @@ const getters = {
     }
 };
 
-const mutations = {    
+const mutations = {   
+    setAppReady(state, data){
+        state.isAppReady = true;
+    }, 
     addAlert(state, alert){
         if(state.alertData.length >=3)delete state.alertData[0];
         state.alertData.push(alert);

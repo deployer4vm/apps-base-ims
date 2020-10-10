@@ -12,6 +12,7 @@ export default {
         if(!this.store.getters.isLangSet){
             this.store.dispatch('reloadLang').then((val)=>{
                 this.allLang = this.store.getters.getLang;
+                // EventBus.$emit('onLangLoaded');
                 if(onLoadComplete)onLoadComplete();
             });
         }else{
@@ -22,6 +23,7 @@ export default {
     reLoadLang(newLang=null) {
         this.store.dispatch('reloadLang',newLang).then((val)=>{
             this.allLang = this.store.getters.getLang;
+            // EventBus.$emit('onLangLoaded');
         });       
     },
     getLocale() {

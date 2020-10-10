@@ -41,21 +41,26 @@
                             </span>
                         </template>
 
-                        <b-dd-item :to="{name: 'myprofile'}">
+                        <b-dd-item v-if="AppConfig.isModuleEnable('moduser')" :to="{name: 'myprofile'}">
                             <i class="ion ion-ios-person text-lightest"></i>
                             &nbsp; {{ Trans.get('user.my_profile') }}
                         </b-dd-item>
-
                         
-                        <template v-if="AppConfig.packageLocal.moduser.user_role.multi_role==1 && UserAuth.getAuthRoleCount()>1">
+                        <template v-if="AppConfig.isModuleEnable('moduser') && AppConfig.packageLocal.moduser.user_role.multi_role==1 && UserAuth.getAuthRoleCount()>1">
                             <b-dd-divider />
                             <b-dd-item v-for="role in UserAuth.getAuthRoleList()" @click="changeRole(role.role_code)" :key="'header-chose-role-' + role.id">
                                 <i :class="{ion:true, 'ion-md-radio-button-on': ActiveRoleCode==role.role_code, 'ion-md-radio-button-off': ActiveRoleCode!=role.role_code, 'text-success':true}"></i> &nbsp; {{role.name}}
                             </b-dd-item>
                             <b-dd-divider />
                         </template>
+                        
 
-                        <b-dd-item @click="UserAuth.logout()">
+                        <b-dd-item v-if="AppConfig.isModuleEnable('moduser') && showNotif" :to="{name: 'notification'}">
+                            <i class="ion ion-md-notifications-outline text-info"></i>
+                            &nbsp; {{ Trans.get('notif.notification_title') }}
+                        </b-dd-item>
+
+                        <b-dd-item v-if="AppConfig.isModuleEnable('moduser')" @click="UserAuth.logout()">
                             <i class="ion ion-ios-log-out text-danger"></i>
                             &nbsp; {{ Trans.get('auth.logout') }}
                         </b-dd-item>
@@ -92,7 +97,7 @@ export default {
             return this.Web.getNavbarTitle()?this.Web.getNavbarTitle():this.Web.getTenantName();
         },
         showNotif() {
-            return this.AppConfig.packageLocal.moduser.notification.enable==1 && this.AppConfig.packageLocal.moduser.notification.show==1;
+            return this.AppConfig.isModuleEnable('moduser') && this.AppConfig.packageLocal.moduser.notification.enable==1 && this.AppConfig.packageLocal.moduser.notification.show==1;
         }
     },
     name: "app-layout-navbar",

@@ -1,6 +1,8 @@
 import globals from "@/globals";
 
 const state = {
+    // persistant: true, jika ingin store ini disave di local storage
+
     allConfig: {},
     isConfigSet: null,
     lastReload: null

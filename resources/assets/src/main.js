@@ -120,6 +120,13 @@ var VM = new Vue({
                 title: this.Trans.get('alert.info_title'),
                 text: this.Trans.get('alert.default_text')
             };
+            this.$store.commit('setAppReady');
+            var that = this;
+            setTimeout(() => {
+                that.layoutHelpers.init();
+                that.layoutHelpers.update();
+                that.layoutHelpers.setAutoUpdate(true);                
+            }, 100); 
         });
 
         //set bahasa untuk alert token invalid

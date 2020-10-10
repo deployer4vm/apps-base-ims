@@ -32,7 +32,9 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        if($this->app->runningInConsole())$this->bootMigration();
+        if($this->app->runningInConsole())
+            $this->bootMigration();
+
         parent::boot();
     }
 
@@ -41,21 +43,7 @@ class RouteServiceProvider extends ServiceProvider
      */
     private function bootMigration()
     {
-        $mainPath = database_path('migrations'); 
-        $appPath = app_path('MainApp'.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations');       
-        
-        $modulePath = Utilities::listModulePath($this->app['config']['hpsynapse']['namespaces'], function($namespace,$pathToModule){            
-            $moduleNamespace = explode('\\',trim($namespace,'\\'));
-            $moduleNamespace = array_pop($moduleNamespace);            
-            $pathToModule .= DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
-            if(config('AppConfig.packageLocal.'.$moduleNamespace.'.database.run_migration',true) && file_exists($pathToModule)){
-                return $pathToModule;
-            }
-        });
-        
-        $paths = array_merge([$mainPath], $modulePath);
-        $paths[] = $appPath;
-        $this->loadMigrationsFrom($paths);
+        $this->loadMigrationsFrom(config('hpsynapse.migration_path'));
     }
 
     /**
@@ -80,16 +68,18 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function map()
     {        
+        if(!$this->app->runningInConsole())
+            $this->registerControllerNamespace();
 
-        // $homeSlug = trim(config('AppConfig.client.endpoint.'.config('AppConfig.system.mode').'.home_slug',''),'/');
-        // if($homeSlug) $homeSlug = '/'.$homeSlug;
+    }
 
-        $config = $this->app['config']['hpsynapse'];
-        // $middleware = $config['protection_middleware'];        
-        // if(isset($config['protection_middleware'])){
-        //     $middleware = array_merge($middleware,$config['protection_middleware']);
-        // }
-        Utilities::listModulePath($config['namespaces'], function($namespace,$pathToModule) {
+    /**
+     * initiate route untuk Admin area Vue Frontend di web akses
+     */
+    protected function registerControllerNamespace()
+    {
+        $controllerPaths = config('hpsynapse.controller_path');
+        foreach ($controllerPaths as $namespace => $pathToModule) {
             
             $fileNames = [
                 'routes_api' => true,
@@ -120,39 +110,43 @@ class RouteServiceProvider extends ServiceProvider
                     continue;
                 }
                 
+                // register router utama per module
                 Route::middleware($isApi ? ['api'] : ['web'])
                     ->prefix($isApi && $moduleNamespace != 'moduser' ? config('AppConfig.endpoint.laravel.api.'.$moduleNamespace) : '')
                     ->namespace($namespace)
                     ->group($path);
             }
-        });
+        }
 
         $this->mapApiRoutes();
         $this->mapWebRoutes();
-
-        /**
-         * initiate route untuk Admin area Vue Frontend
-         */
         
         //jika full_vue aktif maka load route config nya
-        if(config('AppConfig.system.web_admin.full_vue')){
-            $adminEndpoint = config('AppConfig.endpoint.laravel.admin.app');
-            if($adminEndpoint!='/' && !empty($adminEndpoint)){
-                Route::middleware('web')
-                    ->get($adminEndpoint, function(){
-                        return view('layouts.full_vue.main');
-                    });
-            }else{
-                $adminEndpoint = '';
-            }
-            Route::middleware('web')
-                ->get($adminEndpoint.'{any}', function(){
-                    return view('layouts.full_vue.main');
-                })->where('any', '.*');
-        }
-
+        if(config('AppConfig.system.web_admin.full_vue'))
+            $this->mapWebFullVueRoutes();
     }
 
+    /**
+     * full vue web routes
+     *
+     * @return void
+     */
+    protected function mapWebFullVueRoutes()
+    {        
+        $adminEndpoint = config('AppConfig.endpoint.laravel.admin.app');
+        if($adminEndpoint!='/' && !empty($adminEndpoint)){                
+            Route::middleware('web')
+                ->get($adminEndpoint, function(){
+                    return view('layouts.full_vue.main');
+                });
+        }else{
+            $adminEndpoint = '';
+        }
+        Route::middleware('web')
+            ->get($adminEndpoint.'{any}', function(){
+                return view('layouts.full_vue.main');
+            })->where('any', '.*');        
+    }
 
     /**
      * Define the "web" routes for the application.

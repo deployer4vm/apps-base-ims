@@ -32,10 +32,10 @@
         padding: 0 10px;
     }
 
-    .v-fade-enter-active, .v-fade-leave-active {
-        transition: opacity .2s;
+    .fade-enter-active, .fade-leave-active {
+        transition: opacity .2s ease;
     }
-    .v-fade-enter, .v-fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+    .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
         opacity: 0.1;
     }
 </style>

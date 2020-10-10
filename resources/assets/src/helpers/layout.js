@@ -15,6 +15,10 @@ export default {
     return this._exec(() => this._layoutHelpers.getSidenav()) || null
   },
 
+  _bindSidenavMouseEvents () {
+    return this._exec(() => this._layoutHelpers._bindSidenavMouseEvents()) || null
+  },
+
   getLayoutNavbar () {
     return this._exec(() => this._layoutHelpers.getLayoutNavbar()) || null
   },
