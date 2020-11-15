@@ -52,13 +52,14 @@ class RouteServiceProvider extends ServiceProvider
     public function register()
     {
         require_once app_path('Helpers/Helper.php');
+        
         // $this->mergeConfigFrom(
         //     __DIR__.'/../config/HPSynapse.php', config_path('hpsynapse.php')
         // );      
         
-//        $this->app->singleton('breadcrumb', function ($app) {
-//            return new \hpsynapse\appscore\Services\Breadcrumb();
-//        });
+        // $this->app->singleton('breadcrumb', function ($app) {
+        //     return new \hpsynapse\appscore\Services\Breadcrumb();
+        // });
     }
 
     /**
@@ -175,5 +176,5 @@ class RouteServiceProvider extends ServiceProvider
             ->middleware('api')
             ->namespace($this->namespace)
             ->group(base_path('routes/api.php'));
-}
+    }
 }

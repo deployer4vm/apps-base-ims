@@ -8,7 +8,9 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\Facades\Backup;
-use Exception;
+
+// use Exception;
+use Throwable;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -35,13 +37,13 @@ class RestoreBackup implements ShouldQueue
     /**
      * The job failed to process.
      *
-     * @param  Exception  $exception
+     * @param  Throwable  $error
      * @return void
      */
-    public function failed(Exception $exception)
+    public function failed(Throwable $error)
     {        
         UserAuth::unlockLogin();
-        report($exception);          
+        report($error);          
     }
 
     /**

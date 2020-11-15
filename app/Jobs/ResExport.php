@@ -9,7 +9,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 
-use Exception;
+// use Exception;
+use Throwable;
 use App\MainApp\Modules\UnitToko\Facades\StockOpname;
 
 /**
@@ -42,12 +43,12 @@ class ResExport implements ShouldQueue
         $this->resumeParam = $resumeParam;
     }
 
-    public function failed(Exception $exception)
+    public function failed(Throwable $error)
     {        
         $repo = new $this->repo;        
         $repo->initExportOnJob($this->addsJobsParam);
         $repo->setExportHomeUrl($this->homeUrl);
-        $repo->setExportJobFailed($exception);
+        $repo->setExportJobFailed($error);
     }
     
     /**

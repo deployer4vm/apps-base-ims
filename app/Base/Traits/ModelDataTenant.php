@@ -61,16 +61,16 @@ trait ModelDataTenant
         
         return parent::getConnectionName(); 
     }
-
     
     public function getTable()
     {
         if (empty($this->tenantId))
-            $this->tenantId = isset($GLOBALS['tenant_id'])?$GLOBALS['tenant_id']:config('tenant.id');
-        
+            $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
+
+        $table = $this->table;
         if(config('AppConfig.system.multitenant.data_mode',1)==2)
-            $this->table = config('AppConfig.system.multitenant.table_prefix','_').$this->tenantId.'_'.$this->table;
+            $table = config('AppConfig.system.multitenant.table_prefix','_').$this->tenantId.'_'.$this->table;
         
-        return $this->table;
+        return $table;
     }
 }

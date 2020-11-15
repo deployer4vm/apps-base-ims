@@ -7,6 +7,8 @@ use App\Models\TenantGroup;
 use App\Models\TenantGroupTenant;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Exception;
 
 use App\Base\BaseRepository;
 
@@ -90,6 +92,60 @@ class Tenant extends BaseRepository
      * DB TRANSACTION PER TENANT CONNECTION
      */
     
+    /**
+     * detek otomatis dbtransaction
+     * 
+     * @param Object $that $this dari class bersangkutan
+     * @param Function $func callback fungsi yang akan dieksekusi dengan format function($that)
+     * @param Function $rollbackFunc callback fungsi saat terjadi error
+     * 
+     * @return Boolean true jika berhasil, false atau throw error jika gagal
+     */
+    public function dbBeginTransactionIfNotExist($that, $func, $rollbackFunc=null){
+        // jika belum ada transaksi aktif maka aktifkan
+        $dontHaveTransactionLevel = !$this->dbTransactionLevel();
+        
+        try {         
+            if($dontHaveTransactionLevel) 
+                $this->dbBeginTransaction();
+
+            $return = $func($that);
+            
+            if($dontHaveTransactionLevel) 
+                $this->dbCommit();
+
+        } catch (Exception  $e) {
+            $return = false;
+            
+            if($dontHaveTransactionLevel) 
+                $this->dbRollback();
+
+            $this->error = $e->getMessage(); 
+
+            Log::error('dbBeginTransactionIfNotExist ERROR');
+            Log::error($e->getTraceAsString());
+
+            // eksekusi rollback function jika disertakan
+            if($rollbackFunc!=null)   
+                $rollbackFunc($that);      
+            
+            // jika sedang dalam transaksi dari parent maka teruskan error nya ke parent transaction nya
+            if(!$dontHaveTransactionLevel) 
+                throw new Exception($this->errorFull());
+        }
+            
+        return $return;
+    }
+    
+    /**
+     * cek transaction level
+     */
+    public function dbTransactionLevel($tenantId=false)
+    {
+        if(!$tenantId)$tenantId=config('tenant.id');
+        $tenantId = $tenantId?$tenantId:$this->getActiveTenant('id');
+        return \Illuminate\Support\Facades\DB::connection($this->getDbConnectionName($tenantId))->transactionLevel();
+    }
     
     /**
      * begin db transaction pertenant, hanya eksekusi di multi tenant db yg sudah di-initialize sebelumnya

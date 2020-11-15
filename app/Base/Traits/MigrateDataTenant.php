@@ -13,7 +13,7 @@ trait MigrateDataTenant
     public function createPerTenant($table,$bluePrint)
     {
         //jika mode nya tidak share dalam 1 table
-        if(config('AppConfig.system.multitenant.data_mode')!=1){        
+        if(config('AppConfig.system.multitenant.data_mode',1)!=1){        
             $filter = isset($this->tenantId)?[['id',$this->tenantId]]:[];
             $tenantList = Tenant::listTenant($filter);  
             foreach ($tenantList['data'] as $tenant) {     
@@ -38,14 +38,14 @@ trait MigrateDataTenant
     }
 
     public function tablePerTenant($table,$bluePrint,$column=false,$ifColumnExist=false)
-    {
+    { 
         //jika mode nya tidak share dalam 1 table
-        if(config('AppConfig.system.multitenant.data_mode')!=1){        
+        if(config('AppConfig.system.multitenant.data_mode',1)!=1){        
             $filter = isset($this->tenantId)?[['id',$this->tenantId]]:[];
             $tenantList = Tenant::listTenant($filter);  
-            foreach ($tenantList['data'] as $tenant) {     
+            foreach ($tenantList['data'] as $tenant) {    
                 //jika per database
-                if(config('AppConfig.system.multitenant.data_mode')==3){                    
+                if(config('AppConfig.system.multitenant.data_mode',1)==3){                    
                     Tenant::setDb($tenant['id']);
                     if (Tenant::dbExists($tenant['id']) && Schema::connection(config('database.perTenant').$tenant['id'])->hasTable($table)) {
                         if(
@@ -78,12 +78,12 @@ trait MigrateDataTenant
     public function dropTablePerTenant($table,$ifTableExist=true)
     {
         //jika mode nya tidak share dalam 1 table
-        if(config('AppConfig.system.multitenant.data_mode')!=1){        
+        if(config('AppConfig.system.multitenant.data_mode',1)!=1){        
             $filter = isset($this->tenantId)?[['id',$this->tenantId]]:[];
             $tenantList = Tenant::listTenant($filter);  
             foreach ($tenantList['data'] as $tenant) {     
                 //jika per database
-                if(config('AppConfig.system.multitenant.data_mode')==3){                    
+                if(config('AppConfig.system.multitenant.data_mode',1)==3){                    
                     Tenant::setDb($tenant['id']);
                     if (Tenant::dbExists($tenant['id'])) {
                         if($ifTableExist){

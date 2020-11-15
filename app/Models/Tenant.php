@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Base\BaseModel;
 
-class Tenant extends Model
+class Tenant extends BaseModel
 {
     /**
      * The table associated with the model.

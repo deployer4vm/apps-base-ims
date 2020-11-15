@@ -51,6 +51,7 @@ $applicationProviders = [
         App\Providers\RouteServiceProvider::class,
         App\Providers\TelescopeServiceProvider::class,
         App\MainApp\Providers\AppServiceProvider::class,
+        App\MainApp\Providers\EventServiceProvider::class,
 ];
 
 $providers = array_merge($laravelFrameworkProviders, $synapseProvider, $applicationProviders);

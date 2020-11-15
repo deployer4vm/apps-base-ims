@@ -33,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
                 }
             });
         
+        // set public path sesuai config
         if(config('AppConfig.system.public_path')){
             $this->app->bind('path.public', function() {
                 return realpath(__DIR__.'/../..'.config('AppConfig.system.public_path'));

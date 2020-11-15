@@ -591,19 +591,19 @@ abstract class BaseRepository {
      * 
      * @param eloquen instance $model model data yang digunakan
      * @param array $filter filter data jika ada
-     *      tenantId|tenant_id       bigint              id tenant yang di filter
+     *      tenantId|tenant_id      bigint              id tenant yang di filter
      *      q                       string              jika menyertakan ini maka akan dilakuan string filter berdasarkan field $searchField     * 
      *      function                function($model)    filter tambahan jika diperlukan
      *      searchField             array               list field/column yg termasuk kedalam filter search
      *      hiddenColumn            array               list field/column yg di hidde * -- HINDARI PENGGUNAAN HIDDEN COLUMN UNTUK DATA BESAR
      *      append                  array|string        list custom attribute yg akan ditampilkan
      *      with                    array|string        list custom relation yg akan ditampilkan
+     *      idAsKey                 boolean             true jika key data menggunakan ID, false jika urutan array default (default false)
      *     
      *      ADDITIONAL_PARAM array where untuk default filter
-     * 
-     * @param array $orderBy [['field','DESC/ASC'],['other_field','ASC/DESC']] atau array 1 level jika memang cuma 1 yg di order by nya
      * @param int $offset
      * @param int $limit jika 0 maka view all
+     * @param array $orderBy [['field','DESC/ASC'],['other_field','ASC/DESC']] atau array 1 level jika memang cuma 1 yg di order by nya
      * 
      * @return array
      */
@@ -620,8 +620,13 @@ abstract class BaseRepository {
         }
 
         $hiddenColumn = null;
-        $appendAttribut = null;
-        if (!empty($filter)) {
+        $appendAttribut = null;               
+        $idAsKey = false; // key di list data, apakah menggunakan ID atau urut array secara default saja
+        if (!empty($filter)) {     
+            if (isset($filter['idAsKey'])) {                
+                $idAsKey = true;
+                unset($filter['idAsKey']);
+            }
             $model = $this->_filter($model,$filter);            
             if (isset($filter['hiddenColumn'])) {                
                 $hiddenColumn = $filter['hiddenColumn'];
@@ -660,18 +665,35 @@ abstract class BaseRepository {
             }else{
                 $this->pagination['data'] = $model->get()->toArray();
             }
-            
-            //jika menyertakan hiddeColumn berarti ada column yg di hide
-            if ($hiddenColumn) {
-                $collection = collect($this->pagination['data']);
-                $collection->transform(function($i) use ($hiddenColumn) {
-                    foreach ($hiddenColumn as $value) {
-                        unset($i[$value]);
+          
+            // jika menyertakan hiddeColumn berarti ada column yg di hide
+            // jika menyertakan idAsKey berarti key data menggunakan field id
+            if ($hiddenColumn || $idAsKey) {
+                $tmpData = [];
+                foreach ($this->pagination['data'] as $value) {
+                    if($hiddenColumn)
+                        foreach ($hiddenColumn as $column) {
+                            unset($value[$column]);
+                        }
+                    if($idAsKey){
+                        $tmpData[$value['id']] = $value;
+                    }else{
+                        $tmpData[] = $value;
                     }
-                    return $i;
-                });
-                $this->pagination['data'] = $collection->toArray();
-            }
+                }
+                $this->pagination['data'] = $tmpData;
+                unset($tmpData);
+
+                // $collection = collect($this->pagination['data']);
+                // $collection->transform(function($i) use ($hiddenColumn) {
+                //     foreach ($hiddenColumn as $value) {
+                //         unset($i[$value]);
+                //     }
+                //     return $i;
+                // });
+                // $this->pagination['data'] = $collection->toArray();
+            }  
+			
         } else {
             $this->pagination['data'] = [];
         }        

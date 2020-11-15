@@ -1,12 +1,14 @@
 <template>
     <multiselect 
-        v-model="modelDataTmp"
-        @select="selectData"
-        :allow-empty="inlineAllowEmpty"
-        :options="options"
-        :disabled="disabled"
-        :placeholder="inlinePlaceholder"
-        :track-by="inlineTrackBy"
+        v-model="modelDataTmp" 
+        @select="selectData" 
+        :allow-empty="inlineAllowEmpty" 
+        :options="options" 
+        :disabled="disabled" 
+        :placeholder="inlinePlaceholder" 
+        :selectLabel="inlineSelectLabel" 
+        :deselectLabel="inlineDeselectLabel" 
+        :track-by="inlineTrackBy" 
         :label="inlineLabel"
     />
 </template>
@@ -23,6 +25,8 @@ export default {
         'label',
         'options',
         'placeholder',
+        'selectLabel',
+        'deselectLabel',
         'track-by',
         'modelData',
         'disabled'
@@ -30,6 +34,8 @@ export default {
     data: () => ({
         modelDataTmp: {},
         inlineLabel: '',
+        inlineSelectLabel: '',
+        inlineDeselectLabel: '',
         inlineTrackBy: '',
         inlineAllowEmpty: '',
         inlinePlaceholder: '',
@@ -38,8 +44,11 @@ export default {
         this.inlineLabel = this.label==undefined?'text':this.label;
         this.inlineTrackBy = this.trackBy==undefined?'value':this.trackBy;
         this.inlineAllowEmpty = this.allowEmpty==undefined?false:this.allowEmpty;
+        this.inlineSelectLabel = this.selectLabel==undefined?'Press enter to select':this.selectLabel;
+        this.inlineDeselectLabel = this.deselectLabel==undefined?'Press enter to remove':this.deselectLabel;
         this.inlinePlaceholder = this.placeholder==undefined?'Select':this.placeholder;
-        if(this.modelData>0)this.setSelected(this.modelData);
+        // if(this.modelData>0)
+        this.setSelected(this.modelData);
     },
     watch: {
         'modelData': function(v) {

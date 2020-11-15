@@ -46,6 +46,12 @@ export default {
             return res;
         });
     },
+    register(userData){
+        userData.group_app = this.router.currentRoute.params.group_app;
+        return this.store.dispatch('register',userData).then((res)=>{            
+            return res;
+        });
+    },
     //logoutkan session yg sekarang
     // return promise
     logout(goToLogin=true){

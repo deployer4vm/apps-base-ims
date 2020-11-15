@@ -8,8 +8,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
-use Exception;
-
+// use Exception;
+use Throwable;
 
 /**
  * Bagian dari general Excel Import functionality (ResImportTraits)
@@ -39,11 +39,11 @@ class ResImport implements ShouldQueue
         $this->resumeParam = $resumeParam;
     }
 
-    public function failed(Exception $exception)
+    public function failed(Throwable $error)
     {        
         $repo = new $this->repo;        
         $repo->initImportOnJob($this->addsJobsParam);
-        $repo->setImportJobFailed($exception);
+        $repo->setImportJobFailed($error);
     }
     
     /**

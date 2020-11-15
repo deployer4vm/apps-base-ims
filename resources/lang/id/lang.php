@@ -29,6 +29,7 @@ return [
     'search' => 'Cari',
     'view_all' => 'Tampilkan Semua',
     //-- general caption
+    'loading_data' => 'Loading',
     'data_not_found' => 'Data tidak ditemukan',
     'data_attribute_not_found' => 'Data :attribute tidak ditemukan',
     'no_data' => 'Belum ada data',

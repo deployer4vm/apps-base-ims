@@ -29,6 +29,7 @@ return [
     'search' => 'Search',
     'view_all' => 'View All',
     //-- general caption
+    'loading_data' => 'Loading',
     'data_not_found' => 'Data not found',
     'data_attribute_not_found' => 'Data :attribute not found',
     'no_data' => 'No Data',
