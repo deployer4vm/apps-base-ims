@@ -1,7 +1,8 @@
 <template>
     <multiselect 
         v-model="modelDataTmp" 
-        @select="selectData" 
+        @select="onSelect" 
+        @search-change="onSearhChange"
         :allow-empty="inlineAllowEmpty" 
         :options="options" 
         :disabled="disabled" 
@@ -56,8 +57,11 @@ export default {
         }
     },
     methods: {
-        selectData(selectedOption){
+        onSelect(selectedOption){
             this.$emit('onSelect', selectedOption.value);
+        },
+        onSearhChange(query){
+            this.$emit('onSearhChange', query);
         },
         setSelected(value) {     
             this.modelDataTmp = this.options.find(function( d ) {

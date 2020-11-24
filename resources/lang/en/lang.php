@@ -25,9 +25,11 @@ return [
     'yes' => 'Yes',
     'exit' => 'Exit',
     'back' => 'Back',
+    'edit' => 'Edit',
     'delete' => 'Delete',
     'search' => 'Search',
     'view_all' => 'View All',
+    'view_detail' => 'View Detail',
     //-- general caption
     'loading_data' => 'Loading',
     'data_not_found' => 'Data not found',

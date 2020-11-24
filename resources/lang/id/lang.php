@@ -25,9 +25,11 @@ return [
     'yes' => 'Ya',
     'exit' => 'Keluar',
     'back' => 'Kembali',
+    'edit' => 'Edit',
     'delete' => 'Delete',
     'search' => 'Cari',
     'view_all' => 'Tampilkan Semua',
+    'view_detail' => 'Tampilkan Detail',
     //-- general caption
     'loading_data' => 'Loading',
     'data_not_found' => 'Data tidak ditemukan',

@@ -13,7 +13,7 @@ trait Uuid
 
         static::creating(function ($model) {
             // try {
-                $model->uuid = Generator::uuid4()->toString();
+                $model->uuid = empty($model->uuid)?Generator::uuid4()->toString():$model->uuid;
             // } catch (Exception $e) {
             //     abort(500, $e->getMessage());
             // }

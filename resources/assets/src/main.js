@@ -39,6 +39,10 @@ if(globals().AppConfig.system.broadcast.services_enabled.pusher){
     window.Echo = new Echo(echoConfig);
 }
 
+if(globals().AppConfig.system.web_serviceworker==1){
+    navigator.serviceWorker.register('/sw.js');
+}
+
 // vue general global event bus
 window.EventBus = new Vue({store});
 
