@@ -54,6 +54,9 @@ export default {
     watch: {
         'modelData': function(v) {
             this.setSelected(this.modelData);
+        },
+        'options': function(v) {
+            console.log(v);
         }
     },
     methods: {
