@@ -1,8 +1,28 @@
 <template>
     <multiselect 
+        v-if="ajaxSearch"
         v-model="modelDataTmp" 
         @select="onSelect" 
+        :allow-empty="inlineAllowEmpty" 
+        :options="options" 
+        :disabled="disabled" 
+        :placeholder="inlinePlaceholder" 
+        :selectLabel="inlineSelectLabel" 
+        :deselectLabel="inlineDeselectLabel" 
+        :track-by="inlineTrackBy" 
+        :label="inlineLabel"
+
         @search-change="onSearhChange"
+        :searchable="true" 
+        :loading="isLoading" 
+        :internal-search="false"
+        :clear-on-select="false" 
+        :close-on-select="true"
+    />
+    <multiselect 
+        v-else
+        v-model="modelDataTmp" 
+        @select="onSelect" 
         :allow-empty="inlineAllowEmpty" 
         :options="options" 
         :disabled="disabled" 
@@ -22,12 +42,14 @@ export default {
         Multiselect,
     },
     props:[
+        'ajaxSearch',
         'allow-empty',
         'label',
         'options',
         'placeholder',
         'selectLabel',
         'deselectLabel',
+        'isLoading',
         'track-by',
         'modelData',
         'disabled'
@@ -55,9 +77,9 @@ export default {
         'modelData': function(v) {
             this.setSelected(this.modelData);
         },
-        'options': function(v) {
-            console.log(v);
-        }
+        // 'options': function(v) {
+        //     console.log('v-single-select Options : ',v);
+        // }
     },
     methods: {
         onSelect(selectedOption){
