@@ -77,9 +77,10 @@ export default {
         'modelData': function(v) {
             this.setSelected(this.modelData);
         },
-        // 'options': function(v) {
-        //     console.log('v-single-select Options : ',v);
-        // }
+        'options': function(v) {
+            this.setSelected(this.modelData);
+            // console.log('v-single-select Options : ',v);
+        }
     },
     methods: {
         onSelect(selectedOption){

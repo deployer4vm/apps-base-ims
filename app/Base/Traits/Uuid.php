@@ -4,6 +4,7 @@ namespace App\Base\Traits;
 
 use Exception;
 use Ramsey\Uuid\Uuid as Generator;
+// use Illuminate\Support\Facades\Log;
 
 trait Uuid
 {
@@ -13,7 +14,8 @@ trait Uuid
 
         static::creating(function ($model) {
             // try {
-                $model->uuid = empty($model->uuid)?Generator::uuid4()->toString():$model->uuid;
+                if(empty($model->uuid))
+                    $model->uuid = Generator::uuid4()->toString();
             // } catch (Exception $e) {
             //     abort(500, $e->getMessage());
             // }
