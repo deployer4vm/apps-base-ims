@@ -40,7 +40,7 @@ trait ModelDataTenant
     public function setDbPerTenant()
     {
         if (empty($this->tenantId))
-        $this->tenantId = $GLOBALS['model_tenant_id'] = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
+            $this->tenantId = $GLOBALS['model_tenant_id'] = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
         
         Tenant::setDb($this->tenantId);
     }

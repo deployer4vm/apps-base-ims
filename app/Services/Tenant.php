@@ -101,7 +101,8 @@ class Tenant extends BaseRepository
      * 
      * @return Boolean true jika berhasil, false atau throw error jika gagal
      */
-    public function dbBeginTransactionIfNotExist($that, $func, $rollbackFunc=null){
+    public function dbBeginTransactionIfNotExist($that, $func, $rollbackFunc=null)
+    {
         // jika belum ada transaksi aktif maka aktifkan
         $dontHaveTransactionLevel = !$this->dbTransactionLevel();
         

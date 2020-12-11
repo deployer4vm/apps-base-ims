@@ -369,7 +369,10 @@ trait ResImportTrait {
             );
 
             //jika kosong berarti error, maka skip
-            if(empty($insertRow))continue;
+            if(empty($insertRow)){
+                $row++;
+                continue;
+            }
             
             $insertRow['created_at'] = now();
             $result = $this->_importModelDetail->create($insertRow);
