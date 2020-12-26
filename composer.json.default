@@ -33,8 +33,7 @@
         "nunomaduro/collision": "^4.1",
         "orangehill/iseed": "^2.6",
         "phpunit/phpunit": "^8.5",
-        "reliese/laravel": "^0.0.14"
-        "xethron/migrations-generator": "^2.0"        
+        "reliese/laravel": "^0.0.14"  
     },
     "config": {
         "optimize-autoloader": true,

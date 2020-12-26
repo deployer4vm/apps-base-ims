@@ -643,8 +643,13 @@ abstract class BaseRepository {
             $this->pagination = $this->getDefaultListFormat();
             return $this->pagination;
         }
-        
-        $this->pagination['count'] = $model->count();
+
+        if ($model) { 
+            $this->pagination['count'] = $model->count();
+        }else{
+            $this->pagination['count'] = 0;
+        }
+
         $this->pagination['offset'] = $offset;
         $this->pagination['limit'] = $limit;
         $this->pagination['currentPage'] = 1;
@@ -797,7 +802,7 @@ abstract class BaseRepository {
         if(!is_array($filter))$filter = [['id',$filter]];
         $data = $this->_filter($model, $filter)->first();
         
-        if (isset($filter['append'])) {            
+        if (isset($filter['append']) && $data) {            
             $data = $data->append($filter['append']);
         }    
         return $data ? $data->toArray() : false;

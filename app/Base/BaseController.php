@@ -121,7 +121,7 @@ class BaseController extends LaravelBaseController
     final protected function getListParam(bool $mergeParam = true,array $mergeExcept = [])
     {
         $params = [
-            'all' => request()->except(['limit','offset','orderBy','orderType','q']),
+            'all' => request()->except(['limit','offset','orderBy','orderType','q','with','append']),
             'query' => [//parameter yang dipassing di URL, termasuk juga parameter filter, untuk di passing ke pagination juga
                 'limit' => request()->input('limit', 10),
                 'offset' => request()->input('offset', 0)
@@ -139,8 +139,17 @@ class BaseController extends LaravelBaseController
 
         //jika menyertakan query string
         if(request()->input('q', null)){
-            $params['query']['q'] = request()->input('q','');
-            $params['filter']['q'] = $params['query']['q'];
+            $params['filter']['q'] = $params['query']['q'] = request()->input('q','');
+        }
+
+        //jika menyertakan with
+        if(request()->input('with', null)){
+            $params['filter']['with'] = $params['query']['with'] = request()->input('with','');
+        }
+
+        //jika menyertakan append
+        if(request()->input('append', null)){
+            $params['filter']['append'] = $params['query']['append'] = request()->input('append','');
         }
 
         //jika parameter dimerge langsung dengan query dan filter
