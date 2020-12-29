@@ -2,6 +2,8 @@
 /node_modules
 /public/hot
 /public/dist/*
+/public/images
+/public/images/*
 /public/assets/*
 /public/storage
 /public/sw.js
