@@ -802,6 +802,11 @@ abstract class BaseRepository {
         if(!is_array($filter))$filter = [['id',$filter]];
         $data = $this->_filter($model, $filter)->first();
         
+        if (isset($filter['with'])) {                
+            $model = $model->with($filter['with']);
+            unset($filter['with']);
+        }
+        
         if (isset($filter['append']) && $data) {            
             $data = $data->append($filter['append']);
         }    

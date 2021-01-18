@@ -144,7 +144,7 @@ class BaseController extends LaravelBaseController
 
         //jika menyertakan with
         if(request()->input('with', null)){
-            $params['filter']['with'] = $params['query']['with'] = request()->input('with','');
+            $params['filter']['with'] = $params['query']['with'] = request()->input('with');
         }
 
         //jika menyertakan append
