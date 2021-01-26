@@ -982,9 +982,8 @@ abstract class BaseRepository {
         $model = $this->_where($model, $where);
 		
         if ($model != false) {
-            if ($model->delete()) {
-                return true;
-            }            
+            $model->delete();
+            return true;            
         }else{
             $this->error = __('lang.data_not_found');
         }
