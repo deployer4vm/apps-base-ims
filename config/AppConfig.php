@@ -548,5 +548,6 @@ return [
     'package' => $package, //config2 default dari module dan lib
     // 'listener' => $listener,
     'sidenav' => $sidenav,
+    'tenant' => $tenantList, //_tenant.json , list tenant
     'acl' => $acl //_acl.json
 ];
