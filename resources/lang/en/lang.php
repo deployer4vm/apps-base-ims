@@ -23,6 +23,7 @@ return [
     'close' => 'Close',
     'ok' => 'Ok',
     'yes' => 'Yes',
+    'done' => 'Done',
     'exit' => 'Exit',
     'back' => 'Back',
     'edit' => 'Edit',
@@ -30,6 +31,7 @@ return [
     'search' => 'Search',
     'view_all' => 'View All',
     'view_detail' => 'View Detail',
+    'print' => 'Print',
     //-- general caption
     'loading_data' => 'Loading',
     'data_not_found' => 'Data not found',
