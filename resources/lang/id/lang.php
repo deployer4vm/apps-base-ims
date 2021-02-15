@@ -23,6 +23,7 @@ return [
     'close' => 'Tutup',
     'ok' => 'Ok',
     'yes' => 'Ya',
+    'done' => 'Selesai',
     'exit' => 'Keluar',
     'back' => 'Kembali',
     'edit' => 'Edit',
@@ -30,6 +31,7 @@ return [
     'search' => 'Cari',
     'view_all' => 'Tampilkan Semua',
     'view_detail' => 'Tampilkan Detail',
+    'print' => 'Cetak',
     //-- general caption
     'loading_data' => 'Loading',
     'data_not_found' => 'Data tidak ditemukan',
