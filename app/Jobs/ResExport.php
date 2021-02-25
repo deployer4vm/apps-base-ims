@@ -2,13 +2,13 @@
 
 namespace App\Jobs;
 
-use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
+use Exception;
 
 // use Exception;
 use Throwable;
@@ -21,10 +21,10 @@ use App\MainApp\Modules\UnitToko\Facades\StockOpname;
 class ResExport implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    public $repo,$addsJobsParam,$homeUrl,$resumeParam;
+    public $repo,$addsJobsParam,$homeUrl,$resumeParam,$tenantId;
     public $tries = 1;
     // public $retryAfter = 10;
-    public $timeout = 3600;
+    public $timeout = 36000;
     
     /**
      * Create a new job instance.
@@ -36,12 +36,13 @@ class ResExport implements ShouldQueue
      * 
      * @return void
      */
-    public function __construct($repo,array $addsJobsParam = [],string $homeUrl='',array $resumeParam = [])
+    public function __construct($repo,array $addsJobsParam = [],string $homeUrl='',array $resumeParam = [],$tenantId=0)
     {
         $this->repo = $repo;
         $this->addsJobsParam = $addsJobsParam;
         $this->homeUrl = $homeUrl;
         $this->resumeParam = $resumeParam;
+        $this->tenantId = $tenantId?$tenantId:config('tenant.id',0);
     }
 
     public function failed(Throwable $error)
@@ -61,10 +62,12 @@ class ResExport implements ShouldQueue
     {
         try{
             $repo = new $this->repo;
+            $repo->setExportTenantId($this->tenantId);
             $repo->initExportOnJob($this->addsJobsParam);
             $repo->setExportHomeUrl($this->homeUrl);
             $repo->setExportAsResume($this->resumeParam);
-            $repo->processExport();            
+            $repo->processExport();
+        
         } catch (Exception $e) {
             Log::error('ResExport ERROR : '.$e->getMessage());
             throw $e;

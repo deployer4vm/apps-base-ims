@@ -2,11 +2,14 @@
 namespace App\Base\Traits;
 
 use Exception;
+use Throwable;
+
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
 
 use App\Jobs\ResImport;
+use App\Facades\Tenant;
 use App\Facades\Excel;
 use Carbon\Carbon;
 
@@ -39,6 +42,8 @@ trait ResImportTrait {
     private $_importDefaultColumn = [];//daftar field yang diimport, jika array kosong maka semua field diimport
     private $_importColumn = [];//daftar field yang diimport, jika array kosong maka semua field diimport
     private $_resumeParams = [];
+
+    private $_tenantId = 0;
 
     public function initImport(string $group = '', $modelHeader=null, $modelDetail=null, array $addsJobsParam=[])
     {
@@ -163,7 +168,16 @@ trait ResImportTrait {
         return $this->_importDefaultColumn;
     }
     
-    
+    public final function setImportTenantId($tenantId=0)
+    {
+        $this->_tenantId = $tenantId;
+
+        // jika dijobs dan pertenant tapi tenant nya ga ke detek maka set tenant
+        if($tenantId!=0 && config('tenant.id',0)==0){
+            Tenant::setActiveTenantById($tenantId);
+        }
+    }
+
     /**
      * OVERRIDEABLE
      * fungsi untuk di overload di parent repo yg menggunakan import trait ini (jika diperlukan)
@@ -195,6 +209,7 @@ trait ResImportTrait {
         if(!$this->_importFunctionInitialize){
             return false;
         }
+        $this->setImportTenantId(config('tenant.id'));
         $this->setImportStartRow($startRow);
         //generate path file import akan diupload
         $path = $this->getImportUploadPath().strtolower(preg_replace('/[^a-zA-Z0-9]+/', '_',$this->_importGroup));
@@ -205,6 +220,7 @@ trait ResImportTrait {
         //proses jika upload berhasil
         if($filePath){
             try{
+                    
                 if($this->_importModelHeader){
                     $addsData['import_filepath'] = $filePath;
                     $addsData['import_filename'] = $fileName;
@@ -221,6 +237,7 @@ trait ResImportTrait {
                     $config = $this->getInitImportStatus();
                     $config['addsData'] = $addsData;
                     $this->saveImportStatus($config); 
+                    Log::info(['import saved',$result]);
                 }
 
                 $this->setImportStartProcess([
@@ -230,21 +247,38 @@ trait ResImportTrait {
                 ]);
 
                 $config =  $this->getImportStatus();
+                
                 // mulai jobs untuk proses import nya
-                ResImport::dispatch(
-                    self::class,
-                    $this->getImportStartRow(),
-                    $this->_importAddsJobsParam
-                );
+                if($this->isImportJobsPerTenant()){
+                    ResImport::dispatch(
+                        self::class,
+                        $this->getImportStartRow(),
+                        $this->_importAddsJobsParam
+                    )->onQueue('tenant'.$this->_tenantId);
+                }else{
+                    ResImport::dispatch(
+                        self::class,
+                        $this->getImportStartRow(),
+                        $this->_importAddsJobsParam
+                    );
+                }
 
                 return $config;
             }catch (Exception $e) {
                 $this->error = $e->getMessage();
+                Log::error('Job Import::startImport() ERROR');
+                Log::error($e->getTraceAsString());
             }
         }else{
             $this->error = 'File import tidak terdeteksi.';
         }     
         return false;
+    }
+
+    
+    public function isImportJobsPerTenant()
+    {
+        return config('AppConfig.system.jobs.multitenant_add',false) && !empty($this->perTenant) && $this->_tenantId>0?true:false;
     }
     
     /**
@@ -288,7 +322,9 @@ trait ResImportTrait {
         $config = $this->getImportStatus();
         $header = [];
         if($this->_importModelHeader){
+            Log::info($this->_importModelHeader->toSql());
             $header = $this->_importModelHeader->where('import_status',0)->where('is_import',1)->first();
+            Log::info(['import $header',$this->_importAddsJobsParam,$header]);
             if(!$header){
 
                 $this->appendImportLog('<b class="text-danger">Import file not found!</b><br>');
@@ -435,12 +471,23 @@ trait ResImportTrait {
 
         $resumParams = $this->getImportResumeParam();
         $resumParams['lastExcelRow'] = $lastExcelRow;
-        ResImport::dispatch(
-            self::class,
-            $this->getImportStartRow(),
-            $this->_importAddsJobsParam,
-            $resumParams
-        );
+        
+        if($this->isImportJobsPerTenant()){
+            ResImport::dispatch(
+                self::class,
+                $this->getImportStartRow(),
+                $this->_importAddsJobsParam,
+                $resumParams,
+                $this->_tenantId
+            )->onQueue('tenant'.$this->_tenantId);
+        }else{
+            ResImport::dispatch(
+                self::class,
+                $this->getImportStartRow(),
+                $this->_importAddsJobsParam,
+                $resumParams
+            );
+        }
     }
     
     /**
@@ -501,7 +548,7 @@ trait ResImportTrait {
         //tambahkan field foreign key ke table header dari table detail
         if($this->_importModelHeader)
             $insertRow[$this->getImportDetailForeignKey()] = isset($header['id'])?$header['id']:0;
-
+        if($rowNumber<5)Log::info($insertRow);
         return $insertRow;
     }
 
@@ -621,7 +668,7 @@ trait ResImportTrait {
     /**
      * set dari cronjob, jika cronjob ada uncaught error
      */
-    public function setImportJobFailed(Exception $exception, string $log = '')
+    public function setImportJobFailed(Throwable $exception, string $log = '')
     { 
         if(!$this->_importFunctionInitialize){
             return false;
@@ -776,6 +823,7 @@ trait ResImportTrait {
         if(!($config = $this->_getCache('import',$this->_importGroup))){  
             $config = $this->getInitImportStatus();
         }
+        // $config['status'] = self::$IMPORT_STATUS_SUCCESS;//3: success
         $this->saveImportStatus($config);
         return $config;
     }

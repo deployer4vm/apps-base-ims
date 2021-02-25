@@ -31,8 +31,8 @@ class Kernel extends ConsoleKernel
         // * * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
         $schedule->command('queue:work --daemon --tries=3 --queue=high')->everyMinute()->withoutOverlapping();
         $schedule->command('queue:work --daemon --tries=3 --queue=verification,email')->everyMinute()->withoutOverlapping();
-        $schedule->command('queue:work --daemon --tries=3 --queue=default,low')->everyMinute()->withoutOverlapping();
-
+        $schedule->command('queue:work --daemon --tries=3 --queue=default,low --once')->everyMinute()->withoutOverlapping();
+        
         // load queuetambahan jika ada, bisa digunakan untuk per tenant juga
         $queueAdds = config('AppConfig.system.jobs.queue_adds',[]);
         foreach($queueAdds as $queue){
@@ -43,7 +43,7 @@ class Kernel extends ConsoleKernel
         if(config('AppConfig.system.jobs.multitenant_add',false)){
             $queueAdds = config('AppConfig.tenant',[]);
             foreach($queueAdds as $queue){
-                $schedule->command('queue:work --daemon --tries=3 --queue='.$queue)->everyMinute()->withoutOverlapping();
+                $schedule->command('queue:work --daemon --tries=3 --queue=tenant'.$queue.' --once')->everyMinute()->withoutOverlapping();
             }
         }
 

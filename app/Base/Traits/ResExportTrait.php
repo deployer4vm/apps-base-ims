@@ -5,6 +5,7 @@ use Exception;
 use Illuminate\Support\Facades\Storage;
 use App\Facades\Excel;
 use App\Jobs\ResExport;
+use App\Facades\Tenant;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -36,12 +37,13 @@ trait ResExportTrait {
     private $_exportColumn = [];//daftar field yang diexport, jika array kosong maka semua field diexport
     private $_resumeParams = [];
 
+    private $_tenantId = 0;
+
     /**
      * fungsi utama yang harus dieksekusi untuk menggunakan trait ini
      */
     public function initExport(string $exportGroup = '', $model=null, array $addsJobsParam=[], string $template = '')
     {
-        Log::info('init addsJobsParam : '.var_export($addsJobsParam,true));
         $this->_exportGroup = $exportGroup; 
 
         $this->setExportModel($model);
@@ -155,9 +157,20 @@ trait ResExportTrait {
         $this->_exportUploadPath = $uploadPath;
     }
     
+    public final function setExportTenantId($tenantId=0)
+    {
+        $this->_tenantId = $tenantId;
+
+        // jika dijobs dan pertenant tapi tenant nya ga ke detek maka set tenant
+        // if($tenantId!=0 && config('tenant.id',0)==0){
+        //     Tenant::setActiveTenantById($tenantId);
+        // }
+    }
+    
     /**
      * OVERRIDEABLE
-     * fungsi untuk di overload di parent repo yg menggunakan export trait ini (jika diperlukan)
+     * fungsi untuk di overide di parent repo yg menggunakan export trait ini (jika diperlukan)
+     * 
      * method ini di eksekusi di job
      */
     public function initExportOnJob(array $addsJobsParam=[])
@@ -171,7 +184,8 @@ trait ResExportTrait {
     }
 
     /**
-     * Start export process
+     * Start export process, fungsi yang dieksekusi pertama kali dari controller
+     * atau tempat lain untuk mentrigger export
      */
     public function startExport(array $addsJobsParam = [])
     {
@@ -184,18 +198,32 @@ trait ResExportTrait {
             return $this->getExportStatus();
         }
 
+        $this->setExportTenantId(config('tenant.id'));
         if(!empty($addsJobsParam))$this->setExportJobsParam($addsJobsParam);
 
         $this->setExportStartProcess();  
         $config =  $this->getExportStatus();   
 
-        ResExport::dispatch(
-            self::class,
-            $this->getExportJobsParam(),
-            url('')
-        );
+        if($this->isExportJobsPerTenant()){
+            ResExport::dispatch(
+                self::class,
+                $this->getExportJobsParam(),
+                url('')
+            )->onQueue('tenant'.$this->_tenantId);
+        }else{
+            ResExport::dispatch(
+                self::class,
+                $this->getExportJobsParam(),
+                url('')
+            );
+        }
 
         return $config;
+    }
+
+    public function isExportJobsPerTenant()
+    {
+        return config('AppConfig.system.jobs.multitenant_add',false) && !empty($this->perTenant) && $this->_tenantId>0?true:false;
     }
 
     /**
@@ -226,7 +254,7 @@ trait ResExportTrait {
      */
     public function processExport()
     {        
-        ini_set('memory_limit','1024M');
+        ini_set('memory_limit','5524M');
         set_time_limit(0);
         
         $startTime = microtime(true);
@@ -242,7 +270,7 @@ trait ResExportTrait {
 
         //jika jobs pertama maka
         if(empty($this->_resumeParams)){
-            $data = $this->_exportModel->get();
+            $data = $this->_exportModel;//->get();
             $config['count'] = $data->count();
             $config['filename'] = strtoupper(preg_replace('/[^a-zA-Z0-9]+/', '_',$this->_exportGroup.'_'.$config['date'])).'.xlsx';
             $fileName = $this->_exportUploadPath.$config['filename'];
@@ -258,67 +286,83 @@ trait ResExportTrait {
             $row++;//start row ditambah satu agar style header tidak terbawa, karena nanti first row ini akan didelete juga
             $noUrut = 0;
             $firstRow = true;//flag untuk penanda baris pertama dari data
+            $offset = 0;
+            $limit = null;
+            
+        // jika resume dari jobs sebelumnya yang di split 
         }else{
             $this->appendExportLog('<span class="text-info">Continueing process from previous jobs</span>...<br>');
             $this->appendExportLog('<span class="text-info">Jobs started at : <b>'.now()->format('Y-m-d H:i:s').'</b></span><br>');
 
             $fileName = $this->_exportUploadPath.$config['filename'];
             $reader = Excel::load(public_path($fileName), 'Xlsx', false);
-            $data = $this->_exportModel->offset($this->_resumeParams['lastTableRow'])->limit($config['count']+1000)->get();
+            $data = $this->_exportModel;//->offset($this->_resumeParams['lastTableRow'])->limit($config['count']+1000);//->get();
+            
+            $offset = $this->_resumeParams['lastTableRow'];
+            $limit = $config['count']+1000;
+
             $deleteRow=$this->getExportTemplateStartRow();
             $row = $this->_resumeParams['lastExcelRow'];
             $firstRow = false;//flag untuk penanda baris pertama dari data
             $noUrut = $this->_resumeParams['lastTableRow'];
-        }
-        
+        }        
          
         /**
          * proses export
          */
         
         $reader->setActiveSheetIndex(0);
-        $headerColumn = [];               
-        $data = $this->formatExportMainData($data->toArray());
-        
-        foreach ($data as $val) {
-            $this->appendExportLog('. ');
-            $this->exportIncrementProcessedCount();
-
-            //jika tanpa template dan row 1 maka simpan nama2 kolomnya, untuk dijadikan header caption
-            if($firstRow && empty($this->_exportTemplate)){                
-                $headerColumn = $this->formatExportExcelHeaderAfter(
-                    $this->formatExportExcelHeader($val),
-                    $val
-                );
-                //kolom terakhir header
-                $countHeader = count($headerColumn);
-                $reader = Excel::setCell($reader, $headerColumn);
-                $reader = Excel::setBorder($reader,'A1:'.Excel::excol($countHeader).'1');
-                $reader = Excel::setFontBold($reader,'A1:'.Excel::excol($countHeader).'1');
-                $reader = Excel::setBackground($reader,'A1:'.Excel::excol($countHeader).'1','CCCCCC');
-                $firstRow = false;//tandai flag first row agar tidak masuk ke sini lg di row selanjutnya
-            }
-
-            $insertRow = $this->formatExportExcelRowAfter(
-                $this->formatExportExcelRow($val,$row),
-                $val,
-                $row
-            );
-
-            $reader = Excel::insertRow($reader, $row, $insertRow);            
-            $row++;
-            $noUrut++;
+        $isBreaking = false;
+        $this->chunkWithLimit($data,100,$offset,$limit, function ($chunkedData) use(&$firstRow,&$reader,&$row,&$noUrut,$startTime,$fileName,&$isBreaking) {
+            $chunkedData = $this->formatExportMainData($chunkedData->toArray());
             
-            //break proses setiap kurang dari 1 jam
-            if((microtime(true)-$startTime)>=3500){
-                $data = null;
-                unset($data);
+            usleep(200);
+
+            foreach ($chunkedData as $val) {
+                $this->appendExportLog('. ');
+                $this->exportIncrementProcessedCount();
+
+                //jika tanpa template dan row 1 maka simpan nama2 kolomnya, untuk dijadikan header caption
+                if($firstRow && empty($this->_exportTemplate)){                
+                    $headerColumn = $this->formatExportExcelHeaderAfter(
+                        $this->formatExportExcelHeader($val),
+                        $val
+                    );
+                    //kolom terakhir header
+                    $countHeader = count($headerColumn);
+                    $reader = Excel::setCell($reader, $headerColumn);
+                    $reader = Excel::setBorder($reader,'A1:'.Excel::excol($countHeader).'1');
+                    $reader = Excel::setFontBold($reader,'A1:'.Excel::excol($countHeader).'1');
+                    $reader = Excel::setBackground($reader,'A1:'.Excel::excol($countHeader).'1','CCCCCC');
+                    $firstRow = false;//tandai flag first row agar tidak masuk ke sini lg di row selanjutnya
+                }
+
+                $insertRow = $this->formatExportExcelRowAfter(
+                    $this->formatExportExcelRow($val,$row),
+                    $val,
+                    $row
+                );
+
+                $reader = Excel::insertRow($reader, $row, $insertRow);            
+                $row++;
+                $noUrut++;
+                
+            }
+            
+            //break proses setiap kurang dari setengah jam 
+            if((microtime(true)-$startTime)>=1800){
+                $chunkedData = null;
+                unset($chunkedData);
+                // $reader = $this->breakExcelReader($reader,$fileName,$row,$noUrut);
                 $this->onBreakToNextExport();
                 $this->breakToNextExport($reader,$fileName,$row,$noUrut);
-                return true;
+                $isBreaking = true;
+                return false;
             }
-            usleep(1000);
-        }
+            usleep(500);
+        });
+
+        if($isBreaking)return true;
 
         if($deleteRow) $reader->getActiveSheet()->removeRow($deleteRow);        
 
@@ -340,6 +384,42 @@ trait ResExportTrait {
         $this->setExportDone();
 
         return true;        
+    }
+
+    private function chunkWithLimit ($model, $count,$offset=0,$remaining=null, callable $callback) {
+        do {
+            if (! is_null($remaining)) {
+                $limit = min($count, $remaining);
+            } else {
+                $limit = $count;
+            }
+            
+            $results = $model->skip($offset)->take($limit)->get();
+
+            $countResults = $results->count();
+
+            if ($countResults == 0) {
+                break;
+            }
+
+            // On each chunk result set, we will pass them to the callback and then let the
+            // developer take care of everything within the callback, which allows us to
+            // keep the memory low for spinning through large result sets for working.
+            if (call_user_func($callback, $results) === false) {
+                return false;
+            }
+
+            $offset += $countResults;
+
+            if (! is_null($remaining)) {
+                $remaining -= $countResults;
+                if ($remaining == 0) {
+                    break;
+                }
+            }
+        } while ($countResults == $limit);
+
+        return true;
     }
 
     /**
@@ -373,13 +453,45 @@ trait ResExportTrait {
         $resumParams['lastExcelRow'] = $lastExcelRow;
         $resumParams['lastTableRow'] = $lastTableRow;
 
-        ResExport::dispatch(
-            self::class,
-            $this->_exportAddsJobsParam,
-            $this->_exportHomeUrl,
-            $resumParams
-        );
+        if($this->isExportJobsPerTenant()){
+            ResExport::dispatch(
+                self::class,
+                $this->_exportAddsJobsParam,
+                $this->_exportHomeUrl,
+                $resumParams,
+                $this->_tenantId
+            )->onQueue('tenant'.$this->_tenantId);
+        }else{
+            ResExport::dispatch(
+                self::class,
+                $this->_exportAddsJobsParam,
+                $this->_exportHomeUrl,
+                $resumParams
+            );
+        }
     }
+
+    private function breakExcelReader(&$reader,$fileName,$lastExcelRow=1,$lastTableRow=1)
+    {
+        
+        if(!file_exists(public_path($this->_exportUploadPath))){
+            mkdir(public_path($this->_exportUploadPath),0777,true);
+        }
+
+        Excel::save($reader,public_path($fileName));
+
+        //pastikan semua selesai dan memory di-free-kan kembali
+        $reader->disconnectWorksheets();// Good to disconnect
+        $reader->garbageCollect(); // Add this too
+        $reader = null;
+        unset($objWriter, $reader);
+
+        usleep(200);
+        
+        return  Excel::load(public_path($fileName), 'Xlsx', false);
+    }
+
+
 
     /**
      * OVERRIDEABLE

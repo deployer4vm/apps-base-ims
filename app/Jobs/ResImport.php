@@ -18,10 +18,10 @@ use Throwable;
 class ResImport implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    public $repo,$startRow,$addsJobsParam,$resumeParam;
+    public $repo,$startRow,$addsJobsParam,$resumeParam,$tenantId;
     public $tries = 1;
-    public $retryAfter = 10;
-    public $timeout = 3600;
+    // public $retryAfter = 10;
+    public $timeout = 36000;
 
     /**
      * Create a new job instance.
@@ -31,12 +31,13 @@ class ResImport implements ShouldQueue
      * 
      * @return void
      */
-    public function __construct($repo,int $startRow=2,array $addsJobsParam = [],array $resumeParam = [])
+    public function __construct($repo,int $startRow=2,array $addsJobsParam = [],array $resumeParam = [],$tenantId=0)
     {
         $this->repo = $repo;
         $this->startRow = $startRow;
         $this->addsJobsParam = $addsJobsParam;
         $this->resumeParam = $resumeParam;
+        $this->tenantId = $tenantId?$tenantId:config('tenant.id',0);
     }
 
     public function failed(Throwable $error)
@@ -54,6 +55,7 @@ class ResImport implements ShouldQueue
     public function handle()
     {
         $repo = new $this->repo;
+        $repo->setImportTenantId($this->tenantId);
         $repo->initImportOnJob($this->addsJobsParam);
         $repo->setImportStartRow($this->startRow);
         $repo->setImportAsResume($this->resumeParam);
