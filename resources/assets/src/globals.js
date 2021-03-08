@@ -294,10 +294,15 @@ export default function () {
         //downloader
         download: function(path,filename) {    
             let docUrl = this.downloadVar.path + path;
+            let token = UserAuth.getToken();
             axios({
                 method: 'get',
                 url: docUrl,
-                responseType: 'arraybuffer'
+                responseType: 'arraybuffer',
+                headers: { 
+                    Authorization: "Bearer " + token ,
+                    "Syn-Api-Token" : token
+                }
             })
             .then(response => { 
                 this.Web.setLoadingPage(false);

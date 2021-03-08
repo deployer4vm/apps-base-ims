@@ -71,6 +71,7 @@ class Excel
         return $reader; 
     }
 
+    
     public function setFontBold(&$reader, $cell)
     {
         $styleArray = ['font'=>['bold'=>true]];        
@@ -85,10 +86,28 @@ class Excel
         return $reader; 
     }
 
+    public function setRowHeight(&$reader, $row, $height)
+    {
+        $reader->getActiveSheet()->getRowDimension($row)->setRowHeight($height);
+        return $reader; 
+    }
+
     public function setBackground(&$reader, $cell,$bgcolor = 'ffffff')
     {  
         $reader->getActiveSheet()->getStyle($cell)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB($bgcolor);
         return $reader; 
+    }
+
+    public function copyRange(&$reader,$from,$to)
+    {
+        $cellValues = $reader->getActiveSheet()->rangeToArray($from);
+        $reader->getActiveSheet()->fromArray($cellValues, null, $to);
+
+        $cellStyle = $reader->getActiveSheet()
+            ->duplicateStyle(
+                $reader->getActiveSheet()->getStyle('A'.$numRows),
+                'B3:B7'
+            );
     }
 
     /**
@@ -196,10 +215,11 @@ class Excel
     public function setCell(&$reader,$data){
 
         foreach ($data as $key => $value) {
-            $option = ['quote'=>'auto'];
+            $option = ['quote'=>'auto','type'=>'default'];
 
             //jika array berarti menggunakan format sendiri
             if(is_array($value)){
+                $option = isset($value['option'])?$value['option']:$option;
                 $option['type'] = isset($value['option']['type'])?$value['option']['type']:'default';
                 if(isset($value['option']['quote']))$option['quote'] = $value['option']['quote']?'yes':'no';
                 $value = $value['value'];
@@ -218,6 +238,40 @@ class Excel
                 }else{
                     $this->setCellString($reader,$key,$value,$option['quote']);
                 }
+            }else if($option['type']=='number'){
+                $reader->getActiveSheet()->setCellValueExplicit(
+                    $key, 
+                    $value,
+                    \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC
+                );
+            }else if($option['type']=='percentage'){
+                $digit = '';
+                if(!isset($option['digit']))$option['digit']=0;
+                if($option['digit']>0)
+                    $digit = '.'.str_repeat('0',$option['digit']);
+                $reader->getActiveSheet()->setCellValue($key, $value);
+                $reader->getActiveSheet()
+                    ->getStyle($key)
+                    ->getNumberFormat()
+                    ->setFormatCode('0'.$digit.'%;[Red]-0'.$digit.'%');
+                    // ->applyFromArray([
+                    //     "code" => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_PERCENTAGE_00
+                    // ]);
+            }else if($option['type']=='currency'){
+                
+                if(!isset($option['prefix']))$option['prefix']='';
+                if(!isset($option['sufix']))$option['sufix']='';
+                
+                if($option['prefix']){
+                    $format = '"'.$option['prefix'].'"#,##0.00_-';
+                }else{
+                    $format = '#,##0.00 "'.$option['sufix'].'"';
+                }
+                $reader->getActiveSheet()->setCellValue($key, $value);
+                $reader->getActiveSheet()
+                    ->getStyle($key)
+                    ->getNumberFormat()
+                    ->setFormatCode($format);
             }else{
                 $reader->getActiveSheet()->setCellValue($key, $value);
             }            
