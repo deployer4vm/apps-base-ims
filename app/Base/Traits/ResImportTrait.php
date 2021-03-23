@@ -38,6 +38,14 @@ trait ResImportTrait {
     private $_importStartRow = 2;//start read dari baris berapa
     private $_importUseJobs = true;//sementara belum ada opsi pake jobs atau tidak, HARUS pake jobs
     private $_importUploadPath = 'import/';//path ke upload relative dari public_path
+    private $_allowedMimeType = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel'
+    ];// list tipe mime yang diperbolehkan untuk diupload
+    private $_allowedExt = [
+        'xlsx',
+        'xls'
+    ];// list extensi yang diperbolehkan untuk diupload
 
     private $_importDefaultColumn = [];//daftar field yang diimport, jika array kosong maka semua field diimport
     private $_importColumn = [];//daftar field yang diimport, jika array kosong maka semua field diimport
@@ -114,6 +122,34 @@ trait ResImportTrait {
     public function setImportUploadPath(string $uploadPath='')
     {
         $this->_importUploadPath = trim(trim($uploadPath,'/'),'\\').'/';
+    }
+    
+    /**
+     * allowed mime type
+     * -----
+     */
+    public function getAllowedMimeType()
+    {
+        return $this->_allowedMimeType;
+    }
+
+    public function setAllowedMimeType(array $allowedMimeType = [])
+    {
+        $this->_allowedMimeType = $allowedMimeType;
+    }
+
+    /**
+     * allowed file extention
+     * -----
+     */
+    public function getAllowedExt()
+    {
+        return $this->_allowedExt;
+    }
+
+    public function setAllowedExt(array $allowedExt = [])
+    {
+        $this->_allowedExt = $allowedExt;
     }
 
     /**
@@ -215,6 +251,24 @@ trait ResImportTrait {
         $path = $this->getImportUploadPath().strtolower(preg_replace('/[^a-zA-Z0-9]+/', '_',$this->_importGroup));
         //simpan nama file aslinya
         $fileName = $inputFile->getClientOriginalName();
+
+        $mimeType = $inputFile->getMimeType();
+        $fileExtention = $inputFile->extension();
+
+        // pastikan extensi yang diallow saja
+        if(!empty($this->_allowedExt))
+            if(!in_array($fileExtention,$this->_allowedExt)){
+                $this->error = __('validation.mimes',['attribute'=>'import file','values'=>' ['.implode(', ',$this->_allowedExt).']']);
+                return false;
+            }        
+
+        // pastikan mimetype yang diallow saja
+        if(!empty($this->_allowedMimeType))
+            if(!in_array($mimeType,$this->_allowedMimeType)){
+                $this->error = __('validation.mimetypes',['attribute'=>'import file','values'=>' ['.implode(', ',$this->_allowedExt).']']);
+                return false;
+            }
+
         //upload file import nya
         $filePath = $inputFile->store($path);
         //proses jika upload berhasil

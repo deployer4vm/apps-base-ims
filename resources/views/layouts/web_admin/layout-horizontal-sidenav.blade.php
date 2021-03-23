@@ -6,7 +6,7 @@
     <div class="layout-inner">
 
         <!-- Layout navbar -->
-        @include('layouts.web.includes.layout-navbar', ['hide_layout_sidenav_toggle' => true])
+        @include('layouts.web_admin.includes.layout-navbar', ['hide_layout_sidenav_toggle' => true])
 
         <!-- Layout container -->
         <div class="layout-container">
@@ -14,7 +14,7 @@
             <!-- Layout content -->
             <div class="layout-content">
               <!-- Layout sidenav -->
-                @include('layouts.web.includes.layout-sidenav', ['layout_sidenav_horizontal' => true])
+                @include('layouts.web_admin.includes.layout-sidenav', ['layout_sidenav_horizontal' => true])
 
                 <!-- Content -->
                 <div class="container-fluid flex-grow-1 container-p-y">
@@ -23,7 +23,7 @@
                 <!-- / Content -->
 
                 <!-- Layout footer -->
-                @include('layouts.web.includes.layout-footer')
+                @include('layouts.web_admin.includes.layout-footer')
             </div>
             <!-- Layout content -->
 
