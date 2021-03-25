@@ -1,4 +1,4 @@
-@extends('layouts.web.application')
+@extends('layouts.web_admin.application')
 
 @section('layout-content')
     @yield('content')

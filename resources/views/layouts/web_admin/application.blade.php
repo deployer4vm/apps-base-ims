@@ -14,11 +14,21 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i,900" rel="stylesheet">
 
     <!-- Icons. Uncomment required icon fonts -->
+    @if(config('AppConfig.system.web_admin.assets_template.font.fontawesome'))
     <link rel="stylesheet" href="{{ asset('/dist/vendor/fonts/fontawesome.css') }}">
+    @endif
+    @if(config('AppConfig.system.web_admin.assets_template.font.ionicons'))
     <link rel="stylesheet" href="{{ asset('/dist/vendor/fonts/ionicons.css') }}">
+    @endif
+    @if(config('AppConfig.system.web_admin.assets_template.font.linearicons'))
     <link rel="stylesheet" href="{{ asset('/dist/vendor/fonts/linearicons.css') }}">
+    @endif
+    @if(config('AppConfig.system.web_admin.assets_template.font.open-iconic'))
     <link rel="stylesheet" href="{{ asset('/dist/vendor/fonts/open-iconic.css') }}">
+    @endif
+    @if(config('AppConfig.system.web_admin.assets_template.font.pe-icon-7-stroke'))
     <link rel="stylesheet" href="{{ asset('/dist/vendor/fonts/pe-icon-7-stroke.css') }}">
+    @endif
 
     <!-- Core stylesheets -->
     <link rel="stylesheet" href="{{ asset('/dist/vendor/css/bootstrap.css') }}">

@@ -38,23 +38,19 @@
         <link rel="stylesheet" href="{{ asset($value) }}">
         @endforeach
         @endif
-
+        
         <!-- Core scripts -->
         <script src="{{ asset('/dist/vendor/webjs/pace.js') }}"></script>
 
         <!-- Page -->
-        <link rel="stylesheet" href="{{asset('/dist/css/authentication.css')}}">
+        <!-- <link rel="stylesheet" href="{{asset('/dist/css/authentication.css')}}"> -->
     </head>
     <body>
         <!-- Pace.js loader -->
         <div class="page-loader"><div class="bg-primary"></div></div>
+
         <!-- Content -->
-        <div class="authentication-wrapper authentication-2 px-4">
-            <div class="ui-bg-overlay bg-dark opacity-25"></div>
-            <div class="authentication-inner py-5">
-                @yield('content')
-            </div>
-        </div>
+        @yield('content')
         <!-- / Content -->
 
         @if(config('AppConfig.system.template.frontend.assets_js'))
@@ -62,7 +58,7 @@
         <script src="{{ asset($value) }}"></script>
         @endforeach
         @endif
-        
+
         <!-- Core scripts -->
         <script src="{{ asset('/dist/vendor/weblibs/jquery/3.2.1/jquery.min.js') }}"></script>
         <script src="{{ asset('/dist/vendor/weblibs/popper/popper.js') }}"></script>
