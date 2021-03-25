@@ -29,6 +29,6 @@ class CreateTenants extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('admin_tenants');
+        Schema::dropIfExists('tenants');
     }
 }

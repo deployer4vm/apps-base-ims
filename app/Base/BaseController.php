@@ -14,34 +14,54 @@ class BaseController extends LaravelBaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
     use ResCacheTrait;
-    
+
     //default data parameter untuk responseable
     protected $output = [
-            'status'=>200,
-            'message'=>'',
-            'message_type'=>'info',//khusus warning view (bukan api)
-            'data'=>null,
-            'params'=>null,
-            'viewdata'=>null,//data yang hanya disertakan di web request
-            'errors'=>null,
-        ];
-    
+        'status' => 200,
+        'message' => '',
+        'message_type' => 'info', //khusus warning view (bukan api)
+        'data' => null,
+        'params' => null,
+        'viewdata' => null, //data yang hanya disertakan di web request
+        'errors' => null,
+    ];
+
     /**
      * boolean nama variable wrap/grouping data di view (web request)
      */
-    protected $isViewVarWraped = false;//apakah seluruh variable diwrap/grupping ke variable $viewWrapVarName
-    protected $viewWrapVarName = 'data';//nama variable wrap/grouping ,untuk data berbentuk list array, jadi di view akan jadi output->output['data'][VAR_NAME] dan di api akan jadi output->output['data']
+    protected $isViewVarWraped = false; //apakah seluruh variable diwrap/grupping ke variable $viewWrapVarName
+    protected $viewWrapVarName = 'data'; //nama variable wrap/grouping ,untuk data berbentuk list array, jadi di view akan jadi output->output['data'][VAR_NAME] dan di api akan jadi output->output['data']
 
 
     //default response paramter untuk
     protected $response = '';
-    
+
     //nama class responseable nya
     protected $responsableName = '\App\Base\DefaultResponse';
-    
+
     //force output menjadi api atau web
-    private $forceOutput = 0;//0 auto, 1 WEB, 2 API
-    
+    private $forceOutput = 0; //0 auto, 1 WEB, 2 API
+
+    /**
+     * Set $this->output['data']
+     * 
+     * @param mixed Output Data
+     */
+    protected function setData($data)
+    {
+        $this->output['data'] = $data;
+    }
+
+    /**
+     * Set $this->output['params']
+     * 
+     * @param array Output Parameters
+     */
+    protected function setParams($params)
+    {
+        $this->output['params'] = $params;
+    }
+
     /**
      * 
      * @param string $message
@@ -50,27 +70,27 @@ class BaseController extends LaravelBaseController
      * @param mix $error
      * @param mix $response
      */
-    protected function setWarning($message,$type='warning',$code=400,$error=false,$response=null)
-    {        
+    protected function setWarning($message, $type = 'warning', $code = 400, $error = false, $response = null)
+    {
         $this->output['status'] = $code;
         $this->output['message'] = $message;
         $this->output['message_type'] = $type;
-        $this->output['errors'] = $error===true||$error===1||$error===false?[true]:$error;
+        $this->output['errors'] = $error === true || $error === 1 || $error === false ? [true] : $error;
 
-        if(!is_null($response)){
-            $this->response = 
-                $response===true||$response===1||$response===false?
-                redirect(url()->previous())->withInput():
+        if (!is_null($response)) {
+            $this->response =
+                $response === true || $response === 1 || $response === false ?
+                redirect(url()->previous())->withInput() :
                 $response;
         }
 
-        if($this->isWebCall() && $this->forceOutput != 2)
+        if ($this->isWebCall() && $this->forceOutput != 2)
             Session::put('alert', [
-                    'type' => $type,
-                    'message' => $message
-                ]);
+                'type' => $type,
+                'message' => $message
+            ]);
     }
-    
+
     /**
      * 
      * @param string $message
@@ -78,20 +98,20 @@ class BaseController extends LaravelBaseController
      * @param integer $code
      * @param type $response
      */
-    protected function setError($message,$error=false,$code=400,$response=null)
-    {        
-        $this->setWarning($message,'danger',$code,$error,$response);
+    protected function setError($message, $error = false, $code = 400, $response = null)
+    {
+        $this->setWarning($message, 'danger', $code, $error, $response);
     }
-    
+
     /**
      * set alert view
      * 
      * @param string $message
      * @param string $type 'warning','info','warning','danger'
      */
-    protected function setAlert($message,$type='info')
-    {        
-        $this->setWarning($message,$type,'200');
+    protected function setAlert($message, $type = 'info')
+    {
+        $this->setWarning($message, $type, '200');
     }
 
     /**
@@ -118,101 +138,101 @@ class BaseController extends LaravelBaseController
      *      orderBy => []
      *  ]
      */
-    final protected function getListParam(bool $mergeParam = true,array $mergeExcept = [])
+    final protected function getListParam(bool $mergeParam = true, array $mergeExcept = [])
     {
         $params = [
-            'all' => request()->except(['limit','offset','orderBy','orderType','q','with','append']),
-            'query' => [//parameter yang dipassing di URL, termasuk juga parameter filter, untuk di passing ke pagination juga
+            'all' => request()->except(['limit', 'offset', 'orderBy', 'orderType', 'q', 'with', 'append']),
+            'query' => [ //parameter yang dipassing di URL, termasuk juga parameter filter, untuk di passing ke pagination juga
                 'limit' => request()->input('limit', 10),
                 'offset' => request()->input('offset', 0)
             ],
-            'filter' => [],//parameter filter ke method repo listing nya
+            'filter' => [], //parameter filter ke method repo listing nya
             'orderBy' => []
         ];
 
         //jika menyertakan orderBy
-        if(request()->input('orderBy',null)||request()->input('orderType',null)){
-            $params['query']['orderBy'] = request()->input('orderBy','id');
-            $params['query']['orderType'] = request()->input('orderType','ASC');
-            $params['orderBy'] = [$params['query']['orderBy'] , $params['query']['orderType']];
+        if (request()->input('orderBy', null) || request()->input('orderType', null)) {
+            $params['query']['orderBy'] = request()->input('orderBy', 'id');
+            $params['query']['orderType'] = request()->input('orderType', 'ASC');
+            $params['orderBy'] = [$params['query']['orderBy'], $params['query']['orderType']];
         }
 
         //jika menyertakan query string
-        if(request()->input('q', null)){
-            $params['filter']['q'] = $params['query']['q'] = request()->input('q','');
+        if (request()->input('q', null)) {
+            $params['filter']['q'] = $params['query']['q'] = request()->input('q', '');
         }
 
         //jika menyertakan with
-        if(request()->input('with', null)){
+        if (request()->input('with', null)) {
             $params['filter']['with'] = $params['query']['with'] = request()->input('with');
         }
 
         //jika menyertakan append
-        if(request()->input('append', null)){
-            $params['filter']['append'] = $params['query']['append'] = request()->input('append','');
+        if (request()->input('append', null)) {
+            $params['filter']['append'] = $params['query']['append'] = request()->input('append', '');
         }
 
         //jika parameter dimerge langsung dengan query dan filter
-        if($mergeParam && !empty($params['all'])){
+        if ($mergeParam && !empty($params['all'])) {
             foreach ($params['all'] as $key => $param) {
-                if(!in_array($key,$mergeExcept)){
+                if (!in_array($key, $mergeExcept)) {
                     $params['query'][$key] = $param;
-                    if(isset($param) && in_array(strtoupper($param[0]),['LIKE','!=','<','<=','>','>='])){
-                        $params['filter'][] = [$key,$param[0],$param[1]];
-                    }else{
-                        $params['filter'][] = [$key,$param];
+                    if (isset($param) && in_array(strtoupper($param[0]), ['LIKE', '!=', '<', '<=', '>', '>='])) {
+                        $params['filter'][] = [$key, $param[0], $param[1]];
+                    } else {
+                        $params['filter'][] = [$key, $param];
                     }
                 }
-            }            
+            }
         }
 
         return $params;
     }
-    
+
     /**
      * cek apakah request dari ifframe atau bukan
      * @return boolean
      */
     protected function hasReferer()
     {
-        return isset($_SERVER['HTTP_REFERER'])?true:false;
+        return isset($_SERVER['HTTP_REFERER']) ? true : false;
     }
-    
+
     /**
      * cek apakah request API
      * @return boolean
      */
     protected function isApiCall()
     {
-        return request()->wantsJson()?true:false;
+        return request()->wantsJson() ? true : false;
     }
-    
+
     /**
      * cek apakah request Ajax
      * @return boolean
      */
     protected function isAjaxCall()
     {
-        return request()->ajax()?true:false;
+        return request()->ajax() ? true : false;
     }
-    
+
     /**
      * cek apakah request WEB
      * @return boolean
      */
     protected function isWebCall()
     {
-        return !(request()->ajax()||request()->wantsJson())?true:false;
+        return !(request()->ajax() || request()->wantsJson()) ? true : false;
     }
-    
+
     /**
      * bypass output responsable menjadi API (JSON) menghiraukan request yg masuk
      */
     protected function forceApiOutput()
     {
         $this->forceOutput = 2;
-    }    
-    
+    }
+
     /**
      * bypass output responsable menjadi WEB menghiraukan request yg masuk
      */
@@ -220,23 +240,24 @@ class BaseController extends LaravelBaseController
     {
         $this->forceOutput = 1;
     }
-    
+
     /**
      * 
      * @param type $response
      * @return \App\Base\responsableName
      */
-    protected function done($response=false)
+    protected function done($response = false)
     {
-        if($response)$this->response=$response;
+        if ($response) $this->response = $response;
         return new $this->responsableName(
-            $this->output, 
-            $this->response, 
-            $this->forceOutput, 
-            $this->isViewVarWraped, 
-            $this->viewWrapVarName);
+            $this->output,
+            $this->response,
+            $this->forceOutput,
+            $this->isViewVarWraped,
+            $this->viewWrapVarName
+        );
     }
-    
+
     /*
      * controller level cache
      * -------------------------------------------------------------------------

@@ -28,6 +28,6 @@ class CreateTenantGroupsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('tenant_group');
+        Schema::dropIfExists('tenant_groups');
     }
 }

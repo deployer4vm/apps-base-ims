@@ -32,9 +32,15 @@ export default {
     /**
      * pilih salah satu item sesuai lang yg aktif
      */
-    chose(langFile){
+    choose(langFile){
         if(langFile[this.store.getters.getLocale] != undefined)return langFile[this.store.getters.getLocale];
         return langFile;
+    },
+    /**
+     * Mirror dari choose, biar gak break
+     */
+    chose(langFile) {
+        return this.choose(langFile);
     },
     get(langKey, replace = {}) {
         let lang = "";
