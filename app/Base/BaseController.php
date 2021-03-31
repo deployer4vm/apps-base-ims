@@ -115,7 +115,7 @@ class BaseController extends LaravelBaseController
     }
 
     /**
-     * generate/get default parameter di resource listing, yang akan dipassing jug ke output
+     * generate/get default parameter di resource listing, yang akan dipassing juga ke output
      * 
      * @param bool $mergeParam true jika parameter input lainnya langsung dimasukan ke query dan filter
      *                         false jika dipisah di key terpisah saja (all)
