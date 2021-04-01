@@ -61,7 +61,14 @@ class BaseController extends LaravelBaseController
     {
         $this->output['params'] = $params;
     }
-
+    
+    /**
+     * 
+     */
+    protected function getParams()
+    {
+        return $this->output['params'];
+    }
     /**
      * 
      * @param string $message
@@ -190,8 +197,17 @@ class BaseController extends LaravelBaseController
     }
 
     /**
+     * Otomatisasi `$this->output['params'] = $this->getListParam();`
+     */
+    public function buildParams()
+    {
+        $this->setParams($this->getListParam());
+    }
+
+    /**
      * cek apakah request dari ifframe atau bukan
      * @return boolean
+     * @SuppressWarnings(PHPMD.Superglobals)
      */
     protected function hasReferer()
     {
@@ -245,6 +261,7 @@ class BaseController extends LaravelBaseController
      * 
      * @param type $response
      * @return \App\Base\responsableName
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
     protected function done($response = false)
     {

@@ -204,6 +204,7 @@ export default {
         }else{
             this.setShowAll();
         }
+        return this;
     },
     /**
      * tampilkan semua element yg hide/show
@@ -212,6 +213,7 @@ export default {
         this.setShowNavbar(true);
         this.setShowSidenav(true);
         this.setShowFooter(true);
+        return this;
     },
     /**
      * sembunyikan semua element yg hide/show
@@ -220,10 +222,12 @@ export default {
         this.setShowNavbar(false);
         this.setShowSidenav(false);
         this.setShowFooter(false);
+        return this;
     },
     // set module yang sedang dibuka saat ini
     setModule(module) {
         this.store.commit("setModule", module);
+        return this;
 
     },
     getModule() {
@@ -252,12 +256,15 @@ export default {
     },
     appendNavbarTitle(title) {
         this.store.commit("setNavbarTitle", this.store.getters.getNavbarTitle + ' \\ ' + title);
+        return this;
     },
     setNavbarTitle(newTitle) {
         this.store.commit("setNavbarTitle", newTitle);
+        return this;
     },
     setShowNavbar(showNavbar) {
         this.store.commit("setShowNavbar", showNavbar);
+        return this;
     },
     /**
      * SIDENAV (menu utama)
@@ -268,12 +275,15 @@ export default {
     },
     setShowSidenav(showSidenav) {
         this.store.commit("setShowSidenav", showSidenav);
+        return this;
     },
     setSidenavHorizontal(isHorizontal) {
         this.store.commit("setSidenavHorizontal", isHorizontal?true:false);
+        return this;
     },
     setSidenavHorizontalDefault() {
         this.store.commit("setSidenavHorizontal", globals().AppConfig.system.web_admin.sidenav_horizontal==1?true:false);
+        return this;
     },
     /**
      * BODY (content utama)
@@ -294,13 +304,16 @@ export default {
             tmpLink.href = href?href:'#';
         }
         this.store.dispatch("addBreadcrumb", tmpLink);
+        return this;
     },
     resetBreadcrumb() {
         this.store.commit("resetBreadcrumb");
+        return this;
     },
     //set container utama dengan padding atau tidak
     setBodyWithPadding(isWithPadding) {
         this.store.commit("setBodyWithPadding", isWithPadding);
+        return this;
     },
     /**
      * FOOTER (content footer utama)
@@ -308,6 +321,7 @@ export default {
      */
     setShowFooter(showFooter) {
         this.store.commit("setShowFooter", showFooter);
+        return this;
     },
     /**
      * WEB FUNCTION
@@ -374,6 +388,7 @@ export default {
                 duration: duration
             });
         }
+        return this;
     },
     _showAlert_position: {
         "top-left": "notifications-top-left",
