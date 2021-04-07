@@ -46,20 +46,24 @@ class BaseController extends LaravelBaseController
      * Set $this->output['data']
      * 
      * @param mixed Output Data
+     * @return $this
      */
     protected function setData($data)
     {
         $this->output['data'] = $data;
+        return $this;
     }
 
     /**
      * Set $this->output['params']
      * 
      * @param array Output Parameters
+     * @return $this
      */
     protected function setParams($params)
     {
         $this->output['params'] = $params;
+        return $this;
     }
     
     /**
@@ -69,6 +73,21 @@ class BaseController extends LaravelBaseController
     {
         return $this->output['params'];
     }
+
+    /**
+     * Set $this->output['message'] dan $this->output['message_info']
+     * 
+     * @param string Message
+     * @param string type: info, warning, danger
+     * @return $this
+     */
+    protected function setMessage($message, $type = 'info')
+    {
+        $this->output['message'] = $message;
+        $this->output['message_type'] = $type;
+        return $this;
+    }
+
     /**
      * 
      * @param string $message

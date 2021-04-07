@@ -44,8 +44,12 @@ class RouteServiceProvider extends ServiceProvider
     private function bootMigration()
     {
         //boot additional data type migration
-        \Doctrine\DBAL\Types\Type::addType('double', \App\Base\DoctrineType\DoubleType::class);
-        \Doctrine\DBAL\Types\Type::addType('tinyInteger', \App\Base\DoctrineType\TinyIntegerType::class);
+        if (!\Doctrine\DBAL\Types\Type::hasType('double')) {
+            \Doctrine\DBAL\Types\Type::addType('double', \App\Base\DoctrineType\DoubleType::class);
+        }
+        if (!\Doctrine\DBAL\Types\Type::hasType('tinyInteger')) {
+            \Doctrine\DBAL\Types\Type::addType('tinyInteger', \App\Base\DoctrineType\TinyIntegerType::class);
+        }
         
         $this->loadMigrationsFrom(config('hpsynapse.migration_path'));
     }
