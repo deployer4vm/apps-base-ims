@@ -31,11 +31,12 @@
     @endif
 
     <!-- Core stylesheets -->
-    <link rel="stylesheet" href="{{ asset('/dist/vendor/css/bootstrap.css') }}">
-    <link rel="stylesheet" href="{{ asset('/dist/vendor/css/appwork.css') }}">
-    <link rel="stylesheet" href="{{ asset('/dist/vendor/css/theme-corporate.css') }}">
-    <link rel="stylesheet" href="{{ asset('/dist/vendor/css/colors.css') }}">
-    <link rel="stylesheet" href="{{ asset('/dist/vendor/css/uikit.css') }}">
+    <link rel="stylesheet" href="{{ asset('/dist/css/bootstrap.css') }}">
+    <link rel="stylesheet" href="{{ asset('/dist/css/appwork.css') }}">
+    <link rel="stylesheet" href="{{ asset('/dist/css/theme-app.css') }}">
+    <link rel="stylesheet" href="{{ asset('/dist/css/colors.css') }}">
+    <link rel="stylesheet" href="{{ asset('/dist/css/uikit.css') }}">
+    <link rel="stylesheet" href="{{ asset('/dist/css/style.css') }}">
     
     @if(config('AppConfig.system.web_admin.assets_link'))
     @foreach (config('AppConfig.system.web_admin.assets_link') as $value)
@@ -65,7 +66,7 @@
     @yield('styles')
 
     <!-- Application stylesheets -->
-    <!-- <link rel="stylesheet" href="{{ asset('/dist/css/application.css') }}"> -->
+    <link rel="stylesheet" href="{{ asset('/dist/vendor/webcss/application.css') }}">
 
 </head>
 <body>
@@ -93,13 +94,14 @@
     <script src="{{ asset('/dist/vendor/weblibs/toastr/toastr.js') }}"></script>
 
     <!-- Application javascripts -->
-    <script src="{{ mix('/dist/js/webapp.js') }}"></script>
+    <script src="{{ mix('/dist/webapp.js') }}"></script>
 
     @include("alertModal")
 
     <script>
         @if(UserAuth::isLogin())
         //set token di LocalApi
+        <?php //var_dump(UserAuth::getToken('api_token'));die(); ?>
         window.axios.defaults.headers.common['Authorization'] = 'Bearer <?php echo UserAuth::getToken('api_token') ?>'; 
         @endif
         //convert array to query string

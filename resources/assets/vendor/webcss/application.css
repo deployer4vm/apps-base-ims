@@ -1,0 +1,137 @@
+.app-splash-screen {
+    background: #fff;
+    position: fixed;
+    display: block;
+    z-index: 99999999;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    opacity: 1;
+    transition: opacity .3s;
+}
+.app-splash-screen-content {
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+}
+.app-splash-screen-content-inner {
+    position: relative;
+    top: -100px;
+    left: -50%;
+
+}
+.app-splash-screen-content .logo {
+    max-width: 70px; max-height: 70px;
+}
+.lds-ring {
+    display: inline-block;
+    position: relative;
+    width: 80px;
+    height: 80px;
+}
+.lds-ring div {
+    box-sizing: border-box;
+    display: block;
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    margin: 8px;
+    border: 8px solid rgba(0,0,0,0.5);
+    border-radius: 50%;
+    animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    border-color: rgba(0,0,0,0.5) transparent transparent transparent;
+}
+.lds-ring div:nth-child(1) {
+    animation-delay: -0.45s;
+}
+.lds-ring div:nth-child(2) {
+    animation-delay: -0.3s;
+}
+.lds-ring div:nth-child(3) {
+    animation-delay: -0.15s;
+}
+@keyframes lds-ring {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+#warningbox.hide {
+    display: none;
+}
+
+#warningbox.show {
+    display: block;
+}
+
+/** --------------- */
+
+.avatar-header-block {
+    height: 22px;
+    width: 22px;
+}
+.avatar-header-block i.ion {
+    padding-top: 5px;
+}
+.sidenav-app-brand {
+    height: 58px;
+}
+.default-style .sidenav .app-brand.sidenav-app-brand {
+    height: 58px;
+}
+.sidenav-button-onhover {
+    font-size: 180%;
+    padding: 0 25px;
+    display: none;
+}
+.layout-sidenav-hover .sidenav-button-onhover,
+.layout-expanded .sidenav-button-onhover {
+    display: none !important;
+}
+.layout-collapsed .sidenav-button-onhover {
+    display: inline;
+}
+
+.layout-container.no-sidenav {
+    padding-left:0 !important;
+}
+
+.layout-container.no-navbar {
+    padding-top:0 !important;    
+}
+
+/* *****************************************************************************
+* Navbar
+*/
+
+.demo-navbar-messages .dropdown-toggle,
+.demo-navbar-notifications .dropdown-toggle,
+.demo-navbar-user .dropdown-toggle,
+.demo-navbar-messages.b-nav-dropdown .nav-link,
+.demo-navbar-notifications.b-nav-dropdown .nav-link,
+.demo-navbar-user.b-nav-dropdown .nav-link {
+    white-space: nowrap;
+}
+
+.demo-navbar-messages .dropdown-menu,
+.demo-navbar-notifications .dropdown-menu {
+    overflow: hidden;
+    padding: 0;
+}
+
+@media (min-width: 992px) {
+    .demo-navbar-messages .dropdown-menu,
+    .demo-navbar-notifications .dropdown-menu {
+        margin-top: 0.5rem;
+        width: 22rem;
+    }
+
+    .demo-navbar-user .dropdown-menu {
+        margin-top: 0.25rem;
+    }
+}

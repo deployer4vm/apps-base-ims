@@ -231,9 +231,10 @@ generate loader store, router, routerAdmin dan init.js untuk package
 if(systemVar.web_admin.full_vue)
     mix.js("resources/assets/src/entry-point.js", "dist/app.js").version();//full vue
 
-if(systemVar.web_admin.web)
+if(systemVar.web_admin.web){
     mix.js("resources/assets/src/web-entry-point.js", "dist/webapp.js").version();//web
-
+    mix.copyDirectory("resources/assets/vendor/webcss", publicPath + "/dist/vendor/webcss")//web
+}
 // Core Stylesheets
 
 if(systemVar.web_admin.web || systemVar.web_admin.full_vue) {

@@ -12,6 +12,7 @@
         "providers",
         "has_artisan_web_access",
         "artisan_web_endpoint",
+        "use_admin_full_vue",
         "broadcast"
     ],
     "protected_packageLocal_key": [

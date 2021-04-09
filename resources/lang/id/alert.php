@@ -26,6 +26,7 @@ return [
     'delete_confirm_text' => 'Apakah anda yakin ?',
     // AUTH,
     'access_denied' => 'Akses Ditolak !',
+    'auth_required' => 'Perlu authentifikasi untuk mengakses resource ini',
     'auth_failed' => 'Autentifikasi Gagal',//error saat login gagal
     'auth_success' => 'Autentifikasi Berhasil',
     'invalid_token' => 'Token Keliru',

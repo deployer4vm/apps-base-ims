@@ -138,6 +138,6 @@ if(AppConfig.system.broadcast && AppConfig.system.broadcast.services_enabled.pus
     window.Echo = new Echo(echoConfig);
 }
 
-if(globals().AppConfig.system.web_serviceworker==1){
+if(AppConfig.system.web_serviceworker==1){
     navigator.serviceWorker.register('/sw.js');
 }

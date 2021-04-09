@@ -2,6 +2,7 @@
 <?php 
 $alert = Session::get('alert');
 Session::forget('alert');
+if(!$alert)return false;
 Session::save();
 $availbleAlert = ['success','info','warning','danger'];
 $alertType = in_array($alert['type'],$availbleAlert)?$alert['type']:'info';

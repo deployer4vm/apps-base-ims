@@ -26,6 +26,7 @@ return [
     'delete_confirm_text' => 'Are you sure ?',
     // AUTH
     'access_denied' => 'Access Denied !',
+    'auth_required' => 'Auth Required',
     'auth_failed' => 'Authentificaion Failed',//error saat login gagal
     'auth_success' => 'Authentificaion Success',
     'invalid_token' => 'Invalid Token',
