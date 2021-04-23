@@ -12,9 +12,17 @@ import projectRoutes from "../../../../app/MainApp/resources/js/router/index";
 import modulesRoutes from "../../../../app/MainApp/resources/js/router/modules";
 //load all routes web modules admin
 import modulesAdminRoutes from "../../../../app/MainApp/resources/js/router/modulesAdmin";
+//load all routes web modules general
+import modulesRoutesPerTenant from "../../../../app/MainApp/resources/js/router/modulesPerTenant";
+//load all routes web modules admin
+import modulesAdminRoutesPerTenant from "../../../../app/MainApp/resources/js/router/modulesAdminPerTenant";
 
 Vue.use(Router);
 Vue.use(Meta);
+
+if(globals().AppConfig.system.multitenant.active){
+    modulesAdminRoutes.concat(modulesAdminRoutesPerTenant[tenantId]);
+}
 
 let tmpRoutes = [...projectRoutes];
 // if (globals().AppConfig.system.web_admin.autoload_router.frontend) {
@@ -25,6 +33,10 @@ let tmpRoutes = [...projectRoutes];
     });
 // }
 tmpRoutes.concat(modulesRoutes);
+
+if(globals().AppConfig.system.multitenant.active){
+    tmpRoutes.concat(modulesRoutesPerTenant[tenantId]);
+}
 
 const router = new Router({
     base: "/",

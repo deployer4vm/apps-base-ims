@@ -19,6 +19,11 @@ AppConfig.isModuleEnable = function(module) {
 
 AppConfig['sidenavOri'] = JSON.parse(JSON.stringify(AppConfig.sidenav));
 
+// jika multi tenant aktif maka replace packageLocal utama dengan packageLocalPerTenant
+if(AppConfig.system.multitenant.active && AppConfig.packageLocalPerTenant[tenantId]){
+    AppConfig.packageLocal = AppConfig.packageLocalPerTenant[tenantId];
+}
+
 // let varPackageLocal = require("../../../app/MainApp/config/packageLocal.json");
 // let varPackageLocalEnv = require("../../../app/MainApp/config/packageLocalEnv.json");
 

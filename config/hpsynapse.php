@@ -21,7 +21,12 @@ if(!function_exists('initHPsynapseConfig')){
             $config['namespaces']['App\\MainApp\\Projects\\'.$client['project_code'].'\\Modules'] = [app_path('MainApp' . DIRECTORY_SEPARATOR . 'Projects' . DIRECTORY_SEPARATOR . $client['project_code'] . DIRECTORY_SEPARATOR . 'Modules') . DIRECTORY_SEPARATOR, false];
 
         if(isset($system['multitenant']['active']) && $system['multitenant']['active']==1){
-            $tenantList = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/_tenant.json'), true);
+            $tenantConfigPath = __DIR__ . '/../app/MainApp/config/_tenant.json';
+            
+            if(!file_exists($tenantConfigPath))                
+                file_put_contents($tenantConfigPath, json_encode([], JSON_PRETTY_PRINT));
+
+            $tenantList = json_decode(file_get_contents($tenantConfigPath), true);
             foreach ($tenantList as $tenantId) {
                 if(isset($system['multiproject']['active']) && $system['multiproject']['active'] == 1){
                     $config['namespaces']['App\\MainApp\\Projects\\'.$client['project_code'].'\\Tenants\\ID'.$tenantId.'\\Modules'] = [app_path('MainApp' . DIRECTORY_SEPARATOR . 'Projects' . DIRECTORY_SEPARATOR . $client['project_code'] . DIRECTORY_SEPARATOR  . 'Tenants' . DIRECTORY_SEPARATOR . 'ID' . $tenantId . DIRECTORY_SEPARATOR . 'Modules') . DIRECTORY_SEPARATOR, false];

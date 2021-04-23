@@ -41,6 +41,10 @@
             logout: "{{route('auth.logout')}}",
             login: "{{route('auth.login')}}"
         };*/ ?>
+        
+        @if(config('AppConfig.system.multitenant.active'))
+            var tenantId = {{config('tenant.id')}};
+        @endif
     </script>
 
     <!-- Layout helpers -->

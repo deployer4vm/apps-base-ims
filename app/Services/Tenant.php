@@ -213,7 +213,11 @@ class Tenant extends BaseRepository
     {
         $config = app('config');
         $config->set('tenant',$dataTenant);
-        resolve('bindTenant',['tenant_id'=>$dataTenant['id']]);
+        // set packageLocal pertenant
+        if(config('AppConfig.packageLocalPerTenant.'.$dataTenant['id']))
+            $config->set('AppConfig.packageLocal',config('AppConfig.packageLocalPerTenant.'.$dataTenant['id']));
+        resolve('bindTenant',['tenant_id'=>$dataTenant['id']]);        
+        $this->setDb($dataTenant['id']);
     }
 
     public function getActiveTenant(string $field = '')

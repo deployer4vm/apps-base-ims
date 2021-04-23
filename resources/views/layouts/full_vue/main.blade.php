@@ -43,6 +43,12 @@
     @endforeach
     @endif
 
+    @if(config('AppConfig.system.multitenant.active'))
+    <script>
+        var tenantId = {{config('tenant.id')}};
+    </script>
+    @endif
+    
     <style>
     .app-splash-screen {
         background: #fff;

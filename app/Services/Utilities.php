@@ -5,6 +5,13 @@ namespace App\Services;
 use Illuminate\Support\Facades\Artisan;
 class Utilities
 {
+    /**
+     * looping per module per module namespace nya (letak modul bisa dimana saja)
+     * 
+     * @param 
+     * 
+     * @return 
+     */
     public static function findNamespaceResources(array $namespaces, $resourceFolderName, $resourceNamespace)
     {        
         return array_reduce($namespaces, function ($carry, $namespacePath) use ($resourceNamespace, $resourceFolderName) {
@@ -46,8 +53,12 @@ class Utilities
         }, []);
     }
     
-    /*
+    /**
      * looping per module per module namespace nya (letak modul bisa dimana saja)
+     * 
+     * @param 
+     * 
+     * @return 
      */
     public static function listModulePath(array $namespaces,$func)
     {
