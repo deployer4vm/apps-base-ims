@@ -643,20 +643,15 @@ abstract class BaseRepository {
             $this->pagination = $this->getDefaultListFormat();
             return $this->pagination;
         }
-
-        if ($model) { 
-            $this->pagination['count'] = $model->count();
-        }else{
-            $this->pagination['count'] = 0;
-        }
-
+        
+        $this->pagination['count'] = $model->count();
         $this->pagination['offset'] = $offset;
         $this->pagination['limit'] = $limit;
         $this->pagination['currentPage'] = 1;
         $this->pagination['pageCount'] = 1;
 
         if ($limit){
-            $model = $model->limit($limit)->offset($offset);
+            // $model = $model->limit($limit)->offset($offset);
             
             $this->pagination['currentPage'] = (int) ceil(($offset+1)/$limit);
             $this->pagination['pageCount'] = (int) ceil($this->pagination['count']/$limit);
@@ -665,12 +660,26 @@ abstract class BaseRepository {
         if ($model) {
             // $this->pagination['query'] = $model->toSql();
             // $this->pagination['queryBindings'] = $model->getBindings();
-            if($appendAttribut){
-                $this->pagination['data'] = $model->get()->append($appendAttribut)->toArray();
-            }else{
-                $this->pagination['data'] = $model->get()->toArray();
-            }
-          
+            // if($appendAttribut){
+            //     $this->pagination['data'] = $model->get()->append($appendAttribut)->toArray();
+            // }else{
+            //     $this->pagination['data'] = $model->get()->toArray();
+            // }
+            
+            $this->_tmpListData = [];
+            $this->chunkWithLimit($model,100,$offset,$limit?$limit:null, function ($chunkedData) use($appendAttribut) {
+                // $model->chunk(100, function ($data) use($appendAttribut) {
+                if($appendAttribut)
+                    $chunkedData = $chunkedData->append($appendAttribut);
+
+                foreach ($chunkedData as $item) {
+                    $this->_tmpListData[] = $item->toArray();
+                }
+                usleep(200);
+            });
+
+            $this->pagination['data'] = $this->_tmpListData;
+
             // jika menyertakan hiddeColumn berarti ada column yg di hide
             // jika menyertakan idAsKey berarti key data menggunakan field id
             if ($hiddenColumn || $idAsKey) {
@@ -698,11 +707,48 @@ abstract class BaseRepository {
                 // });
                 // $this->pagination['data'] = $collection->toArray();
             }  
-			
+
         } else {
             $this->pagination['data'] = [];
         }        
         return $this->pagination;
+    }
+    
+    private function chunkWithLimit ($model, $count,$offset=0,$remaining=null, callable $callback) 
+    {        
+        do {
+            if (! is_null($remaining)) {
+                $limit = min($count, $remaining);
+            } else {
+                $limit = $count;
+            }
+            
+            $results = $model->skip($offset)->take($limit)->get();
+
+            $countResults = $results->count();
+            Log::info([$offset,$limit,$countResults]);
+            if ($countResults == 0) {
+                break;
+            }
+
+            // On each chunk result set, we will pass them to the callback and then let the
+            // developer take care of everything within the callback, which allows us to
+            // keep the memory low for spinning through large result sets for working.
+            if (call_user_func($callback, $results) === false) {
+                return false;
+            }
+
+            $offset += $countResults;
+
+            if (! is_null($remaining)) {
+                $remaining -= $countResults;
+                if ($remaining == 0) {
+                    break;
+                }
+            }
+        } while ($countResults == $limit);
+
+        return true;
     }
 
     final protected function _filter($model,array $filter=[])
@@ -789,31 +835,25 @@ abstract class BaseRepository {
      * fungsi utama untuk get 1 record data
      * 
      * @param eloquen instance  $model
-     * @param array|int|string      $filter     synapse array filter format, atau id table
+     * @param array|int         $filter     synapse array filter format, atau id table
      * 
-     * @return false|array                      false jika gagal, array record jika ada
+     * @return false|array    false jika gagal, array record jika ada
      */
     final protected function _getOne($model, $filter)
     {
         if(empty($model))return $model;
         // $data = $this->_getOneModel($model, $filter);
-        
-        // jika bukan array maka diasumsikan yang diinput sebagai parameter adalah value id nya
-        if(!is_array($filter))$filter = [['id',$filter]];
-        $data = $this->_filter($model, $filter)->first();
-        
-        if (isset($filter['with'])) {                
-            $model = $model->with($filter['with']);
-            unset($filter['with']);
-        }
-        
-        if (isset($filter['append']) && $data) {            
+        if(!is_array($filter))$filter = ['id',$filter];
+        $data = $this->_filter($model, $filter)->first();  
+              
+        if (isset($filter['append'])) {            
             $data = $data->append($filter['append']);
         }    
         return $data ? $data->toArray() : false;
     }
 
     /**
+     * DONE
      * 
      * fungsi utama untuk get 1 record data
      * 
@@ -982,8 +1022,9 @@ abstract class BaseRepository {
         $model = $this->_where($model, $where);
 		
         if ($model != false) {
-            $model->delete();
-            return true;            
+            if ($model->delete()) {
+                return true;
+            }            
         }else{
             $this->error = __('lang.data_not_found');
         }

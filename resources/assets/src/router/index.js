@@ -20,7 +20,7 @@ import modulesAdminRoutesPerTenant from "../../../../app/MainApp/resources/js/ro
 Vue.use(Router);
 Vue.use(Meta);
 
-if(globals().AppConfig.system.multitenant.active){
+if(globals().AppConfig.system.multitenant.active && modulesRoutesPerTenant[tenantId]){
     modulesAdminRoutes.concat(modulesAdminRoutesPerTenant[tenantId]);
 }
 
@@ -34,7 +34,7 @@ let tmpRoutes = [...projectRoutes];
 // }
 tmpRoutes.concat(modulesRoutes);
 
-if(globals().AppConfig.system.multitenant.active){
+if(globals().AppConfig.system.multitenant.active && modulesRoutesPerTenant[tenantId]){
     tmpRoutes.concat(modulesRoutesPerTenant[tenantId]);
 }
 

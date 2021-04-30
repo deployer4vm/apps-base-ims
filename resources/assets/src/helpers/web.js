@@ -182,21 +182,43 @@ export default {
             globals().AppConfig.packageLocal[module].template.admin
         ) {
             //hide / show navbar (header)
-            if(globals().AppConfig.packageLocal[module].template.admin.navbar){
+            if((!onIframe && globals().AppConfig.packageLocal[module].template.admin.navbar) || (onIframe && byPassViewConfig.showNavbar)){
                 this.setShowNavbar(true);
             }else{
                 this.setShowNavbar(false);                
             }
 
             //hide / show sidenave (menu utama)
-            if(globals().AppConfig.packageLocal[module].template.admin.sidenav){
+            if((!onIframe && globals().AppConfig.packageLocal[module].template.admin.sidenav) || (onIframe && byPassViewConfig.showSidenav)){
                 this.setShowSidenav(true);
             }else{
                 this.setShowSidenav(false);                
             }
 
             //hide / show footer
-            if(globals().AppConfig.packageLocal[module].template.admin.footer){
+            if((!onIframe && globals().AppConfig.packageLocal[module].template.admin.footer) || (onIframe && byPassViewConfig.showFooter)){
+                this.setShowFooter(true);
+            }else{
+                this.setShowFooter(false);                
+            }
+            
+        }else if(onIframe){
+            //hide / show navbar (header)
+            if(byPassViewConfig.showNavbar){
+                this.setShowNavbar(true);
+            }else{
+                this.setShowNavbar(false);                
+            }
+
+            //hide / show sidenave (menu utama)
+            if(byPassViewConfig.showSidenav){
+                this.setShowSidenav(true);
+            }else{
+                this.setShowSidenav(false);                
+            }
+
+            //hide / show footer
+            if(byPassViewConfig.showFooter){
                 this.setShowFooter(true);
             }else{
                 this.setShowFooter(false);                
@@ -204,7 +226,6 @@ export default {
         }else{
             this.setShowAll();
         }
-        return this;
     },
     /**
      * tampilkan semua element yg hide/show

@@ -43,11 +43,19 @@
     @endforeach
     @endif
 
-    @if(config('AppConfig.system.multitenant.active'))
     <script>
+    @if(config('AppConfig.system.multitenant.active'))
         var tenantId = {{config('tenant.id')}};
-    </script>
     @endif
+    var onIframe = {{isset($_GET['onIframeConfig'])?'true':'false'}};
+    @if(isset($_GET['onIframeConfig']))
+        var byPassViewConfig = {
+            showNavbar:{{isset($_GET['onIframeConfig']['showNavbar']) && $_GET['byPassViewConfig']['showNavbar'] == 0 ? '0': '1' }},
+            showSidenav:{{isset($_GET['onIframeConfig']['showSidenav']) && $_GET['byPassViewConfig']['showSidenav'] == 0 ? '0': '1' }},
+            showFooter:{{isset($_GET['onIframeConfig']['showFooter']) && $_GET['byPassViewConfig']['showFooter'] == 0 ? '0': '1' }}
+        };
+    @endif
+    </script>
     
     <style>
     .app-splash-screen {
