@@ -726,7 +726,7 @@ abstract class BaseRepository {
             $results = $model->skip($offset)->take($limit)->get();
 
             $countResults = $results->count();
-            Log::info([$offset,$limit,$countResults]);
+            
             if ($countResults == 0) {
                 break;
             }

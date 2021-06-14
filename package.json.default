@@ -40,6 +40,7 @@
         "laravel-mix": "^5.0.1",
         "laravel-echo": "^1.8.0",
         "lodash": "^4.17.15",
+        "mathjs": "^9.4.0",
         "moment": "~2.24.0",
         "node-sass": "~4.11.0",
         "nouislider": "~13.1.4",

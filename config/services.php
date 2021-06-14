@@ -1,6 +1,6 @@
 <?php
 
-return [
+$tmpService = [
 
     /*
     |--------------------------------------------------------------------------
@@ -41,3 +41,16 @@ return [
     ],
 
 ];
+
+/**
+ * merge config services dari MainApp jika ada
+ */
+$mainAppServiceConfigPath = __DIR__ . '/../app/MainApp/config/services.php';  
+if(file_exists($mainAppServiceConfigPath)){
+    $tmpMainAppService = include($mainAppServiceConfigPath);
+    if(is_array($tmpMainAppService)){
+        $tmpService = array_merge($tmpService,$tmpMainAppService);
+    }
+}
+
+return $tmpService;

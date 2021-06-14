@@ -98,6 +98,10 @@ class Excel
         return $reader; 
     }
 
+    /**
+     * @param String $from range yg akan dicopy, misal 'A1:A10'
+     * @param String $to range yg dituju untuk paset style, misal 'B1:B10'
+     */
     public function copyRange(&$reader,$from,$to)
     {
         $cellValues = $reader->getActiveSheet()->rangeToArray($from);
@@ -105,8 +109,8 @@ class Excel
 
         $cellStyle = $reader->getActiveSheet()
             ->duplicateStyle(
-                $reader->getActiveSheet()->getStyle('A'.$numRows),
-                'B3:B7'
+                $reader->getActiveSheet()->getStyle($from),
+                $to
             );
     }
 
@@ -167,17 +171,37 @@ class Excel
                 $this->setColumnHeader($this->_readRow($row));
             }
             if($key>=$startRow){   
-                $i++;      
-                $result[$i] = $this->_readRow($row);
-                if($loppingFunc){
-                    $loppingFunc($result[$i],$i);
+                // hanya ambil data yang tidak 
+                if(!$this->isRowEmpty($row)){
+                    $i++;      
+                    $result[$i] = $this->_readRow($row);
+                    if($loppingFunc){
+                        $loppingFunc($result[$i],$i);
+                    }
+                    if($perRowSleep)usleep($perRowSleep);
                 }
-                if($perRowSleep)usleep($perRowSleep);
             }
                
         }
         $loppingFunc = null;
         return $result;
+    }
+
+    /**
+     * detek apakah row kosong
+     */
+    public static function isRowEmpty($rowIterator)
+    {
+        $cellIterator = $rowIterator->getCellIterator();    
+        $cellIterator->setIterateOnlyExistingCells(FALSE);
+        
+        foreach ($cellIterator as $cell) {
+            if ($cell->getValue()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

@@ -155,10 +155,14 @@ class BaseController extends LaravelBaseController
      *          *orderBy --> optional jika menyertakan parameter orderBy atau orderType
      *          *orderType --> optional jika menyertakan parameter orderBy atau orderType
      *          *q --> optional jika menyertakan parameter q
+     *          *with --> optional jika menyertakan parameter with
+     *          *append --> optional jika menyertakan parameter append
      *          ... paramater2 input lainnya jika ada dan $mergeParam == true
      *      ],
      *      filter => [
      *          q,
+     *          append,
+     *          with,
      *          [..] ... paramater2 input lainnya jika ada dan $mergeParam == true
      *      ],
      *      orderBy => []
@@ -190,12 +194,12 @@ class BaseController extends LaravelBaseController
 
         //jika menyertakan with
         if (request()->input('with', null)) {
-            $params['filter']['with'] = $params['query']['with'] = request()->input('with');
+            $params['filter']['with'] = $params['query']['with'] = request()->input('with',[]);
         }
 
         //jika menyertakan append
         if (request()->input('append', null)) {
-            $params['filter']['append'] = $params['query']['append'] = request()->input('append', '');
+            $params['filter']['append'] = $params['query']['append'] = request()->input('append', []);
         }
 
         //jika parameter dimerge langsung dengan query dan filter
