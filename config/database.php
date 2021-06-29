@@ -2,7 +2,93 @@
 
 use Illuminate\Support\Str;
 
+$multiDatabaseServer = [
+    'enable'=> env('DB_MULTISERVER_ENABLE', false),
+    'server_count'=> 1, // jumlah db server, minimal 1 (main server)
+    'servers'=>[
+        [
+            'name' => env('DB_MULTISERVER_MAIN_NAME', 'Main DB Server'),
+            'driver' => env('DB_MULTISERVER_MAIN_DRIVER', 'mysql'),
+            'url' => env('DATABASE_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '3306'),
+            'database' => env('DB_DATABASE', 'forge'),
+            'username' => env('DB_USERNAME', 'forge'),
+            'password' => env('DB_PASSWORD', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            // 'strict' => true,
+            'modes' => [
+                // 'ONLY_FULL_GROUP_BY',
+                // 'STRICT_TRANS_TABLES',
+                // 'NO_ZERO_IN_DATE',
+                // 'NO_ZERO_DATE',
+                'ERROR_FOR_DIVISION_BY_ZERO',
+                'NO_AUTO_CREATE_USER',
+                // 'NO_ENGINE_SUBSTITUTION',
+            ],
+            'engine' => 'InnoDB',
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ]
+    ]
+];
+
+$i=1;
+while (env('DB_MULTISERVER_'.$i.'_HOST',false)) {
+    $multiDatabaseServer['servers'][] = [
+        // config cpanel untuk server lain
+        'cpanel' => [
+            'dbcreate_use_cpanel' => env('DB_MULTISERVER_'.$i.'_CPANEL_CREATEDB', false),
+            'domain' => env('DB_MULTISERVER_'.$i.'_CPANEL_DOMAIN'),    
+            'port' => env('DB_MULTISERVER_'.$i.'_',2083),
+            'username' => env('DB_MULTISERVER_'.$i.'_CPANEL_USERNAME'),
+            'password' => env('DB_MULTISERVER_'.$i.'_CPANEL_PASSWORD')
+        ],
+        'name' => env('DB_MULTISERVER_'.$i.'_NAME', 'Main DB Server'),
+        'driver' => env('DB_MULTISERVER_'.$i.'_DRIVER', 'mysql'),
+        'url' => env('DATABASE_URL'),
+        'host' => env('DB_MULTISERVER_'.$i.'_HOST', '127.0.0.1'),
+        'port' => env('DB_MULTISERVER_'.$i.'_PORT', '3306'),
+        'database_prefix' => env('DB_MULTISERVER_'.$i.'_DATABASE_PREFIX', env('DB_DATABASE_PREFIX_PERTENANT', env('DB_DATABASE_PERTENANT',env('DB_DATABASE', 'forge')))),
+        'database' => env('DB_MULTISERVER_'.$i.'_DATABASE', env('DB_DATABASE', 'forge')),
+        'username' => env('DB_MULTISERVER_'.$i.'_USERNAME', 'forge'),
+        'password' => env('DB_MULTISERVER_'.$i.'_PASSWORD', ''),
+        'unix_socket' => env('DB_MULTISERVER_'.$i.'SOCKET', ''),
+        'charset' => 'utf8mb4',
+        'collation' => 'utf8mb4_unicode_ci',
+        'prefix' => '',
+        'prefix_indexes' => true,
+        // 'strict' => true,
+        'modes' => [
+            // 'ONLY_FULL_GROUP_BY',
+            // 'STRICT_TRANS_TABLES',
+            // 'NO_ZERO_IN_DATE',
+            // 'NO_ZERO_DATE',
+            'ERROR_FOR_DIVISION_BY_ZERO',
+            'NO_AUTO_CREATE_USER',
+            // 'NO_ENGINE_SUBSTITUTION',
+        ],
+        'engine' => 'InnoDB',
+        'options' => extension_loaded('pdo_mysql') ? array_filter([
+            PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+        ]) : [],
+
+    ];
+    $multiDatabaseServer['server_count'] = $i;
+    $i++;
+}
+
 return [
+
+    /*
+    | Config tambahan untuk multi tenant dan multi database server
+    */
+    'multi_database_server' => $multiDatabaseServer,
 
     /*
     |--------------------------------------------------------------------------
@@ -75,11 +161,12 @@ return [
 
         //config data per tenant
         'mysqlPerTenant' => [
-            'driver' => 'mysql',
+            'driver' => env('DB_DRIVER_PERTENANT', 'mysql'),
             'url' => env('DATABASE_URL'),
             'host' => env('DB_HOST_PERTENAN', '127.0.0.1'),
             'port' => env('DB_PORT_PERTENAN', '3306'),
-            'database' => env('DB_DATABASE_PERTENAN', 'forge'),
+            'database_prefix' => env('DB_DATABASE_PREFIX_PERTENANT', env('DB_DATABASE_PERTENANT',env('DB_DATABASE', 'forge'))),
+            'database' => env('DB_DATABASE_PERTENANT', env('DB_DATABASE', 'forge')),
             'username' => env('DB_USERNAME_PERTENAN', 'forge'),
             'password' => env('DB_PASSWORD_PERTENAN', ''),
             'unix_socket' => env('DB_SOCKET_PERTENAN', ''),

@@ -21,6 +21,7 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         // \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+        \App\Http\Middleware\AppGroupCheck::class,
     ];
 
     /**
@@ -38,7 +39,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\IframeLoadCheck::class,
-            \App\Http\Middleware\AppGroupCheck::class,
+            // \App\Http\Middleware\AppGroupCheck::class,
             \App\Http\Middleware\TokenExpireCheck::class,
             \App\Http\Middleware\AcceesConfigCheck::class,
         ],
@@ -46,7 +47,7 @@ class Kernel extends HttpKernel
         'api' => [
             'throttle:600,1',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            \App\Http\Middleware\AppGroupCheck::class,
+            // \App\Http\Middleware\AppGroupCheck::class,
             \App\Http\Middleware\TokenExpireCheck::class,
             \App\Http\Middleware\AcceesConfigCheck::class,
         ],

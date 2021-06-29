@@ -19,4 +19,12 @@ class Tenant extends BaseModel
      * @var array
      */
     protected $guarded = ['id','created_at'];
+
+    /**
+     * relasi data ke instansi terkait
+     */
+    public function instanceData()
+    {
+        return $this->hasOne(config('AppConfig.system.multitenant.table_instance'),'tenant_id', 'id');
+    }
 }

@@ -32,28 +32,49 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        if($this->app->runningInConsole())
+        if($this->app->runningInConsole()){
             $this->bootMigration();
+        //detect app_group mmulti tenant
+        }else if(config('AppConfig.system.multitenant.active',false)){
+            $this->AppGroupCheck();
+        }
 
         parent::boot();
     }
 
-    /*
+    private function AppGroupCheck()
+    {
+        // jika detect by subfolder
+        if(config('AppConfig.system.multitenant.detect_mode',1)==1){
+            if(!($appGroup = request()->header('Group-App'))){
+                if(!($appGroup = request()->route('group_app'))){ 
+                    $appGroup = request()->input('group_app');
+                }
+            }
+            
+            if($appGroup)
+                \App\Facades\Tenant::setActiveTenantByGroup($appGroup); 
+
+        // jika detect by subdomain
+        }else{
+            \App\Facades\Tenant::setActiveTenantByDomain();
+        }
+
+    }
+
+    /**
      * tambah migration path disetiap module
      */
     private function bootMigration()
     {
         //boot additional data type migration
         try {
-            if (!\Doctrine\DBAL\Types\Type::hasType('double')) {
-                \Doctrine\DBAL\Types\Type::addType('double', \App\Base\DoctrineType\DoubleType::class);
-            }
-            if (!\Doctrine\DBAL\Types\Type::hasType('tinyInteger')) {
-                \Doctrine\DBAL\Types\Type::addType('tinyInteger', \App\Base\DoctrineType\TinyIntegerType::class);
-            }
+            \Doctrine\DBAL\Types\Type::addType('double', \App\Base\DoctrineType\DoubleType::class);
+            \Doctrine\DBAL\Types\Type::addType('tinyInteger', \App\Base\DoctrineType\TinyIntegerType::class);
         } catch (\Throwable $th) {
+            //throw $th;
         }
-        
+
         $this->loadMigrationsFrom(config('hpsynapse.migration_path'));
     }
 
@@ -63,14 +84,13 @@ class RouteServiceProvider extends ServiceProvider
     public function register()
     {
         require_once app_path('Helpers/Helper.php');
-        
-        // $this->mergeConfigFrom(
-        //     __DIR__.'/../config/HPSynapse.php', config_path('hpsynapse.php')
-        // );      
-        
-        // $this->app->singleton('breadcrumb', function ($app) {
-        //     return new \hpsynapse\appscore\Services\Breadcrumb();
-        // });
+
+    //     $this->mergeConfigFrom(
+    //         __DIR__.'/../config/HPSynapse.php', config_path('hpsynapse.php')
+    //     );              
+    //    $this->app->singleton('breadcrumb', function ($app) {
+    //        return new \hpsynapse\appscore\Services\Breadcrumb();
+    //    });
     }
 
     /**
@@ -79,10 +99,9 @@ class RouteServiceProvider extends ServiceProvider
      * @return void
      */
     public function map()
-    {        
-        if(!$this->app->runningInConsole())
+    {
+        // if(!$this->app->runningInConsole())
             $this->registerControllerNamespace();
-
     }
 
     /**
@@ -106,6 +125,8 @@ class RouteServiceProvider extends ServiceProvider
             //load seluruh routes yg ada di setiap module
             foreach ($fileNames as $fileName => $isApi) {
                 $path = sprintf('%s/%s.php', $pathToModule, $fileName);
+                
+                // var_dump([$namespace,$path]);echo('<br><br>');
 
                 //load general route tambahan jika ada
                 if($pathBinding = config('AppConfig.binding.route.'.$moduleNamespace.'.'.($isApi?'api':'web'),false)){
@@ -129,6 +150,7 @@ class RouteServiceProvider extends ServiceProvider
                     ->group($path);
             }
         }
+        // dd($controllerPaths);
 
         $this->mapApiRoutes();
         $this->mapWebRoutes();

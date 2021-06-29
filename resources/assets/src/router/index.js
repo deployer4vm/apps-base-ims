@@ -20,8 +20,11 @@ import modulesAdminRoutesPerTenant from "../../../../app/MainApp/resources/js/ro
 Vue.use(Router);
 Vue.use(Meta);
 
-if(globals().AppConfig.system.multitenant.active && modulesRoutesPerTenant[tenantId]){
-    modulesAdminRoutes.concat(modulesAdminRoutesPerTenant[tenantId]);
+var newModulesAdminRoutes = [];
+newModulesAdminRoutes = newModulesAdminRoutes.concat(modulesAdminRoutes);
+
+if(globals().AppConfig.system.multitenant.active && modulesAdminRoutesPerTenant[tenantId]){
+    newModulesAdminRoutes = newModulesAdminRoutes.concat(modulesAdminRoutesPerTenant[tenantId]);
 }
 
 let tmpRoutes = [...projectRoutes];
@@ -29,12 +32,12 @@ let tmpRoutes = [...projectRoutes];
     tmpRoutes.push({
         path: globals().AppConfig.endpoint.admin.app,
         component: BlankRouterContainer,
-        children: modulesAdminRoutes
+        children: newModulesAdminRoutes
     });
 // }
-tmpRoutes.concat(modulesRoutes);
+tmpRoutes = tmpRoutes.concat(modulesRoutes);
 
-if(globals().AppConfig.system.multitenant.active && modulesRoutesPerTenant[tenantId]){
+if(globals().AppConfig.system.multitenant.active && modulesAdminRoutesPerTenant[tenantId]){
     tmpRoutes.concat(modulesRoutesPerTenant[tenantId]);
 }
 
@@ -44,44 +47,55 @@ const router = new Router({
     routes: tmpRoutes
 });
 
+var _groupApp = '';
 router.afterEach((to, from) => {
-    if(globals().LocalApi.defaults.headers.common["Group-App"] != to.params.group_app)
-        globals().LocalApi.defaults.headers.common["Group-App"] = to.params.group_app;
+    
+
+    if(globals().AppConfig.system.multitenant.active){
         
-    //jika tenant berubah atau jika saat pertama kali akses
-    if(globals().AppConfig.system.multitenant.active && to.params.group_app != globals().Web.getTenantGroupApp()){
-        console.log('tenant berubah : old=',globals().Web.getTenantGroupApp(),' , new=',to.params.group_app);
-        //jika pertama kali akses dan tidak mengakses tenant maka redirect ke default tenant
-        if(to.params.group_app==undefined && globals().Web.getTenantGroupApp()==''){
-            console.log('First access, go to default tenant (from main router)');
-            globals().Web.goToDefaultTenant();
-            return;
-
-        //jika tidak mengakses tenant tapi sebelumnya sudah ada tenant yg aktif maka redirect ke tenant tersebut
-        }else if(to.params.group_app==undefined){
-            console.log('go to previouse active tenant (from main router)');
-            globals().Web.goToCurrentTenant();
-            return;
-
-        //jika tenant berubah atau saat pertama kali akses
+        if(tenantData==undefined){
+            _groupApp = to.params.group_app;
         }else{
-            console.log('load tenant baru : ',to.params);
-            globals().Web.loadTenant(to.params.group_app).then((val)=>{
-                console.log('tenant baru : ',val);
-                EventBus.$emit('onTenantChange',val);
-                //jika tenant tidak ditemukan
-                if(!val){                    
-                    //jika tenant yang tidak ditemukan adalah default tenant maka error
-                    if(to.params.group_app == globals().Web.getDefaultTenantRoute().params.group_app){
-                        alert('Tenant Api Error');                    
-                    }else{                        
-                        globals().Web.goToDefaultTenant();
+            _groupApp = tenantData.group_app;
+        }
+
+        if(globals().LocalApi.defaults.headers.common["Group-App"] != _groupApp)
+            globals().LocalApi.defaults.headers.common["Group-App"] = _groupApp;
+        
+        //jika tenant berubah atau jika saat pertama kali akses
+        if(_groupApp != globals().Web.getTenantGroupApp()){
+            console.log('tenant berubah : old=',globals().Web.getTenantGroupApp(),' , new=',_groupApp);
+            //jika pertama kali akses dan tidak mengakses tenant maka redirect ke default tenant
+            if(_groupApp==undefined && globals().Web.getTenantGroupApp()==''){
+                console.log('First access, go to default tenant (from main router)');
+                globals().Web.goToDefaultTenant();
+                return;
+
+            //jika tidak mengakses tenant tapi sebelumnya sudah ada tenant yg aktif maka redirect ke tenant tersebut
+            }else if(_groupApp==undefined){
+                console.log('go to previouse active tenant (from main router)');
+                globals().Web.goToCurrentTenant();
+                return;
+
+            //jika tenant berubah atau saat pertama kali akses
+            }else{
+                console.log('load tenant baru : ',to.params);
+                globals().Web.loadTenant(_groupApp).then((val)=>{
+                    console.log('tenant baru : ',val);
+                    EventBus.$emit('onTenantChange',val);
+                    //jika tenant tidak ditemukan
+                    if(!val){                    
+                        //jika tenant yang tidak ditemukan adalah default tenant maka error
+                        if(_groupApp == globals().Web.getDefaultTenantRoute().params.group_app){
+                            alert('Tenant Api Error');                    
+                        }else{                        
+                            globals().Web.goToDefaultTenant();
+                        }
                     }
-                }
-            });
+                });
+            }
         }
     }
-
     
     /*
     jika mengakses halaman admin maka detek dan proteksi halaman admin dengan auth (jika fitur auth diaktifkan di config)
@@ -106,7 +120,7 @@ router.afterEach((to, from) => {
         if(
             globals().UserAuth.isLogin() 
             && globals().AppConfig.system.multitenant.active 
-            && to.params.group_app != globals().Web.getTenantGroupApp()
+            && _groupApp != globals().Web.getTenantGroupApp()
         ){
             globals().UserAuth.logout();
             return;
@@ -142,7 +156,7 @@ router.afterEach((to, from) => {
     //reset
     globals().Web.setSidenavHorizontalDefault();
     globals().Web.setBodyWithPadding(true);
-
+    
     // Scroll to top of the page
     globals().scrollTop(0, 0);
     globals().Web.setLoadingPage(false);

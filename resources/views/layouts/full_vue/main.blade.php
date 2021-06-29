@@ -46,6 +46,7 @@
     <script>
     @if(config('AppConfig.system.multitenant.active'))
         var tenantId = {{config('tenant.id')}};
+        var tenantData = <?php echo json_encode(config('tenant',[]),JSON_PRETTY_PRINT) ?>;
     @endif
     var onIframe = {{isset($_GET['onIframeConfig'])?'true':'false'}};
     @if(isset($_GET['onIframeConfig']))

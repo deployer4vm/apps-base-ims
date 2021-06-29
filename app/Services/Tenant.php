@@ -31,6 +31,7 @@ class Tenant extends BaseRepository
     {
         return config('database.perTenant').$tenantId;
     }
+
     /**
      * generate and get connection database pertenant
      */
@@ -39,9 +40,34 @@ class Tenant extends BaseRepository
         $dbConfigName = $this->getDbConnectionName($tenantId);
         $dbConfig = config('database.connections.'.config('database.perTenant'));
         $dbConfig['database'] = $this->getDbName($tenantId);
+
+        // jika multidatabase server aktif maka detek dan sinkronkan konfig db nya
+        if(config('database.multi_database_server.enable',false))
+            $dbConfig = $this->getDbConnection_getServer($tenantId,$dbConfig);
+
         config(['database.connections.'.$dbConfigName => $dbConfig]);
 
         return $dbConfig;
+    }
+
+    private function getDbConnection_getServer($tenantId,$dbConfig)
+    {
+        if(config('tenant.id')!=$tenantId){
+            $tenant = MTenant::select('db')->where('id',$tenantId)->first();
+            $server = config('database.multi_database_server.servers.'.$tenant->db);
+        }else{
+            $server = config('database.multi_database_server.servers.'.config('tenant.db'));
+        }
+        $dbConfig['host'] = $server['host'];
+        return $dbConfig;
+    }
+
+    /**
+     * get
+     */
+    public function getDbRawPDO($tenantId=false)
+    {
+        return $this->db($tenantId)->getRawPdo();
     }
 
     /**
@@ -49,7 +75,15 @@ class Tenant extends BaseRepository
      */
     public function getDbName($tenantId)
     {
-        return config('database.connections.'.config('database.perTenant').'.database_prefix').$tenantId;
+        $tenant = MTenant::where('id',$tenantId)->first();
+
+        if($tenant->db==0){
+            $schemaName = config("database.connections.".config("database.perTenant").".database_prefix").$tenantId;
+        }else{
+            $schemaName = config("database.multi_database_server.servers.".$tenant->db.".database_prefix").$tenantId;
+        }
+
+        return $schemaName;
     }
 
     /**
@@ -57,7 +91,7 @@ class Tenant extends BaseRepository
      */
     public function dbExists($tenantId)
     {
-        $schemaName = config("database.connections.".config("database.perTenant").".database_prefix").$tenantId;
+        $schemaName = $this->getDbName($tenantId);
         $query = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME =  ?";
         $db = DB::select($query, [$schemaName]);
         
@@ -91,8 +125,9 @@ class Tenant extends BaseRepository
     /**
      * DB TRANSACTION PER TENANT CONNECTION
      */
-    
+
     /**
+     * JANGAN DIGUNAKAN DULU - KAYANYA MASIH BUG BELUM TESTING LAGI
      * detek otomatis dbtransaction
      * 
      * @param Object $that $this dari class bersangkutan
@@ -101,8 +136,7 @@ class Tenant extends BaseRepository
      * 
      * @return Boolean true jika berhasil, false atau throw error jika gagal
      */
-    public function dbBeginTransactionIfNotExist($that, $func, $rollbackFunc=null)
-    {
+    public function dbBeginTransactionIfNotExist($that, $func, $rollbackFunc=null){
         // jika belum ada transaksi aktif maka aktifkan
         $dontHaveTransactionLevel = !$this->dbTransactionLevel();
         
@@ -124,7 +158,7 @@ class Tenant extends BaseRepository
             $this->error = $e->getMessage(); 
 
             Log::error('dbBeginTransactionIfNotExist ERROR');
-            Log::error($e->getTraceAsString());
+            Log::error($e);
 
             // eksekusi rollback function jika disertakan
             if($rollbackFunc!=null)   
@@ -137,7 +171,7 @@ class Tenant extends BaseRepository
             
         return $return;
     }
-    
+
     /**
      * cek transaction level
      */
@@ -145,9 +179,10 @@ class Tenant extends BaseRepository
     {
         if(!$tenantId)$tenantId=config('tenant.id');
         $tenantId = $tenantId?$tenantId:$this->getActiveTenant('id');
-        return \Illuminate\Support\Facades\DB::connection($this->getDbConnectionName($tenantId))->transactionLevel();
+        // Log::info('Tenant - transaction level : '.$tenantId.' - '.$this->getDbConnectionName($tenantId));
+        return DB::connection($this->getDbConnectionName($tenantId))->transactionLevel();
     }
-    
+
     /**
      * begin db transaction pertenant, hanya eksekusi di multi tenant db yg sudah di-initialize sebelumnya
      */
@@ -155,7 +190,8 @@ class Tenant extends BaseRepository
     {
         if(!$tenantId)$tenantId=config('tenant.id');
         $tenantId = $tenantId?$tenantId:$this->getActiveTenant('id');
-        \Illuminate\Support\Facades\DB::connection($this->getDbConnectionName($tenantId))->beginTransaction();
+        // Log::info('Tenant - transaction begin : '.$tenantId.' - '.$this->getDbConnectionName($tenantId));
+        DB::connection($this->getDbConnectionName($tenantId))->beginTransaction();
     }
 
     /**
@@ -165,7 +201,8 @@ class Tenant extends BaseRepository
     {
         if(!$tenantId)$tenantId=config('tenant.id');
         $tenantId = $tenantId?$tenantId:$this->getActiveTenant('id');
-        \Illuminate\Support\Facades\DB::connection($this->getDbConnectionName($tenantId))->commit();
+        // Log::info('Tenant - transaction commit : '.$tenantId.' - '.$this->getDbConnectionName($tenantId));
+        DB::connection($this->getDbConnectionName($tenantId))->commit();
     }
 
     /**
@@ -175,7 +212,8 @@ class Tenant extends BaseRepository
     {
         if(!$tenantId)$tenantId=config('tenant.id');
         $tenantId = $tenantId?$tenantId:$this->getActiveTenant('id');
-        \Illuminate\Support\Facades\DB::connection($this->getDbConnectionName($tenantId))->rollback();
+        // Log::info('Tenant - transaction rollback : '.$tenantId.' - '.$this->getDbConnectionName($tenantId));
+        DB::connection($this->getDbConnectionName($tenantId))->rollback();
     }
 
     /**
@@ -184,7 +222,8 @@ class Tenant extends BaseRepository
     public function db($tenantId=false)
     {
         if(!$tenantId)$tenantId=config('tenant.id');
-        return \Illuminate\Support\Facades\DB::connection($this->getDbConnectionName($tenantId));
+        $this->getDbConnection($tenantId);// generate dulu confignya
+        return DB::connection($this->getDbConnectionName($tenantId));
     }
 
     /**
@@ -192,19 +231,36 @@ class Tenant extends BaseRepository
      */
         
     /**
-     * START - GROUP MANAGE ACTIAVE TENANT
+     * START - GROUP MANAGE ACTIVE TENANT
      */
+    private function getTenantModel()
+    {
+        //
+        if(config('AppConfig.system.multitenant.table_instance',false)==false){
+            return new MTenant;
+        }
 
+        return MTenant::with(['instanceData']);
+    }
+    
     public function setActiveTenantById($tenantId)
     {
-        $tenant = MTenant::where('id',$tenantId)->first();
+        $tenant = $this->getTenantModel()->where('id',$tenantId)->first();
         if($tenant)
             $this->setActiveTenant($tenant->toArray());
     }
 
     public function setActiveTenantByGroup($appGroup)
     {
-        $tenant = MTenant::where('group_app',$appGroup)->first();
+        $tenant = $this->getTenantModel()->where('group_app',$appGroup)->first();
+        if($tenant)
+            $this->setActiveTenant($tenant->toArray());
+    }
+
+    public function setActiveTenantByDomain($domain=false)
+    {
+        $domain = $domain?$domain:request()->getHttpHost();
+        $tenant = $this->getTenantModel()->where('domain',$domain)->first();
         if($tenant)
             $this->setActiveTenant($tenant->toArray());
     }
@@ -213,11 +269,15 @@ class Tenant extends BaseRepository
     {
         $config = app('config');
         $config->set('tenant',$dataTenant);
+        
         // set packageLocal pertenant
         if(config('AppConfig.packageLocalPerTenant.'.$dataTenant['id']))
             $config->set('AppConfig.packageLocal',config('AppConfig.packageLocalPerTenant.'.$dataTenant['id']));
-        resolve('bindTenant',['tenant_id'=>$dataTenant['id']]);        
+
+        resolve('bindTenant',['tenant_id'=>$dataTenant['id']]);
+
         $this->setDb($dataTenant['id']);
+        
     }
 
     public function getActiveTenant(string $field = '')
@@ -228,7 +288,7 @@ class Tenant extends BaseRepository
     /**
      * END - GROUP MANAGE ACTIAVE TENANT
      */
-    
+
     /**
      * CRUD tenant
      */
