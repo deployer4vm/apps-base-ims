@@ -846,7 +846,7 @@ abstract class BaseRepository {
         if(!is_array($filter))$filter = ['id',$filter];
         $data = $this->_filter($model, $filter)->first();  
               
-        if (isset($filter['append'])) {            
+        if ($data && isset($filter['append'])) {            
             $data = $data->append($filter['append']);
         }    
         return $data ? $data->toArray() : false;
