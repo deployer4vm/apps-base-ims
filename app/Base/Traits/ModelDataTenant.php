@@ -12,6 +12,18 @@ trait ModelDataTenant
     protected $tenantId = 0;
     
     /**
+     * Overide data model jika diperlukan
+     * 
+     * 1 mode share dalam 1 table
+     * 2 mode beda table
+     * 3 mode beda database
+     */
+    public function getDataMode()
+    {
+        return config('AppConfig.system.multitenant.data_mode',1);
+    }
+    
+    /**
      * set tenant aktif model ini
      */
     public function setTenantId($tenantId,$isTenantId=true)

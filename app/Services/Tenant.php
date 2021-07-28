@@ -29,6 +29,9 @@ class Tenant extends BaseRepository
      */
     public function getDbConnectionName($tenantId)
     {
+        if(config('AppConfig.system.multitenant.data_mode',1) != 3)
+            return config('database.default');
+
         return config('database.perTenant').$tenantId;
     }
 
@@ -37,28 +40,15 @@ class Tenant extends BaseRepository
      */
     public function getDbConnection($tenantId)
     {
+        if(config('AppConfig.system.multitenant.data_mode',1) != 3)
+            return config('database.connections.'.config('database.default'));
+        
+
         $dbConfigName = $this->getDbConnectionName($tenantId);
         $dbConfig = config('database.connections.'.config('database.perTenant'));
         $dbConfig['database'] = $this->getDbName($tenantId);
-
-        // jika multidatabase server aktif maka detek dan sinkronkan konfig db nya
-        if(config('database.multi_database_server.enable',false))
-            $dbConfig = $this->getDbConnection_getServer($tenantId,$dbConfig);
-
         config(['database.connections.'.$dbConfigName => $dbConfig]);
 
-        return $dbConfig;
-    }
-
-    private function getDbConnection_getServer($tenantId,$dbConfig)
-    {
-        if(config('tenant.id')!=$tenantId){
-            $tenant = MTenant::select('db')->where('id',$tenantId)->first();
-            $server = config('database.multi_database_server.servers.'.$tenant->db);
-        }else{
-            $server = config('database.multi_database_server.servers.'.config('tenant.db'));
-        }
-        $dbConfig['host'] = $server['host'];
         return $dbConfig;
     }
 
@@ -75,15 +65,10 @@ class Tenant extends BaseRepository
      */
     public function getDbName($tenantId)
     {
-        $tenant = MTenant::where('id',$tenantId)->first();
+        if(config('AppConfig.system.multitenant.data_mode',1) != 3)
+            return config('database.connections.'.config('database.default').'.database');
 
-        if($tenant->db==0){
-            $schemaName = config("database.connections.".config("database.perTenant").".database_prefix").$tenantId;
-        }else{
-            $schemaName = config("database.multi_database_server.servers.".$tenant->db.".database_prefix").$tenantId;
-        }
-
-        return $schemaName;
+        return config('database.connections.'.config('database.perTenant').'.database_prefix').$tenantId;
     }
 
     /**
@@ -91,7 +76,7 @@ class Tenant extends BaseRepository
      */
     public function dbExists($tenantId)
     {
-        $schemaName = $this->getDbName($tenantId);
+        $schemaName = config("database.connections.".config("database.perTenant").".database_prefix").$tenantId;
         $query = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME =  ?";
         $db = DB::select($query, [$schemaName]);
         
@@ -104,6 +89,9 @@ class Tenant extends BaseRepository
      */
     public function setDb($tenantId)
     {        
+        if(config('AppConfig.system.multitenant.data_mode',1) != 3)
+            return true;
+            
         $dbConfigName = $this->getDbConnectionName($tenantId);
         config(['tenant.connection',$dbConfigName]);
 
@@ -112,6 +100,7 @@ class Tenant extends BaseRepository
             $dbConfig = $this->getDbConnection($tenantId);
             config(['database.connections.'.$dbConfigName => $dbConfig]);
         }
+        return true;
     }
 
     /**
@@ -222,7 +211,6 @@ class Tenant extends BaseRepository
     public function db($tenantId=false)
     {
         if(!$tenantId)$tenantId=config('tenant.id');
-        $this->getDbConnection($tenantId);// generate dulu confignya
         return DB::connection($this->getDbConnectionName($tenantId));
     }
 
@@ -231,11 +219,10 @@ class Tenant extends BaseRepository
      */
         
     /**
-     * START - GROUP MANAGE ACTIVE TENANT
+     * START - GROUP MANAGE ACTIAVE TENANT
      */
     private function getTenantModel()
     {
-        //
         if(config('AppConfig.system.multitenant.table_instance',false)==false){
             return new MTenant;
         }

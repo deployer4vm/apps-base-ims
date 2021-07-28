@@ -99,7 +99,7 @@
     <!-- Application javascripts -->
     <script src="{{ mix('/dist/webapp.js') }}"></script>
 
-    @include("alertModal")
+    @include('component.alertModal')
 
     <script>
         @if(UserAuth::isLogin())

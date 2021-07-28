@@ -814,21 +814,23 @@ abstract class BaseRepository {
      * DONE
      * Generate pagination untuk di view blade (menggunakan pagination laravel)
      * 
-     * @param string $path path paginationnya
-     * @param array $pagination
+     * @param String $path path paginationnya
+     * @param Array $pagination
      *      count
      *      offset
      *      limit
      *      data
+     * @param String $view view pagination
+     * 
      * @return pagination instance
      */
-    final protected function _getPagination(string $path = '', $pagination = false)
+    final protected function _getPagination(string $path = '', $pagination = false, $view='component.pagination')
     {
         if (!$path)
             $path = request()->url();
         if (!$pagination)
             $pagination = $this->pagination;
-        return pagination_generate($pagination, $path);
+        return pagination_generate($pagination, $path, $view);
     }
 
     /**
@@ -1055,13 +1057,15 @@ abstract class BaseRepository {
     /**
      * Default pagination function
      * 
-     * @param string $path
-     * @param array $pagination data pagination
+     * @param String $path
+     * @param Array $pagination data pagination
+     * @param String $view view pagination
+     * 
      * @return pagination laravel object
      */
-    public function getPagination($path = '', $pagination = false) 
+    public function getPagination($path = '', $pagination = false, $view = 'component.pagination') 
     {
-        return $this->_getPagination($path, $pagination);
+        return $this->_getPagination($path, $pagination, $view);
     }
 
     /**

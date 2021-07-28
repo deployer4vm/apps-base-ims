@@ -89,7 +89,7 @@
     <!-- Application javascripts -->
     <script src="{{ asset('/dist/webapp.js') }}"></script>
 
-    @include("alertModal")
+    @include('component.alertModal')
 
     <script>
         <?php /*@if(UserAuth::isLogin())

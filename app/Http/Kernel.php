@@ -39,7 +39,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\IframeLoadCheck::class,
-            // \App\Http\Middleware\AppGroupCheck::class,
+            // \App\Http\Middleware\AppGroupCheck::class,//dipindah ke routeserviceprovider
             \App\Http\Middleware\TokenExpireCheck::class,
             \App\Http\Middleware\AcceesConfigCheck::class,
         ],
@@ -47,7 +47,7 @@ class Kernel extends HttpKernel
         'api' => [
             'throttle:600,1',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            // \App\Http\Middleware\AppGroupCheck::class,
+            // \App\Http\Middleware\AppGroupCheck::class,//dipindah ke routeserviceprovider
             \App\Http\Middleware\TokenExpireCheck::class,
             \App\Http\Middleware\AcceesConfigCheck::class,
         ],
@@ -71,6 +71,7 @@ class Kernel extends HttpKernel
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'TenantOnly' => \App\Http\Middleware\TenantOnly::class,
     ];
 
 }

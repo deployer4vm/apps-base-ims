@@ -25,9 +25,9 @@ trait MigrateDataTenant
                     }
                 // jika per table
                 }else{                
-                    $table = Tenant::getTableName($table,$tenant['id']);
-                    if (!Schema::hasTable($table)) {
-                        Schema::create($table,$bluePrint);
+                    $tmpTable = Tenant::getTableName($table,$tenant['id']);
+                    if (!Schema::hasTable($tmpTable)) {
+                        Schema::create($tmpTable,$bluePrint);
                     }
                 }
             }    
@@ -57,14 +57,14 @@ trait MigrateDataTenant
                     }
                 // jika per table
                 }else{                
-                    $table = Tenant::getTableName($table,$tenant['id']);
-                    if (Schema::hasTable($table)) {
+                    $tmpTable = Tenant::getTableName($table,$tenant['id']);
+                    if (Schema::hasTable($tmpTable)) {
                         if(
                             $column==false ||
-                            (!$ifColumnExist && !Schema::hasColumn($table,$column)) || 
-                            ($ifColumnExist && Schema::hasColumn($table,$column))
+                            (!$ifColumnExist && !Schema::hasColumn($tmpTable,$column)) || 
+                            ($ifColumnExist && Schema::hasColumn($tmpTable,$column))
                         )
-                            Schema::table($table,$bluePrint);
+                            Schema::table($tmpTable,$bluePrint);
                     }
                 }
             }    
@@ -94,12 +94,12 @@ trait MigrateDataTenant
                     }
                 // jika per table
                 }else{                
-                    $table = Tenant::getTableName($table,$tenant['id']);
+                    $tmpTable = Tenant::getTableName($table,$tenant['id']);
                     
                     if($ifTableExist){
-                        Schema::dropIfExists($table);
+                        Schema::dropIfExists($tmpTable);
                     }else{
-                        Schema::drop($table);
+                        Schema::drop($tmpTable);
                     }  
                 }
             }    

@@ -4,6 +4,7 @@ namespace App\Services\Translation;
 
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Translation\FileLoader;
+use RuntimeException;
 
 class DistributedFileLoader extends FileLoader
 {
@@ -37,5 +38,23 @@ class DistributedFileLoader extends FileLoader
             $result = recuresive_array_merge($result, parent::loadPath($path, $locale, $group));
         }
         return $result;
+    }
+
+    protected function loadJsonPaths($locale)
+    {
+        return collect(array_merge($this->jsonPaths, [$this->path]))
+            ->reduce(function ($output, $path) use ($locale) {
+                if ($path && $this->files->exists($full = "{$path}/{$locale}.json")) {
+                    $decoded = json_decode($this->files->get($full), true);
+
+                    if (is_null($decoded) || json_last_error() !== JSON_ERROR_NONE) {
+                        throw new RuntimeException("Translation file [{$full}] contains an invalid JSON structure.");
+                    }
+
+                    $output = array_merge($output, $decoded);
+                }
+
+                return $output;
+            }, []);
     }
 }

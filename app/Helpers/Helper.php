@@ -24,12 +24,14 @@ if (!function_exists('recuresive_array_merge')) {
         return $merged;
     }
 }
+
 if (!function_exists('route_api_opt')) {
     /**
      * Autogenerate option route untuk api menyesuakan url home dan api nya
      * 
      * @param type $appsUrl
      * @param type $apiUrl
+     * 
      * @return array format 
      *      prefix
      *      domain
@@ -49,12 +51,14 @@ if (!function_exists('route_api_opt')) {
         return $routeOpt;
     }
 }
+
 if (!function_exists('route_web_opt')) {
     /**
      * Autogenerate option route untuk api menyesuakan url home dan api nya
      * 
      * @param type $appsUrl
      * @param type $apiUrl
+     * 
      * @return array format 
      *      prefix
      *      domain
@@ -88,8 +92,7 @@ if (!function_exists('is_route')) {
         }else{
             $isTrue = Route::current()->getName()==$routeName;
         }
-        return $isTrue?$class:'';
- 
+        return $isTrue?$class:''; 
     }
 }
 
@@ -111,9 +114,10 @@ if (!function_exists('is_route_prefix')) {
 if (!function_exists('pagination_format')) {    
     /**
      * 
-     * @param int $count
-     * @param int $offset
-     * @param int $limit
+     * @param Int $count
+     * @param Int $offset
+     * @param Int $limit
+     * 
      * @return array format
      *      total
      *      per_page
@@ -145,9 +149,10 @@ if (!function_exists('pagination_convert_link')) {
     /**
      * convert link pagination default laravel menjadi default system asalnya page ke offset & limit
      * 
-     * @param type $url
-     * @param type $limit
-     * @return string 
+     * @param String $url
+     * @param Int $limit
+     * 
+     * @return String 
      */
     function pagination_convert_link($url,$limit){
         $path = parse_url($url);
@@ -171,15 +176,17 @@ if (!function_exists('pagination_convert_link')) {
 if (!function_exists('pagination_generate')) {    
     /**
      * 
-     * @param array $paginationParam
+     * @param Array $paginationParam
      *      data array data yg ditampilkannya (digunakan untuk generate array dari pagination)
      *      count int 
      *      offset int
      *      limit int limit perpage
-     * @param type $path
+     * @param String $path url path utama yg digunakan di pagination
+     * @param String $view view pagination
+     * 
      * @return pagination pagination object
      */
-    function pagination_generate($paginationParam,$path){
+    function pagination_generate($paginationParam, $path, $view='component.pagination'){
         
         $dataPagination = pagination_format(
             $paginationParam['count'],
@@ -189,7 +196,7 @@ if (!function_exists('pagination_generate')) {
         //ubah current page berdasarkan perhitungan
         request()->merge(['page'=>$dataPagination['current_page']]);
         
-        \Illuminate\Pagination\Paginator::defaultView('pagination');
+        \Illuminate\Pagination\Paginator::defaultView($view);
         
         // set current page
         // $currentPage = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();

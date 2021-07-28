@@ -62,7 +62,12 @@ class Handler extends ExceptionHandler
             if($isApi){ 
                 return response()->json(['status'=>401,'message'=>__('alert.invalid_token'),'data'=>null,'errors'=>[true]],401);//khusus token/auth failed
             }else{
-                return redirect()->route('auth.login')->with('alert', ['type' => 'danger', 'message'=>__('alert.auth_required'),'code'=>401]);
+                // return redirect()->route('auth.login')->with('alert', ['type' => 'danger', 'message'=>__('alert.auth_required'),'code'=>401]);
+                if($exception->redirectTo()){
+                    return response()->redirectTo($exception->redirectTo())->with('alert', ['type' => 'danger', 'message'=>__('alert.auth_required'),'code'=>401]);
+                }else{
+                    return response()->view('error.generic',['message'=>__('alert.invalid_token'),'code'=>401]);
+                }
             }
         }else if($exception instanceof \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException){
             if($isApi){ 
