@@ -52,6 +52,11 @@ export default {
             return res;
         });
     },
+    forgotPassword(email){
+        return this.store.dispatch('forgotPassword',{email:email}).then((res)=>{            
+            return res;
+        });
+    },
     //logoutkan session yg sekarang
     // return promise
     logout(goToLogin=true){

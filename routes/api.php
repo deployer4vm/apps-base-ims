@@ -37,13 +37,9 @@ Route::group($group,function(){
     });
     
     //db config
-    Route::group([
-            'middleware' => 'auth:api'
-        ],function(){  
-        Route::get('/', 'ConfigController@readList');
-        //create atau update config
-        Route::post('/', 'ConfigController@createUpdate');
-    });
+    Route::get('/', 'ConfigController@readList');
+    //create atau update config
+    Route::middleware(['auth:api'])->post('/', 'ConfigController@createUpdate');
 
 });
 

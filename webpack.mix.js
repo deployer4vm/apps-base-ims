@@ -1,9 +1,9 @@
-const mix = require("laravel-mix");
+var mix = require("laravel-mix");
 const glob = require("glob");
 const path = require("path");
 // const forEach = require("lodash/forEach");
 const trim = require("lodash/trim");
-const fs = require("fs");
+var fs = require("fs");
 
 let systemVar = JSON.parse(fs.readFileSync("app/MainApp/config/system.json"));
 var publicPath = path.normalize(systemVar.public_path?trim(systemVar.public_path,'/'):'public');
@@ -228,10 +228,16 @@ generate loader store, router, routerAdmin dan init.js untuk package
  |--------------------------------------------------------------------------
  */
 
-if(systemVar.web_admin.full_vue)
+if(systemVar.web_admin.full_vue){
+    var buildJs = require("./app/MainApp/resources/js/build.js");
+    buildJs(fs,mix);
+
     mix.js("resources/assets/src/entry-point.js", "dist/app.js").version();//full vue
+}
 
 if(systemVar.web_admin.web){
+    var buildJs = require("./app/MainApp/resources/js/webBuild.js");
+    buildJs().build(fs,mix);
     mix.js("resources/assets/src/web-entry-point.js", "dist/webapp.js").version();//web
     mix.copyDirectory("resources/assets/vendor/webcss", publicPath + "/dist/vendor/webcss")//web
 }
@@ -261,7 +267,7 @@ mix.sass(
         "dist/css/uikit.css"
     )//web & full vue
     .copyDirectory("app/MainApp/resources/assets", publicPath + "/assets")//web & full vue
-    .copyDirectory("resources/assets/src/assets/images", publicPath + "/assets/images")//web & full vue
+    .copyDirectory("resources/assets/images", publicPath + "/assets/images")//web & full vue
     .copyDirectory("resources/assets/src/inlinevue", publicPath + "/dist/inlinevue")//web & full vue
     .copyDirectory("resources/assets/vendor/libs", publicPath + "/dist/vendor/libs");//web & full vue
 }

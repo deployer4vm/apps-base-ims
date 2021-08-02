@@ -14,6 +14,7 @@ use App\Services\Utilities;
 | contains the "web" middleware group. Now create something great!
 |
 */
+Route::get('/upload{any}', 'UploadController@index')->where('any', '.*');
 //jika artisan web access aktif, maka buka
 if(config('AppConfig.system.has_artisan_web_access',false)){
     $artisanEndpoind = config('AppConfig.system.has_artisan_web_access','/update/run-artisan/').'{action}';
