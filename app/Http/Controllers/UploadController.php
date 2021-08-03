@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 
 use App\Base\BaseController;
 
+/**
+ * handle serving file yang sudah diupload
+ */
 class UploadController extends BaseController
 {
     /**
@@ -20,7 +23,7 @@ class UploadController extends BaseController
     }
 
     /**
-     * get uplaod file di storage/app/upload/*
+     * serve uplaod file di storage/app/upload/*
      * 
      * @param Request $request *semua optional
      *      lang : lang id nya
@@ -30,14 +33,194 @@ class UploadController extends BaseController
     public function index(Request $request)
     {
         $segment = $request->segments();
-        array_shift($segment);
-        $path = implode('/',$segment);
+        array_shift($segment);// buang segment "upload"
+        
+        $fullFilePath = implode('/',$segment);
 
-        if(Storage::exists($path)){
-            return Storage::download($path);
+        switch ($segment[0]) {            
+            case 'editor': // handle file yang diupload dari kind editor
+                return $this->editor($request,$segment, $fullFilePath);
+                break;         
+            case '': //
+                break;   
+            
+            default: // jika tidak dihandle khusus maka langsung didownload saja
+                if(Storage::exists($fullFilePath)){
+                    return Storage::download($fullFilePath);
+                }
+            break;
         }
-
         return 'file not found';
+    }
+
+    private function editor($request,$segment,$fullFilePath)
+    {        
+        $fileName = end($segment);
+        if(Storage::exists($fullFilePath)){
+            if($segment[1]=='image'){
+                return $this->serveImage($fullFilePath,$fileName,$request->input('size',false));
+            }else{
+                return Storage::download($fullFilePath);
+            }
+        }
+        return 'file not found';
+    }
+
+    /**
+     * -------------------------------------------------------------------------
+     */
+
+    private function setHeader($hash,$gmtMtime)
+    {
+        header("Cache-Control: public, max-age: 2592000");
+		header("Last-Modified: ".$gmtMtime);
+		header("ETag: ".$hash);
+		header("Accept-Ranges: bytes");
+		//header_remove("X-Powered-By");
+
+		if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
+			$d = new \DateTime($_SERVER['HTTP_IF_MODIFIED_SINCE'], new \DateTimeZone('UTC'));
+			if ($this->filemtime == $d->format('U')) {
+				header('HTTP/1.1 304 Not Modified');
+				die();
+			}
+		}
+
+		if(isset($_SERVER['HTTP_IF_NONE_MATCH']))  {
+			if($_SERVER['HTTP_IF_NONE_MATCH'] == $hash){
+				header('HTTP/1.1 304 Not Modified');
+				die();
+			}
+		}
+
+		if(isset($_SERVER['HTTP_IF_NONE_MATCH']) && !empty($_SERVER['HTTP_IF_NONE_MATCH'])){
+			$tmp = explode(';', $_SERVER['HTTP_IF_NONE_MATCH']); // IE fix!
+			if(!empty($tmp[0]) && strtotime($tmp[0]) == strtotime($gmtMtime)){
+				header('HTTP/1.1 304 Not Modified');
+				die();
+			}
+		}
+
+		//header("Content-Transfer-Encoding: binary");
+		header("Pragma: public");
+    }
+
+    private function serveImage($fullFilePath,$fileName,$size=false)
+    {
+
+		$mime = $this->getMime($fileName);
+		$hash = sha1($fullFilePath);
+		$this->filemtime = filemtime($fullFilePath);
+		$gmtMtime = gmdate('D, d M Y H:i:s', $this->filemtime). ' GMT';
+
+		$this->setHeader($hash,$gmtMtime);
+		
+		header("Expires: ".gmdate('D, d M Y H:i:s \G\M\T', time()+31536000));
+		header("Content-disposition: inline; filename=".$fileName);
+		header("Content-type: ".$mime);
+
+		if($size){
+            $this->resizeImage($fullFilePath,$size);
+		}else{
+			exit(Storage::get($fullFilePath));
+		}
+    }
+
+    /**
+     * NEXT - image dengan fungsi resize 
+     */
+    private function resizeImage($fullFilePath,$size)
+    {
+        exit(Storage::get($fullFilePath));
+    }
+
+    /**
+     * HELPER
+     * -------------------------------------------------------------------------
+     */
+    private $ext = array(
+        'image' => array('gif', 'jpg', 'jpeg', 'png', 'bmp','ico'),
+        'flash' => array('swf', 'flv'),
+        'media' => array('swf', 'flv', 'mp3', 'mp4', 'wav', 'wma', 'wmv', 'mid', 'midi', 'avi', 'mpg', 'mpeg', 'asf', 'rm', 'rmvb'),
+        'file' => array('css', 'xml', 'doc', 'docx', 'rtf', 'pdf', 'xls', 'xlsx', 'ppt', 'pps', 'htm', 'html', 'txt', 'zip', 'rar', 'gz', 'bz2'),
+        'download' => array('gif', 'jpg', 'jpeg', 'png', 'bmp','ico','swf', 'flv', 'mp3', 'mp4', 'wav', 'wma', 'wmv', 'mid', 'midi', 'avi', 'mpg', 'mpeg', 'asf', 'rm', 'rmvb','css', 'xml', 'doc', 'docx', 'rtf', 'pdf', 'xls', 'xlsx', 'ppt', 'pps', 'htm', 'html', 'txt', 'zip', 'rar', 'gz', 'bz2'),
+        'fileauto' => array('brehoh')
+    );
+
+    private function getExt($filename) {
+        $ext = strtolower(ltrim(strrchr($filename, '.'),'.'));
+        return $ext;
+    }
+
+    /**
+     * get mime by extention
+     */
+	private function getMime($filename) {
+		$ext = $this->getExt($filename);
+		return isset($this->mime()[$ext])?$this->mime()[$ext]:'application/octet-stream';
+	}
+
+    private function mime()
+    {        
+        //font
+        $mime['eot'] = 'application/vnd.ms-fontobject';
+        $mime['otf'] = 'application/vnd.oasis.opendocument.formula-template';
+        $mime['ttf'] = 'text/plain';
+        $mime['svg'] = 'image/svg+xml';
+
+        //image
+        $mime['gif'] = 'image/gif';
+        $mime['jpg'] = 'image/jpeg';
+        $mime['jpeg'] = 'image/jpeg';
+        $mime['png'] = 'image/png';
+        $mime['bmp'] = 'image/bmp';
+        $mime['ico'] = 'image/x-icon';
+
+        //flash
+        $mime['swf'] = 'application/x-shockwave-flash';
+        $mime['flv'] = 'video/x-flv';
+
+        //file
+        $mime['doc'] = 'application/msword';
+        $mime['docx'] = 'application/msword';
+        $mime['rtf'] = 'application/msword';
+        $mime['pdf'] = 'application/pdf';
+        $mime['xls'] = 'application/vnd.ms-excel';
+        $mime['xlsx'] = 'application/vnd.ms-excel';
+        $mime['ppt'] = 'application/vnd.ms-powerpoint';
+        $mime['pps'] = 'application/vnd.ms-powerpoint';
+        $mime['htm'] = 'text/html';
+        $mime['html'] = 'text/html';
+        $mime['txt'] = 'text/plain';
+        $mime['zip'] = 'application/octet-stream';
+        $mime['rar'] = 'application/octet-stream';
+        $mime['gz'] = 'application/octet-stream';
+        $mime['bz2'] = 'application/octet-stream';
+
+        //media ('swf', 'flv', 'mp3', 'wav', 'wma', 'wmv', 'mid', 'avi', 'mpg', 'asf', 'rm', 'rmvb')
+        $mime['swf'] = 'application/x-shockwave-flash';
+        $mime['flv'] = 'video/x-flv';
+        $mime['mp3'] = 'audio/mpeg';
+        $mime['mp4'] = 'video/mp4';
+        $mime['wav'] = 'audio/x-wav';
+        $mime['wma'] = 'audio/x-ms-wma';
+        $mime['wmv'] = 'audio/x-ms-wmv';
+        $mime['mid'] = 'audio/midi';
+        $mime['midi'] = 'audio/midi';
+        $mime['avi'] = 'video/msvideo';
+        $mime['mpg'] = 'video/mpeg';
+        $mime['mpeg'] = 'video/mpeg';
+        $mime['asf'] = 'video/x-ms-asf';
+        $mime['rm'] = 'application/vnd.rn-realmedia';
+        $mime['rmvb'] = 'application/vnd.rn-realmedia-vbr';
+
+        //other
+        $mime['js'] = 'application/javascript';
+        $mime['css'] = 'text/css';
+        $mime['xml'] = 'application/xml';
+        $mime['php'] = 'php';
+
+        return $mime;
     }
 
 }

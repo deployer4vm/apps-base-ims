@@ -7,6 +7,9 @@
 /public/assets
 /public/assets/*
 /public/storage
+/public/storage/*
+/public/upload
+/public/upload/*
 /public/sw.js
 /public/mix-manifest.json
 /storage/*.key

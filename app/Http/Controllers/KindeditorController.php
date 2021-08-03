@@ -29,9 +29,9 @@ class KindeditorController extends BaseController
     public function upload(Request $request)
     {
         //File save directory path
-        $save_path = public_path('upload');
+        $save_path = storage_path('app/upload/editor/');
         //File save directory URL
-        $save_url = url('upload').'/';
+        $save_url = url('upload/editor').'/';
         //Define file extensions that are allowed to upload
         $ext_arr = [
             'image' => ['gif', 'jpg', 'jpeg', 'png', 'bmp'],
@@ -160,10 +160,10 @@ class KindeditorController extends BaseController
     {
         
         // Root directory path, you can specify an absolute path, such as / var / www / attached /
-        $root_path = public_path('upload').DIRECTORY_SEPARATOR;
+        $root_path = storage_path('app/upload/editor').DIRECTORY_SEPARATOR;
 
         // Root directory URL, you can specify an absolute path, such as http://www.yoursite.com/attached/
-        $root_url = url('upload').'/';
+        $root_url = url('upload/editor').'/';
 
         //Picture extension
         $ext_arr = array('gif', 'jpg', 'jpeg', 'png', 'bmp');
