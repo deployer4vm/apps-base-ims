@@ -36,10 +36,14 @@ class UploadController extends BaseController
         array_shift($segment);// buang segment "upload"
         
         $fullFilePath = implode('/',$segment);
-
+        //isi segement di /upload/*
         switch ($segment[0]) {            
             case 'editor': // handle file yang diupload dari kind editor
                 return $this->editor($request,$segment, $fullFilePath);
+                break;         
+            case 'images': // handle file yang diupload dari kind editor
+                $fileName = end($segment);
+                return $this->serveImage($fullFilePath,$fileName, $request->input('size',false));
                 break;         
             case '': //
                 break;   
@@ -107,16 +111,16 @@ class UploadController extends BaseController
 
     private function serveImage($fullFilePath,$fileName,$size=false)
     {
-
+        $fullFilePathTmp = Storage::path($fullFilePath);
 		$mime = $this->getMime($fileName);
-		$hash = sha1($fullFilePath);
-		$this->filemtime = filemtime($fullFilePath);
+		$hash = sha1($fullFilePathTmp);
+		$this->filemtime = filemtime($fullFilePathTmp);
 		$gmtMtime = gmdate('D, d M Y H:i:s', $this->filemtime). ' GMT';
 
 		$this->setHeader($hash,$gmtMtime);
 		
 		header("Expires: ".gmdate('D, d M Y H:i:s \G\M\T', time()+31536000));
-		header("Content-disposition: inline; filename=".$fileName);
+		header("Content-disposition: inline; filename=".($size?($size.'_'):'').$fileName);
 		header("Content-type: ".$mime);
 
 		if($size){
@@ -131,6 +135,9 @@ class UploadController extends BaseController
      */
     private function resizeImage($fullFilePath,$size)
     {
+        if(config('AppConfig.system.upload.size.'.$size)){
+
+        }
         exit(Storage::get($fullFilePath));
     }
 

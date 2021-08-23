@@ -7,11 +7,11 @@
         
         <b-modal id="modals-scanner" size="xl" body-class="p-0 m-0" class="p-0 m-0" centered no-fade hide-footer hide-header>
             <div class="scanner-container text-center">
-                <template v-show="!isLoading">
+                <div v-show="!isLoading">
                     <video poster="data:image/gif,AAAA" ref="scanner"></video>
                     <div class="overlay-element"></div>
                     <div class="laser"></div>
-                </template>
+                </div>
             </div>
             <b-button variant="primary" block @click="closeScanner">Close</b-button>
         </b-modal>
