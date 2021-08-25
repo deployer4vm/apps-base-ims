@@ -6,7 +6,8 @@ export default {
         return Math.round((num + Number.EPSILON) * 100) / 100;
     },
     roundNumber(value, decimals=2) {
-        return Number(value).toPrecision(decimals);
+        // console.log(Number(value).toPrecision(decimals),value,decimals);
+        return Number(value).toFixed(decimals);
         // value = Number(value);
         // console.log(Number(Math.round(value+'e'+decimals)+'e-'+decimals),value);
         // return Number(Math.round(value+'e'+decimals)+'e-'+decimals);

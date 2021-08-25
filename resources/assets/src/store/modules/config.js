@@ -4,6 +4,7 @@ const state = {
     // persistant: true, jika ingin store ini disave di local storage
 
     allConfig: {},
+    formatedConfig: {},
     isConfigSet: null,
     lastReload: null
 };
@@ -23,7 +24,24 @@ const getters = {
 const mutations = {   
     setConfig(state, allConfig) {
         state.allConfig = allConfig;
-        state.isConfigSet = true;        
+        state.isConfigSet = true; 
+        // console.log(allConfig);
+        
+        _.forEach(allConfig, (value, index) => {            
+            if(state.formatedConfig[value.group]==undefined)
+                state.formatedConfig[value.group] = {};
+
+            state.formatedConfig[value.group][value.key] = value.value; 
+            
+        });  
+
+        // _.forEach(state.allConfig, (value, index) => {            
+        //     if(state.formatedConfig[value.group]==undefined)
+        //         state.formatedConfig[value.group] = {};
+
+        //     state.formatedConfig[value.group][value.key] = value.value;          
+        // }); 
+            
         // const now = new Date()
         // const expirationDate = new Date(now.getTime() + res.data.expiresIn * 1000)
         state.lastReload = new Date();
@@ -37,7 +55,7 @@ const actions = {
                 commit('setConfig',val.data);            
                 return true;
             }).catch((err)=>{
-                console.log('Config file error.');
+                console.log('Config file error.',err);
             });
     },
     saveConfig({commit,getters},data={}){
@@ -46,7 +64,7 @@ const actions = {
                 commit('setConfig',val.data);            
                 return true;
             }).catch((err)=>{
-                console.log('Config file error.');
+                console.log('Config file error.',err);
             });
     }
 };
