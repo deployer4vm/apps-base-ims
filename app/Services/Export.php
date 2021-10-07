@@ -17,7 +17,7 @@ use App\Base\BaseRepository;
 class Export extends BaseRepository
 {   
     protected $cacheActive = true;
-    private $_exportUploadPath = '/upload/export/';//default path ke upload relative dari public_path
+    private $_exportUploadPath = '/export/';//default path ke upload relative dari public_path
     private $_defaultFilename = 'export_data';
 
     // 0 new process
@@ -59,6 +59,10 @@ class Export extends BaseRepository
      */
     public function getExport($cacheKey) 
     {
+        // $this->_deleteCache(
+        //     $this->_mainCacheKeyGroup,
+        //     $this->_mainCacheKeyDetailPrefix.$cacheKey
+        // );
         return $this->_getCache(
             $this->_mainCacheKeyGroup,
             $this->_mainCacheKeyDetailPrefix.$cacheKey,
@@ -76,11 +80,7 @@ class Export extends BaseRepository
     public function createExport($cacheKey,$listingModel,$listingParams=[],$userId=0,$tenantId=0)
     {
         $tenantId = $tenantId?$tenantId:config('tenant.id',0);
-        // $this->_saveCache(
-        //     $this->_mainCacheKeyGroup,
-        //     $this->_mainCacheKeyList,
-        //     []
-        // );
+        
         $exportList = $this->_getCache(
             $this->_mainCacheKeyGroup,
             $this->_mainCacheKeyList,
@@ -93,27 +93,29 @@ class Export extends BaseRepository
 
         // jika sudah ada pastikan tidak dalam proses
         }else{
-            $exportDetail = $this->getExport($cacheKey);
-            if($exportDetail==false)$exportDetail = $this->initExportStatus();
+            $exportData= $this->getExport($cacheKey);
+            if($exportData==false)$exportData= $this->initExportStatus();
             
-            // dd($exportDetail);
-
             // jika sedang dalam proses
             if(
-                $exportDetail['status']==self::$EXPORT_STATUS_DISPATCHED || 
-                $exportDetail['status']==self::$EXPORT_STATUS_ON_PROGRESS
+                $exportData['status']==self::$EXPORT_STATUS_DISPATCHED || 
+                $exportData['status']==self::$EXPORT_STATUS_ON_PROGRESS
             ){
                 $this->error = 'Jobs already exists';
                 return false;
+            // delete file sebelumnya
+            }else{
+                Storage::delete($exportData['laravelFilepath']);
             }
         }
 
         // set baru export
-        $exportDetail = $this->initExportStatus();
-        $exportDetail['listingModel'] = $listingModel;
-        $exportDetail['listingParams'] = $listingParams;
-        $exportDetail['userId'] = $userId;
-        $exportDetail['tenantId'] = $tenantId;
+        $exportData= $this->initExportStatus();
+        $exportData['cacheKey'] = $cacheKey;
+        $exportData['listingModel'] = $listingModel;
+        $exportData['listingParams'] = $listingParams;
+        $exportData['userId'] = $userId;
+        $exportData['tenantId'] = $tenantId;
 
         // tambahkan ke list
         $this->_saveCache(
@@ -126,10 +128,10 @@ class Export extends BaseRepository
         $this->_saveCache(
             $this->_mainCacheKeyGroup,
             $this->_mainCacheKeyDetailPrefix.$cacheKey,
-            $exportDetail
+            $exportData
         );
 
-        return $exportDetail;
+        return $exportData;
     }
 
         
@@ -139,44 +141,45 @@ class Export extends BaseRepository
      */
     public function dispatchExport($cacheKey)
     {
-        $export = $this->getExport($cacheKey);
-        if($export==false)return false;
+        $exportData = $this->getExport($cacheKey);
+        if($exportData==false)return false;
         
-        $export['laravelPath'] = $this->_exportUploadPath.$export['userId'].'/';
-        $export['path'] = public_path($export['laravelPath']);
+        $exportData['laravelPath'] = $this->_exportUploadPath.$exportData['userId'].'/';
+        $exportData['path'] = Storage::path($exportData['laravelPath']);
+
         // pastikan folder tujuan ada
-        if(!file_exists($export['path'])){
-            mkdir($export['path'],0777,true);
+        if(!file_exists($exportData['path'])){
+            mkdir($exportData['path'],0777,true);
         }
 
-        $export['jobDispatchTime'] = now()->format('Y-m-d H:i:s');
-        $export['status'] = self::$EXPORT_STATUS_DISPATCHED;
+        $exportData['jobDispatchTime'] = now()->format('Y-m-d H:i:s');
+        $exportData['status'] = self::$EXPORT_STATUS_DISPATCHED;
         
-        if(empty($export['filename']))
-            $export['filename'] = strtoupper(preg_replace('/[^a-zA-Z0-9]+/', '_',$this->_defaultFilename.'_'.$export['inputTime'])).'.xlsx';
+        if(empty($exportData['filename']))
+            $exportData['filename'] = strtoupper(preg_replace('/[^a-zA-Z0-9]+/', '_',$this->_defaultFilename.'_'.$exportData['inputTime'])).'.xlsx';
 
-        $export['laravelFilepath'] = $export['laravelPath'].$export['filename']; 
-        $export['filepath'] = $export['path'].$export['filename'];   
+        $exportData['laravelFilepath'] = $exportData['laravelPath'].$exportData['filename']; 
+        $exportData['filepath'] = $exportData['path'].$exportData['filename'];   
 
-        $export['fileurl'] = url($export['laravelFilepath']);
+        $exportData['fileurl'] = url('upload'.$exportData['laravelFilepath']);
         
         // jika sudah ada maka rename
         $i=1;
-        while (file_exists($export['filepath'])) {
-            $export['filepath'] = $export['path'].$i.'_'.$export['filename'];
-            $export['laravelFilepath'] = $export['laravelPath'].$i.'_'.$export['filename'];
+        while (file_exists($exportData['filepath'])) {
+            $exportData['filepath'] = $exportData['path'].$i.'_'.$exportData['filename'];
+            $exportData['laravelFilepath'] = $exportData['laravelPath'].$i.'_'.$exportData['filename'];
             $i++;
         }
 
-        $this->updateExport($cacheKey,$export);
+        $this->updateExport($cacheKey,$exportData);
         
         if($this->isExportJobsPerTenant($cacheKey)){
-            JExport::dispatch($cacheKey)->onQueue('tenant'.$export['tenantId']);
+            JExport::dispatch($cacheKey)->onQueue('tenant'.$exportData['tenantId']);
         }else{
             JExport::dispatch($cacheKey);
         }
 
-        return $export;
+        return $exportData;
     }
 
     public function cancelExport($cacheKey)
@@ -196,12 +199,12 @@ class Export extends BaseRepository
 
     public function setFilename($cacheKey,$filename)
     {
-        $export = $this->getExport($cacheKey);
-        if($export==false)return false;
+        $exportData = $this->getExport($cacheKey);
+        if($exportData==false)return false;
 
-        $export['filename'] = $filename;
+        $exportData['filename'] = $filename;
 
-        $this->updateExport($cacheKey,$export);
+        $this->updateExport($cacheKey,$exportData);
 
         return true;
     }
@@ -225,13 +228,13 @@ class Export extends BaseRepository
      */
     public function setColumn($cacheKey,array $columnCaption, $headerRow = 1)
     {
-        $export = $this->getExport($cacheKey);
-        if($export==false)return false;
+        $exportData = $this->getExport($cacheKey);
+        if($exportData==false)return false;
 
-        $export['template']['headerCaption'] = $columnCaption;
-        $export['template']['headerCaptionRow'] = $headerRow;
+        $exportData['template']['headerCaption'] = $columnCaption;
+        $exportData['template']['headerCaptionRow'] = $headerRow;
         
-        $this->updateExport($cacheKey,$export);
+        $this->updateExport($cacheKey,$exportData);
         return true;
     }
 
@@ -240,46 +243,71 @@ class Export extends BaseRepository
      */
     public function setTemplate($cacheKey,$templatePath, $dataStartRow = 2)
     {
-        $export = $this->getExport($cacheKey);
-        if($export==false)return false;
+        $exportData = $this->getExport($cacheKey);
+        if($exportData==false)return false;
 
-        $export['template']['filepath'] = $templatePath;
-        $export['template']['dataStartRow'] = $dataStartRow;
+        $exportData['template']['filepath'] = $templatePath;
+        $exportData['template']['dataStartRow'] = $dataStartRow;
         
-        $this->updateExport($cacheKey,$export);
+        $this->updateExport($cacheKey,$exportData);
         return true;
     }
 
+    public function setAddsParam($cacheKey,$addsParam)
+    {
+        $exportData = $this->getExport($cacheKey);
+        if($exportData==false)return false;
+
+        $exportData['addsParam'] = $addsParam;
+        
+        $this->updateExport($cacheKey,$exportData);
+        return true;
+    }
+
+    /**
+     * OVERIDE MAIN PROCESS
+     * method-method untuk mengganti method utama dalam pemrosesan data
+     */
+
+    public function setCoreMainLooping($cacheKey, string $coreMainLoopingClass, string $coreMainLoopingMethod)
+    {
+        $exportData = $this->getExport($cacheKey);
+        if($exportData==false)return false;
+
+        $exportData['template']['coreMainLoopingMethod'] = [$coreMainLoopingClass,$coreMainLoopingMethod];
+        
+        $this->updateExport($cacheKey,$exportData);
+        return true;
+    }
     
     /**
      * set class dan method untuk memformat data per row
      */
-    public function setDataFormater($cacheKey, string $dataFormaterClass, string $dataFormaterMethod)
+    public function setCoreRowFormater($cacheKey, string $coreRowFormaterClass, string $coreRowFormaterMethod)
     {
-        $export = $this->getExport($cacheKey);
-        if($export==false)return false;
+        $exportData = $this->getExport($cacheKey);
+        if($exportData==false)return false;
 
-        $export['template']['dataFormaterClass'] = $dataFormaterClass;
-        $export['template']['dataFormaterMethod'] = $dataFormaterMethod;
+        $exportData['template']['coreRowFormaterMethod'] = [$coreRowFormaterClass,$coreRowFormaterMethod];
         
-        $this->updateExport($cacheKey,$export);
+        $this->updateExport($cacheKey,$exportData);
         return true;
     }
     
     /**
      * set class dan method untuk memformat excel $reader saat setelah beres semua
      */
-    public function setLastFormater($cacheKey, string $lastFormaterClass, string $lastFormaterMethod)
+    public function setCoreLastFormater($cacheKey, string $coreLastFormaterClass, string $coreLastFormaterMethod)
     {
-        $export = $this->getExport($cacheKey);
-        if($export==false)return false;
+        $exportData = $this->getExport($cacheKey);
+        if($exportData==false)return false;
 
-        $export['template']['lastFormaterClass'] = $lastFormaterClass;
-        $export['template']['lastFormaterMethod'] = $lastFormaterMethod;
+        $exportData['template']['coreLastFormaterMethod'] = [$coreLastFormaterClass,$coreLastFormaterMethod];
         
-        $this->updateExport($cacheKey,$export);
+        $this->updateExport($cacheKey,$exportData);
         return true;
     }
+
     /**
      * CORE - TIDAK DIAKSES / DIGUNAKAN DARI APLIKASI SECARA LANGSUNG
      * -------------------------------------------------------------------------
@@ -287,17 +315,20 @@ class Export extends BaseRepository
 
     protected function initExportStatus()
     {  
-        $config = [];
+        $exportData = [];
 
-        $config['listingModel'] = '';
+        $exportData['cacheKey'] = '';
 
-        $config['listingParams'] = [];
-        $config['userId'] = 0;
-        $config['tenantId'] = 0;
+        $exportData['addsParam'] = [];
+        $exportData['listingModel'] = '';//bisa array [class,static method]
 
-        $config['log'] = '';//log status
+        $exportData['listingParams'] = [];
+        $exportData['userId'] = 0;
+        $exportData['tenantId'] = 0;
 
-        $config['template'] = [
+        $exportData['log'] = '';//log status
+
+        $exportData['template'] = [
 			//full template file export nya jika custom, kosong jika menggunakan default template
             'filepath'=>'',
 			// format header caption khusus default template
@@ -305,79 +336,79 @@ class Export extends BaseRepository
             'headerCaptionRow'=>1,
 			// format data
             'dataStartRow'=>2,//baris pertama data diinsert
+
+            'coreMainLoopingMethod' => [],// [class,static method]
 			
-			'dataFormaterClass'=>'',// fullpath class ke formater
-			'dataFormaterMethod'=>'',// static method nya
+			'coreRowFormaterMethod'=>[],// [class,static method]
 			
-			'lastFormaterClass'=>'',// fullpath class ke formater
-			'lastFormaterMethod'=>'',// static method nya
+			'coreLastFormaterMethod'=>[],// [class,static method]
         ];
 
-        $config['filename'] = '';//nama file export nya
+        $exportData['filename'] = '';//nama file export nya
 		
-        $config['path'] = '';// fullpath folder ke tempate file export berada
-        $config['filepath'] = '';// $config['path'].'/'.$config['filename']
+        $exportData['path'] = '';// fullpath folder ke tempate file export berada
+        $exportData['filepath'] = '';// $exportData['path'].'/'.$exportData['filename']
 		
-        $config['laravelPath'] = '';// path format laravel (yg bisa digunakan ke storage ke folder ke tempat file export berada
-        $config['laravelFilepath'] = '';// $config['path'].'/'.$config['filename']
+        $exportData['laravelPath'] = '';// path format laravel (yg bisa digunakan ke storage ke folder ke tempat file export berada
+        $exportData['laravelFilepath'] = '';// $exportData['path'].'/'.$exportData['filename']
 		
-        $config['fileurl'] = '';//full url exportnya
+        $exportData['fileurl'] = '';//full url exportnya
 
-        $config['count'] = 0;//jumlah total record yang harus diproses
-        $config['processedCount'] = 0;//jumlah record yg sudah diproses
+        $exportData['count'] = 0;//jumlah total record yang harus diproses
+        $exportData['processedCount'] = 0;//jumlah record yg sudah diproses
 
-        $config['inputTime'] = now()->format('Y-m-d H:i:s');//
-        $config['jobDispatchTime'] = '';//waktu pertama kali jobs diproses (saat ke status 1)
-        $config['jobStartTime'] = '';//waktu jobs pertama pertama kali diproses (saat ke status 2)
+        $exportData['inputTime'] = now()->format('Y-m-d H:i:s');//
+        $exportData['jobDispatchTime'] = '';//waktu pertama kali jobs diproses (saat ke status 1)
+        $exportData['jobStartTime'] = '';//waktu jobs pertama pertama kali diproses (saat ke status 2)
         
-        $config['isResumeJob'] = false;
-        $config['resumeJobParam'] = [
+        $exportData['isResumeJob'] = false;
+        $exportData['resumeJobParam'] = [
             'jobDispatchTime' => '',
             'jobStartTime' => ''
         ];
 
-        $config['status'] = 0;
+        $exportData['status'] = 0;
         // status :
         // 0 new process
         // 1 sudah diinput ke jobs
         // 2 jobs sudah di dispatch (run) / sedang berjalan
         // 3 jobs selesai
         // 4 jobs gagal
-        return $config;
+        return $exportData;
     }
 
-    protected function updateExport($cacheKey,$config) 
+    protected function updateExport($cacheKey,$exportData) 
     {   
         $this->_saveCache(
             $this->_mainCacheKeyGroup,
             $this->_mainCacheKeyDetailPrefix.$cacheKey,
-            $config
+            $exportData
         );
     }
 
     protected function setExportDone($cacheKey)
     {
-        $config = $this->getExport($cacheKey); 
-        if($config==false)return false;
+        $exportData = $this->getExport($cacheKey); 
+        if($exportData==false)return false;
 
-        $config['log'] .= '<br><b class="text-success">Export Done !</b><br>';
-        $config['log'] .= '<span class="text-info">Jobs ended at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>';
-        $config['status'] = self::$EXPORT_STATUS_SUCCESS;//2: success
-        $this->updateExport($cacheKey,$config); 
+        $exportData['log'] .= '<br><b class="text-success">Export Done !</b><br>';
+        $exportData['log'] .= '<span class="text-info">Jobs ended at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>';
+        $exportData['status'] = self::$EXPORT_STATUS_SUCCESS;//2: success
+        $this->updateExport($cacheKey,$exportData); 
     }
 
     protected function setExportFailed($cacheKey)
     {
-        $config = $this->getExport($cacheKey); 
-        if($config==false)return false;
+        $exportData = $this->getExport($cacheKey); 
+        if($exportData==false)return false;
 
-        $config['log'] .= '<br><b class="text-danger">Export Failed !</b><br>';
-        $config['log'] .= '<span class="text-info">Jobs ended at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>';
-        $config['filename'] = '';
-        $config['fileurl'] = '';
-        $config['status'] = self::$EXPORT_STATUS_FAILED;//4: failed
+        $exportData['log'] .= '<br><b class="text-danger">Export Failed !</b><br>';
+        $exportData['log'] .= '<span class="text-info">Jobs ended at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>';
+        $exportData['filename'] = '';
+        $exportData['fileurl'] = '';
+        $exportData['status'] = self::$EXPORT_STATUS_FAILED;//4: failed
 
-        $this->updateExport($cacheKey,$config); 
+        $this->updateExport($cacheKey,$exportData); 
     }
     
     /**
@@ -398,13 +429,13 @@ class Export extends BaseRepository
         report($exception); //lanjutkan error ke login (meureun)
     }
 
-    protected function appendExportLog($cacheKey,string $log='')
+    public function appendExportLog($cacheKey,string $log='')
     {       
-        $config = $this->getExport($cacheKey);
-        if($config==false)return false;
+        $exportData = $this->getExport($cacheKey);
+        if($exportData==false)return false;
 
-        $config['log'] .= $log;
-        $this->updateExport($cacheKey,$config);
+        $exportData['log'] .= $log;
+        $this->updateExport($cacheKey,$exportData);
     }
 
     /**
@@ -424,88 +455,114 @@ class Export extends BaseRepository
         /**
          * init status & var
          */
-        $config = $this->getExport($cacheKey);
-        $config['status'] = self::$EXPORT_STATUS_ON_PROGRESS;
+        $exportData = $this->getExport($cacheKey);
+        $exportData['status'] = self::$EXPORT_STATUS_ON_PROGRESS;
 
 
         // jika resume dari jobs sebelumnya yang di split 
-        if($config['isResumeJob']){
+        if($exportData['isResumeJob']){
 
-            $config['resumeJobParam']['jobStartTime'] = now()->format('Y-m-d H:i:s');
-            $this->updateExport($cacheKey,$config);
+            $exportData['resumeJobParam']['jobStartTime'] = now()->format('Y-m-d H:i:s');
+            $this->updateExport($cacheKey,$exportData);
 
             $this->appendExportLog($cacheKey,'<span class="text-info">Continueing process from previous jobs</span>...<br>');
             $this->appendExportLog($cacheKey,'<span class="text-info">Jobs started at : <b>'.now()->format('Y-m-d H:i:s').'</b></span><br>');
 
-            $reader = Excel::load($config['filepath'], 'Xlsx', false);
-            $data = new $config['listingModel'];
-            $data = $this->_filter($data,$config['listingParams']['filter']);
+            $reader = Excel::load($exportData['filepath'], 'Xlsx', false);
+            if(is_array($exportData['listingModel'])){
+                $data = $exportData['listingModel'][0]::{$exportData['listingModel'][1]}(
+                    $exportData['listingParams']
+                );
+            }else{
+                $data = new $exportData['listingModel'];            
+                $data = $this->_filter($data,$exportData['listingParams']['filter']);
+            }
                         
-            $offset = $config['resumeJobParam']['lastTableRow'];
-            $limit = $config['count']+1000;
+            $offset = $exportData['resumeJobParam']['lastTableRow'];
+            $limit = $exportData['count']+1000;
 
-            $deleteRow = $config['template']['dataStartRow'];//row yg harus didelete, kenapa didelete untuk memastikan style header tidak terbawa
-            $row = $config['resumeJobParam']['lastExcelRow'];
-            $firstRow = false;//flag untuk penanda baris pertama dari data
-            $noUrut = $config['resumeJobParam']['lastTableRow'];
+            $deleteRow = $exportData['template']['dataStartRow'];//row yg harus didelete, kenapa didelete untuk memastikan style header tidak terbawa
+            $GLOBALS['synapse_export_indexExcelRow'] = $exportData['resumeJobParam']['lastExcelRow'];
+            $isFirstRow = false;//flag untuk penanda baris pertama dari data
+            $GLOBALS['synapse_export_indexData'] = $exportData['resumeJobParam']['lastTableRow'];
             
         //jika jobs pertama maka
         }else{
-            $data = new $config['listingModel'];
-            $data = $this->_filter($data,$config['listingParams']['filter']);
+            if(is_array($exportData['listingModel'])){
+                $data = $exportData['listingModel'][0]::{$exportData['listingModel'][1]}(
+                    $exportData['listingParams']
+                );
+            }else{
+                var_dump($exportData['listingParams']);
+                $data = new $exportData['listingModel'];            
+                $data = $this->_filter($data,$exportData['listingParams']['filter']);
+            }            
 
-            // echo $data->toSql();
-
-            $config['count'] = $data->count();
-            $config['jobStartTime'] = now()->format('Y-m-d H:i:s');
+            $exportData['count'] = $data->count();
+            $exportData['jobStartTime'] = now()->format('Y-m-d H:i:s');
             
-            $this->updateExport($cacheKey,$config); 
+            $this->updateExport($cacheKey,$exportData); 
 
             $this->appendExportLog($cacheKey,'<span class="text-info">Jobs started at : <b>'.now()->format('Y-m-d H:i:s').'</b></span><br>');
-            $this->appendExportLog($cacheKey,'Url will be at : '.$config['fileurl'].'<br>');
+            $this->appendExportLog($cacheKey,'Url will be at : '.$exportData['fileurl'].'<br>');
             $reader = Excel::load(
-                $config['template']['filepath']?$config['template']['filepath']:resource_path('doc/generalExport.xlsx'), 
+                $exportData['template']['filepath']?$exportData['template']['filepath']:resource_path('doc/generalExport.xlsx'), 
                 'Xlsx',
-                $config['template']['filepath']?false:true
+                $exportData['template']['filepath']?false:true
             );
 
-            $row=$config['template']['dataStartRow'];            
-            $deleteRow=$row;//row yg harus didelete, kenapa didelete untuk memastikan style header tidak terbawa
-            $row++;//start row ditambah satu agar style header tidak terbawa, karena nanti first row ini akan didelete juga
-            $noUrut = 0;
-            $firstRow = true;//flag untuk penanda baris pertama dari data
+            $GLOBALS['synapse_export_indexExcelRow']=$exportData['template']['dataStartRow'];//urutan baris excel    
+            $deleteRow=$GLOBALS['synapse_export_indexExcelRow'];//row yg harus didelete, kenapa didelete untuk memastikan style header tidak terbawa
+            $GLOBALS['synapse_export_indexExcelRow']++;//start row ditambah satu agar style header tidak terbawa, karena nanti first row ini akan didelete juga
+            $GLOBALS['synapse_export_indexData'] = 1;//nomor urut data dari 1 dst
+            $isFirstRow = true;//flag untuk penanda baris pertama dari data
             $offset = 0;
             $limit = null;
         }        
+
+        if(!is_array($exportData['listingModel']) && !empty($exportData['listingParams']['orderBy'])){
+
+            if(!is_array($exportData['listingParams']['orderBy'][0]))
+				$exportData['listingParams']['orderBy']=[$exportData['listingParams']['orderBy']];
+
+            foreach($exportData['listingParams']['orderBy'] as $oBitem){
+                $data = $data->orderBy($oBitem[0], $oBitem[1]);
+            }
+        }
         
         /**
          * proses export
          */
         
         $reader->setActiveSheetIndex(0);
-        $isBreaking = false;
+        $GLOBALS['synapse_export_isBreaking'] = false;
         $this->chunkWithLimit($data,100,$offset,$limit, function ($chunkedData) use(
             $cacheKey, 
-            &$firstRow,
+            $isFirstRow,
             &$reader,
-            &$row,
-            &$noUrut,
             $startTime,
-            &$isBreaking,
-            $config
+            $exportData
         ) {
             
             $chunkedData = $chunkedData->toArray();
             
             usleep(200);
 
-            foreach ($chunkedData as $val) {
+            foreach ($chunkedData as $dataRow) {
+                if(!empty($exportData['template']['coreMainLoopingMethod'])){
+                    $exportData['template']['coreMainLoopingMethod'][0]::{$exportData['template']['coreMainLoopingMethod'][1]}(
+                        $exportData,
+                        $reader,
+                        $dataRow
+                    );
+                    continue;
+                }
                 $this->appendExportLog($cacheKey,'. ');
                 $this->exportIncrementProcessedCount($cacheKey);                
 
                 //jika tanpa template dan row 1 maka simpan nama2 kolomnya, untuk dijadikan header caption
-                if($firstRow && empty($config['template']['filepath'])){                
-                    $headerColumn = $this->formatExportExcelHeader($cacheKey,$val);
+                if($isFirstRow && empty($exportData['template']['filepath'])){                
+                    $headerColumn = $this->formatExportExcelHeader($cacheKey,$dataRow);
 
                     //kolom terakhir header
                     $countHeader = count($headerColumn);
@@ -513,45 +570,49 @@ class Export extends BaseRepository
                     $reader = Excel::setBorder($reader,'A1:'.Excel::excol($countHeader).'1');
                     $reader = Excel::setFontBold($reader,'A1:'.Excel::excol($countHeader).'1');
                     $reader = Excel::setBackground($reader,'A1:'.Excel::excol($countHeader).'1','CCCCCC');
-                    $firstRow = false;//tandai flag first row agar tidak masuk ke sini lg di row selanjutnya
+                    $isFirstRow = false;//tandai flag first row agar tidak masuk ke sini lg di row selanjutnya
                 }
 
                 // format record sesuai data yang diimport sekarang
-                $insertRow = $this->formatExportExcelRow($cacheKey,$val,$row);
+                $insertRow = $this->formatExportExcelRow($cacheKey,$dataRow,$GLOBALS['synapse_export_indexExcelRow'],$GLOBALS['synapse_export_indexData']);
 
-                if($config['template']['dataFormaterClass']){
-                    $insertRow = $config['template']['dataFormaterClass']::{$config['template']['dataFormaterMethod']}(
-                        $cacheKey,$insertRow,$val,$row
+                if(!empty($exportData['template']['coreRowFormaterMethod'])){
+                    $insertRow = $exportData['template']['coreRowFormaterMethod'][0]::{$exportData['template']['coreRowFormaterMethod'][1]}(
+                        $exportData,$insertRow,$dataRow,$GLOBALS['synapse_export_indexExcelRow'],$GLOBALS['synapse_export_indexData']
                     );
                 }
 
-                $reader = Excel::insertRow($reader, $row, $insertRow);            
-                $row++;
-                $noUrut++;                
+                $reader = Excel::insertRow($reader, $GLOBALS['synapse_export_indexExcelRow'], $insertRow);            
+                $GLOBALS['synapse_export_indexExcelRow']++;
+                $GLOBALS['synapse_export_indexData']++;                
             }
             
             //break proses setiap kurang dari setengah jam 
             if((microtime(true)-$startTime)>=1800){
                 $chunkedData = null;
                 unset($chunkedData);
-                $this->breakToNextExport($cacheKey, $reader,$row,$noUrut);
-                $isBreaking = true;
+                $this->breakToNextExport($cacheKey, $reader,$GLOBALS['synapse_export_indexExcelRow'],$GLOBALS['synapse_export_indexData']);
+                $GLOBALS['synapse_export_isBreaking'] = true;
                 return false;
             }
             usleep(500);
         });
 
-        if($isBreaking)return true;
+        if($GLOBALS['synapse_export_isBreaking'])return true;
 
         if($deleteRow) $reader->getActiveSheet()->removeRow($deleteRow);   
         
-        if($config['template']['lastFormaterClass']){
-            $config['template']['lastFormaterClass']::{$config['template']['lastFormaterMethod']}($reader);
+        if(!empty($exportData['template']['coreLastFormaterMethod'])){
+            $exportData['template']['coreLastFormaterMethod'][0]::{$exportData['template']['coreLastFormaterMethod'][1]}($exportData,$reader);
         }
 
-        $this->appendExportLog($cacheKey,'<br>Save file to : '.$config['filename'].'<br>');
+        $exportData = $this->getExport($cacheKey);
+        $exportData['count'] = $GLOBALS['synapse_export_indexData']-1;        
+        $this->updateExport($cacheKey,$exportData); 
 
-        Excel::save($reader,$config['filepath']);
+        $this->appendExportLog($cacheKey,'<br>Save file to : '.$exportData['filename'].'<br>');
+
+        Excel::save($reader,$exportData['filepath']);
 
         //pastikan semua selesai dan memory di-free-kan kembali
         $reader->disconnectWorksheets();// Good to disconnect
@@ -605,12 +666,12 @@ class Export extends BaseRepository
 
     protected function formatExportExcelHeader($cacheKey,array $row1 = [])
     {
-        $config = $this->getExport($cacheKey);
+        $exportData = $this->getExport($cacheKey);
         $headerColumn=[];
         //jika ada format column maka gunakan format column
-        if(!empty($config['template']['headerCaption'])){
+        if(!empty($exportData['template']['headerCaption'])){
             $i=0;
-            foreach($config['template']['headerCaption'] as $format){ 
+            foreach($exportData['template']['headerCaption'] as $format){ 
                 $i++; 
                 $headerColumn[Excel::excol($i).'1'] = empty($format[1]['caption'])?str_replace('_',' ',$format[0]):$format[1]['caption'];
             }
@@ -632,14 +693,14 @@ class Export extends BaseRepository
      * 
      * @return array
      */
-    protected function formatExportExcelRow($cacheKey,array $row = [],int $rowNumber)
+    protected function formatExportExcelRow($cacheKey,array $row = [],int $indexExcelRow,int $indexData)
     {
-        $config = $this->getExport($cacheKey);
+        $exportData = $this->getExport($cacheKey);
         $insertRow=[];
         $i=0;
         //jika ada format column maka gunakan format column
-        if(!empty($config['template']['headerCaption'])){
-            foreach($config['template']['headerCaption'] as $format){
+        if(!empty($exportData['template']['headerCaption'])){
+            foreach($exportData['template']['headerCaption'] as $format){
                 $i++; 
                 $insertRow[Excel::excol($i)] = 
                     empty($row[$format[0]]) && isset($format[1]['default'])?
@@ -700,19 +761,19 @@ class Export extends BaseRepository
 
     }
 
-    protected function exportIncrementProcessedCount($cacheKey)
+    public function exportIncrementProcessedCount($cacheKey)
     {
-        $config = $this->getExport($cacheKey);
-        $config['processedCount']++;
-        $this->updateExport($cacheKey,$config);
+        $exportData = $this->getExport($cacheKey);
+        $exportData['processedCount']++;
+        $this->updateExport($cacheKey,$exportData);
     }
 
     private function isExportJobsPerTenant($cacheKey)
     {
-        $export = $this->getExport($cacheKey);
-        if($export==false)return false;
+        $exportData = $this->getExport($cacheKey);
+        if($exportData==false)return false;
 
-        return config('AppConfig.system.jobs.multitenant_add',false) && !empty($export['tenantId']) && $export['tenantId']>0?true:false;
+        return config('AppConfig.system.jobs.multitenant_add',false) && !empty($exportData['tenantId']) && $exportData['tenantId']>0?true:false;
     }
 
     /**
@@ -720,15 +781,15 @@ class Export extends BaseRepository
      */
     private function breakToNextExport($cacheKey,&$reader,$lastExcelRow=1,$lastTableRow=1)
     {
-        $export = $this->getExport($cacheKey);
-        if($export==false)return false;
+        $exportData = $this->getExport($cacheKey);
+        if($exportData==false)return false;
 
         $this->appendExportLog(
             $cacheKey,
             '<br><span class="text-info">Break process to the next job, please wait</span>...<br>'
         );
 
-        Excel::save($reader,$export['filepath']);
+        Excel::save($reader,$exportData['filepath']);
 
         //pastikan semua selesai dan memory di-free-kan kembali
         $reader->disconnectWorksheets();// Good to disconnect
@@ -736,16 +797,16 @@ class Export extends BaseRepository
         $reader = null;
         unset($objWriter, $reader);
 
-        $export['isResumeJob'] = true;
-        $export['resumeJobParam']['lastExcelRow'] = $lastExcelRow;
-        $export['resumeJobParam']['lastTableRow'] = $lastTableRow;
-        $config['resumeJobParam']['jobDispatchTime'] = now()->format('Y-m-d H:i:s');
-        $config['resumeJobParam']['jobStartTime'] = '';
+        $exportData['isResumeJob'] = true;
+        $exportData['resumeJobParam']['lastExcelRow'] = $lastExcelRow;
+        $exportData['resumeJobParam']['lastTableRow'] = $lastTableRow;
+        $exportData['resumeJobParam']['jobDispatchTime'] = now()->format('Y-m-d H:i:s');
+        $exportData['resumeJobParam']['jobStartTime'] = '';
 
-        $this->updateExport($cacheKey,$export);
+        $this->updateExport($cacheKey,$exportData);
 
         if($this->isExportJobsPerTenant($cacheKey)){
-            JExport::dispatch($cacheKey)->onQueue('tenant'.$export['tenantId']);
+            JExport::dispatch($cacheKey)->onQueue('tenant'.$exportData['tenantId']);
         }else{
             JExport::dispatch($cacheKey);
         }
