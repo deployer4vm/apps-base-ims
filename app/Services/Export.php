@@ -493,7 +493,6 @@ class Export extends BaseRepository
                     $exportData['listingParams']
                 );
             }else{
-                var_dump($exportData['listingParams']);
                 $data = new $exportData['listingModel'];            
                 $data = $this->_filter($data,$exportData['listingParams']['filter']);
             }            
