@@ -542,7 +542,7 @@ abstract class BaseRepository {
             $dVal = $where[1];
         }
 		
-		//jika valuenya array berarti diprses menggunakan IN
+		//jika valuenya array berarti diproses menggunakan IN
         if(is_array($dVal)){
             if($isOr){
                 if($op=='='){
@@ -559,9 +559,21 @@ abstract class BaseRepository {
             }                    
         }else{
             if($isOr){
-                $model = $model->orWhere($field,$op, $dVal);
+                if($dVal==='NULL'){                    
+                    $model = $model->orWhereNull($field);
+                }else if($dVal==='NOT NULL'){                    
+                    $model = $model->orWhereNotNull($field);
+                }else{
+                    $model = $model->orWhere($field,$op, $dVal);
+                }                
             }else{
-                $model = $model->where($field,$op, $dVal);                        
+                if($dVal==='NULL'){                    
+                    $model = $model->whereNull($field);
+                }else if($dVal==='NOT NULL'){                    
+                    $model = $model->whereNotNull($field);
+                }else{
+                    $model = $model->where($field,$op, $dVal);
+                }                         
             }
         }   
         return $model;
@@ -1024,9 +1036,10 @@ abstract class BaseRepository {
         $model = $this->_where($model, $where);
 		
         if ($model != false) {
-            if ($model->delete()) {
+            if($model->count()<=0)
                 return true;
-            }            
+            if ($model->delete())
+                return true;            
         }else{
             $this->error = __('lang.data_not_found');
         }

@@ -53,6 +53,13 @@ class Export extends BaseRepository
         $list = $this->_getCache($this->_mainCacheKeyGroup,$this->_mainCacheKeyList,[]);
         return $list;
     }
+    
+    public function nextExportQueue()
+    {
+        $idxQueue = (int) $this->_getCache($this->_mainCacheKeyGroup,'nextqueue',1);
+        $this->_saveCache($this->_mainCacheKeyGroup,'nextqueue',($idxQueue>=3?0:$idxQueue) +1);
+        return 'export'.$idxQueue;
+    }
 
     /**
      * get data export
@@ -172,21 +179,28 @@ class Export extends BaseRepository
         }
 
         $this->updateExport($cacheKey,$exportData);
-        
+        $queueName = $this->nextExportQueue();
+
         if($this->isExportJobsPerTenant($cacheKey)){
-            JExport::dispatch($cacheKey)->onQueue('tenant'.$exportData['tenantId']);
+            JExport::dispatch($cacheKey)->onQueue('tenant'.$exportData['tenantId'].$queueName);
         }else{
-            JExport::dispatch($cacheKey);
+            JExport::dispatch($cacheKey)->onQueue($queueName);;
         }
 
         return $exportData;
     }
 
+    /**
+     * cancel export yg sedang berjalan
+     */
     public function cancelExport($cacheKey)
     {
 
     }
 
+    /**
+     * delete log export dan file hasil exportnya
+     */
     public function deleteExport($cacheKey)
     {
 

@@ -32,6 +32,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('queue:work --daemon --tries=3 --queue=high')->everyMinute()->withoutOverlapping();
         $schedule->command('queue:work --daemon --tries=3 --queue=verification,email')->everyMinute()->withoutOverlapping();
         $schedule->command('queue:work --daemon --tries=3 --queue=default,low')->everyMinute()->withoutOverlapping();
+        $schedule->command('queue:work --daemon --tries=3 --queue=export1,export2,export3')->everyMinute()->withoutOverlapping();
         
         // load queuetambahan jika ada, bisa digunakan untuk per tenant juga
         $queueAdds = config('AppConfig.system.jobs.queue_adds',[]);
@@ -44,6 +45,7 @@ class Kernel extends ConsoleKernel
             $queueAdds = config('AppConfig.tenant',[]);
             foreach($queueAdds as $queue){
                 $schedule->command('queue:work --daemon --tries=3 --queue=tenant'.$queue.' --once')->everyMinute()->withoutOverlapping();
+                $schedule->command('queue:work --daemon --tries=3 --queue=tenant'.$queue.'export1,tenant'.$queue.'export2,tenant'.$queue.'export3')->everyMinute()->withoutOverlapping();
             }
         }
 

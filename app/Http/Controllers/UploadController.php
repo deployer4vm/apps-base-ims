@@ -41,7 +41,7 @@ class UploadController extends BaseController
             case 'editor': // handle file yang diupload dari kind editor
                 return $this->editor($request,$segment, $fullFilePath);
                 break;         
-            case 'images': // handle file yang diupload dari kind editor
+            case 'images': // handle file image
                 $fileName = end($segment);
                 return $this->serveImage($fullFilePath,$fileName, $request->input('size',false));
                 break;         
@@ -140,7 +140,25 @@ class UploadController extends BaseController
         }
         exit(Storage::get($fullFilePath));
     }
+	
+    private function serverFile($fullFilePath,$fileName,$size=false)
+    {
+        $fullFilePathTmp = Storage::path($fullFilePath);
+		$mime = $this->getMime($fileName);
+		$hash = sha1($fullFilePathTmp);
+		$this->filemtime = filemtime($fullFilePathTmp);
+		$gmtMtime = gmdate('D, d M Y H:i:s', $this->filemtime). ' GMT';
 
+		$this->setHeader($hash,$gmtMtime);
+		
+		header("Expires: ".gmdate('D, d M Y H:i:s \G\M\T', time()+31536000));
+		header("Content-disposition: inline; filename=".($size?($size.'_'):'').$fileName);
+		header("Content-type: ".$mime);
+
+        exit(Storage::get($fullFilePath));
+		
+    }
+    
     /**
      * HELPER
      * -------------------------------------------------------------------------
