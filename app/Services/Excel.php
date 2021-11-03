@@ -216,7 +216,7 @@ class Excel
                                                             //    set will be iterated.        
         $result = [];
         foreach ($cellIterator as $key2 => $cell) {
-            $result[$key2] = $cell->getValue();
+            $result[$key2] = $cell->getFormattedValue();
         }
         $rowIterator = null;
         unset($rowIterator,$cell,$key2);
