@@ -36,6 +36,7 @@ class Export implements ShouldQueue
     public function __construct($cacheKey)
     {
         $this->cacheKey = $cacheKey;
+        $this->startTime = now()->format('Y-m-d H:i:s');
     }
 
     public function failed(Throwable $error)

@@ -14,6 +14,9 @@ use App\Services\Utilities;
 | contains the "web" middleware group. Now create something great!
 |
 */
+Route::get('/system-queue/list', 'QueueController@listQueue')->name('system.queue.list');
+Route::get('/system-queue/detail/{cacheKey}', 'QueueController@detailQueue')->name('system.queue.detail');
+
 Route::get('/upload{any}', 'UploadController@index')->where('any', '.*');
 //jika artisan web access aktif, maka buka
 if(config('AppConfig.system.has_artisan_web_access',false)){
