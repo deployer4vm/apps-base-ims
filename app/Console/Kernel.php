@@ -35,6 +35,13 @@ class Kernel extends ConsoleKernel
         $schedule->command('queue:work --daemon --tries=3 --queue=export1')->everyMinute()->withoutOverlapping();
         $schedule->command('queue:work --daemon --tries=3 --queue=export2')->everyMinute()->withoutOverlapping();
         $schedule->command('queue:work --daemon --tries=3 --queue=export3')->everyMinute()->withoutOverlapping();
+        $schedule->command('queue:work --daemon --tries=3 --queue=export4')->everyMinute()->withoutOverlapping();
+        $schedule->command('queue:work --daemon --tries=3 --queue=export5')->everyMinute()->withoutOverlapping();
+        $schedule->command('queue:work --daemon --tries=3 --queue=export6')->everyMinute()->withoutOverlapping();
+        $schedule->command('queue:work --daemon --tries=3 --queue=export7')->everyMinute()->withoutOverlapping();
+        $schedule->command('queue:work --daemon --tries=3 --queue=export8')->everyMinute()->withoutOverlapping();
+        $schedule->command('queue:work --daemon --tries=3 --queue=export9')->everyMinute()->withoutOverlapping();
+        $schedule->command('queue:work --daemon --tries=3 --queue=export10')->everyMinute()->withoutOverlapping();
         
         // load queuetambahan jika ada, bisa digunakan untuk per tenant juga
         $queueAdds = config('AppConfig.system.jobs.queue_adds',[]);
@@ -50,6 +57,13 @@ class Kernel extends ConsoleKernel
                 $schedule->command('queue:work --daemon --tries=3 --queue=tenant'.$queue.'export1')->everyMinute()->withoutOverlapping();
                 $schedule->command('queue:work --daemon --tries=3 --queue=tenant'.$queue.'export2')->everyMinute()->withoutOverlapping();
                 $schedule->command('queue:work --daemon --tries=3 --queue=tenant'.$queue.'export3')->everyMinute()->withoutOverlapping();
+                $schedule->command('queue:work --daemon --tries=3 --queue=tenant'.$queue.'export4')->everyMinute()->withoutOverlapping();
+                $schedule->command('queue:work --daemon --tries=3 --queue=tenant'.$queue.'export5')->everyMinute()->withoutOverlapping();
+                $schedule->command('queue:work --daemon --tries=3 --queue=tenant'.$queue.'export6')->everyMinute()->withoutOverlapping();
+                $schedule->command('queue:work --daemon --tries=3 --queue=tenant'.$queue.'export7')->everyMinute()->withoutOverlapping();
+                $schedule->command('queue:work --daemon --tries=3 --queue=tenant'.$queue.'export8')->everyMinute()->withoutOverlapping();
+                $schedule->command('queue:work --daemon --tries=3 --queue=tenant'.$queue.'export9')->everyMinute()->withoutOverlapping();
+                $schedule->command('queue:work --daemon --tries=3 --queue=tenant'.$queue.'export10')->everyMinute()->withoutOverlapping();
             }
         }
 

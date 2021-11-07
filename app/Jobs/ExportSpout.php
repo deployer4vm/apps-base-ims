@@ -12,12 +12,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 
-use App\Facades\Export as FExport;
+use App\Facades\ExportSpout as FExport;
 
 /**
  * Bagian dari general Excel Export functionality (Export)
  */
-class Export implements ShouldQueue
+class ExportSpout implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     public $cacheKey,$curQueue,$startTime;

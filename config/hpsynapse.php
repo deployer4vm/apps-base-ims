@@ -132,7 +132,8 @@ if(!function_exists('initHPsynapseConfig')){
                     'App\\Contracts\\Helper'=>'App\\Services\\Helper',
                     'App\\Contracts\\Web'=>'App\\Services\\Web',
                     'App\\Contracts\\Trans'=>'App\\Services\\Trans',
-                    'App\\Contracts\\Export'=>'App\\Services\\Export'
+                    'App\\Contracts\\Export'=>'App\\Services\\Export',
+                    'App\\Contracts\\ExportSpout'=>'App\\Services\\ExportSpout'
                 ],
                 'route'=>[]
             ],

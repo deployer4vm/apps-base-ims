@@ -19,4 +19,13 @@ class Job extends Model
      * @var array
      */
     protected $guarded = ['id','created_at'];
+
+    // protected $appends = ['formated_payload'];
+    
+    public function getFormatedPayloadAttribute()
+    {
+        $payload = json_decode($this->payload,true);
+        $payload['data']['command'] = (array) unserialize($payload['data']['command']);
+        return $payload;
+    }
 }

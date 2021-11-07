@@ -17,7 +17,7 @@
         <div class="d-flex align-items-center">
             <a
                 class="p-3 rounded-0 btn btn-outline-default bg-light border-right d-inline-block borderless text-muted text-nowrap" 
-                href="{{route('system.queue.list')}}"
+                href="{{route($isHistory?'system.queue.export.history':'system.queue.export.list')}}"
             > 
                 <span class="ion ion-ios-arrow-back"></span>&nbsp; {{__('lang.back')}}
             </a>
@@ -29,9 +29,33 @@
     </div>
     @include('component.alert')
     <div class="card m-4"> 
-
+        <div class="row m-2">
+            <div class="col">
+                User : 
+                @if($data['user'])<b>{{$data['user']['name']}} <i>({{$data['user']['username']}})</i></b>@endif
+            </div>
+            <div class="col">
+                Status Jobs : 
+                @if(isset($data['jobs'][0]['attempts']))                
+                    @if($data['jobs'][0]['attempts']==1)
+                    <div class="badge badge-success">
+                        Jobs sedang berjalan
+                    </div> 
+                    @else
+                    <div class="badge badge-info">
+                        Jobs belum berjalan
+                    </div> 
+                    @endif
+                @else
+                <div class="badge badge-default">
+                    Tidak Ada Jobs
+                </div> 
+                @endif
+            </div>            
+        </div>
+        
         <div class="card-datatable table-responsive">
-            <table class="table table-striped table-bordered mb-0">
+            <table class="table table-striped table-hover table-bordered mb-0">
                 <thead>
                     <tr>
                         <th>No</th>
@@ -42,16 +66,35 @@
                 <tbody>
                     <?php $i=0; ?>
                     @foreach($data as $k => $v)
-                    <?php $i++; ?>
+                    <?php 
+                    if(!in_array($k,['jobs','user'])){
+                        $i++;
+                    ?>
                     <tr>
                         <td>{{$i}}</td>
                         <td>{{$k}}</td>
-                        <td><?php if(is_array($v)){
-                            echo '<pre>'.var_export($v,true) . '</pre>';
+                        <td>
+                        <?php 
+                        
+                        if(is_array($v)){
+                            $var = '<pre>'.var_export($v,true) . '</pre>';
                         }else{
-                            echo $v;
-                         } ?></td>
+                            $var = $v;
+                        } 
+                        
+                        if(in_array($k,['log','listingParams','template'])){
+                            ?>
+                            <div style="overflow-y: scroll; max-height: 300px; width: 100%;">
+                            {!!$var!!}
+                            </div>
+                            <?php
+                        }else{
+                            echo $var;
+                        }
+                        ?>
+                        </td>
                     </tr>
+                    <?php } ?>
                     @endforeach
                 </tbody>
             </table>

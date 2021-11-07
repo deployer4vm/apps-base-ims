@@ -5,19 +5,29 @@ namespace App\Services;
 use Exception;
 use Carbon\Carbon;
 
-use Illuminate\Support\Facades\Storage;
+use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
+use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
+use Box\Spout\Common\Entity\Row;
+use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
+use Box\Spout\Writer\Common\Creator\Style\BorderBuilder;
+use Box\Spout\Common\Entity\Style\CellAlignment;
+use Box\Spout\Common\Entity\Style\Color;
+use Box\Spout\Common\Entity\Style\Border;
 
-use App\Models\Job;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+
+use App\Base\BaseRepository;
 
 use App\Facades\Excel;
 use App\Facades\Tenant;
 
-Use App\Jobs\Export as JExport;
+use App\Models\Job;
 
-use App\Base\BaseRepository;
-use Illuminate\Support\Facades\DB;
+Use App\Jobs\ExportSpout as JExport;
 
-class Export extends BaseRepository
+
+class ExportSpout extends BaseRepository
 {   
     protected $cacheActive = true;
     private $_exportUploadPath = '/export/';//default path ke upload relative dari public_path
@@ -363,7 +373,7 @@ class Export extends BaseRepository
     {  
         $exportData = [];
 
-        $exportData['driver'] = 'phpspreadsheet';//phpspreadsheet , spout
+        $exportData['driver'] = 'spout';//phpspreadsheet , spout
         $exportData['jobsId'] = 0;//id table jobs
         $exportData['processId'] = 0;//id process
         $exportData['forceCancle'] = 0;//1 jika force cancel
@@ -548,7 +558,11 @@ class Export extends BaseRepository
          */
         $exportData = $this->getExport($cacheKey);
         $exportData['status'] = self::$EXPORT_STATUS_ON_PROGRESS;
-        $exportData = $this->_initExportData($exportData,$curQueue);
+        $exportData = $this->_initExportData($exportData,$curQueue);       
+
+        $tmpFilename = storage_path('logs'.DIRECTORY_SEPARATOR.'export_tmp'.DIRECTORY_SEPARATOR.$exportData['cacheKey'].'_'.$exportData['jobsId'].'_'.now()->format('YmdHis').'.xlsx');
+        $file = fopen($tmpFilename, 'w');  
+        fclose($file);
 
         // jika resume dari jobs sebelumnya yang di split 
         if($exportData['isResumeJob']){
@@ -558,8 +572,16 @@ class Export extends BaseRepository
 
             $this->appendExportLog($cacheKey,'<span class="text-info">Continueing process from previous jobs</span>...<br>');
             $this->appendExportLog($cacheKey,'<span class="text-info">Jobs started at : <b>'.now()->format('Y-m-d H:i:s').'</b></span><br>');
+            
+            // we need a reader to read the existing file...
+            $reader = ReaderEntityFactory::createReaderFromFile($exportData['filepath']);
+            $reader->setShouldFormatDates(true); // this is to be able to copy dates
+            $reader->open($exportData['filepath']);
 
-            $reader = Excel::load($exportData['filepath'], 'Xlsx', false);
+            // ... and a writer to create the new file
+            $writer = WriterEntityFactory::createWriterFromFile($tmpFilename);
+            $writer->openToFile($tmpFilename);
+            
             if(is_array($exportData['listingModel'])){
                 $data = $exportData['listingModel'][0]::{$exportData['listingModel'][1]}(
                     $exportData['listingParams']
@@ -595,12 +617,21 @@ class Export extends BaseRepository
 
             $this->appendExportLog($cacheKey,'<span class="text-info">Jobs started at : <b>'.now()->format('Y-m-d H:i:s').'</b></span><br>');
             $this->appendExportLog($cacheKey,'Url will be at : '.$exportData['fileurl'].'<br>');
-            $reader = Excel::load(
-                $exportData['template']['filepath']?$exportData['template']['filepath']:resource_path('doc/generalExport.xlsx'), 
-                'Xlsx',
-                $exportData['template']['filepath']?false:true
-            );
+            
 
+
+            $tmpFileReader = $exportData['template']['filepath']?$exportData['template']['filepath']:resource_path('doc/generalExport.xlsx');
+
+            // we need a reader to read the existing file...
+            $reader = ReaderEntityFactory::createReaderFromFile($tmpFileReader);
+            $reader->setShouldFormatDates(true); // this is to be able to copy dates
+            $reader->open($tmpFileReader);
+
+            // ... and a writer to create the new file
+            $writer = WriterEntityFactory::createWriterFromFile($tmpFilename);
+            $writer->openToFile($tmpFilename);
+
+            
             $GLOBALS['synapse_export_indexExcelRow']=$exportData['template']['dataStartRow'];//urutan baris excel    
             $deleteRow=$GLOBALS['synapse_export_indexExcelRow'];//row yg harus didelete, kenapa didelete untuk memastikan style header tidak terbawa
             $GLOBALS['synapse_export_indexExcelRow']++;//start row ditambah satu agar style header tidak terbawa, karena nanti first row ini akan didelete juga
@@ -609,6 +640,20 @@ class Export extends BaseRepository
             $offset = 0;
             $limit = null;
         }        
+
+        
+        // let's read the entire spreadsheet...
+        foreach ($reader->getSheetIterator() as $sheetIndex => $sheet) {
+            // Add sheets in the new file, as we read new sheets in the existing one
+            if ($sheetIndex !== 1) {
+                $writer->addNewSheetAndMakeItCurrent();
+            }
+
+            foreach ($sheet->getRowIterator() as $row) {
+                // ... and copy each row into the new spreadsheet
+                $writer->addRow($row);
+            }
+        }
 
         if(!is_array($exportData['listingModel']) && !empty($exportData['listingParams']['orderBy'])){
 
@@ -620,18 +665,30 @@ class Export extends BaseRepository
             }
         }
         
+        $border = (new BorderBuilder())
+            ->setBorderTop(Color::BLACK, Border::WIDTH_THIN, Border::STYLE_SOLID)
+            ->setBorderRight(Color::BLACK, Border::WIDTH_THIN, Border::STYLE_SOLID)
+            ->setBorderBottom(Color::BLACK, Border::WIDTH_THIN, Border::STYLE_SOLID)
+            ->setBorderLeft(Color::BLACK, Border::WIDTH_THIN, Border::STYLE_SOLID)
+            ->build();
+        
+        $styleBorder = (new StyleBuilder())
+            ->setBorder($border)
+            ->build();
         /**
          * proses export
-         */
-        
-        $reader->setActiveSheetIndex(0);
+         */        
         $GLOBALS['synapse_export_isBreaking'] = false;
         $this->chunkWithLimit($data,100,$offset,$limit, function ($chunkedData) use(
             $cacheKey, 
             $isFirstRow,
             &$reader,
+            &$writer,
             $startTime,
-            $exportData
+            $exportData,
+            $border,
+            $styleBorder,
+            $tmpFilename
         ) {
             
             $chunkedData = $chunkedData->toArray();
@@ -643,6 +700,7 @@ class Export extends BaseRepository
                     $exportData['template']['coreMainLoopingMethod'][0]::{$exportData['template']['coreMainLoopingMethod'][1]}(
                         $exportData,
                         $reader,
+                        $writer,
                         $dataRow
                     );
                     continue;
@@ -660,11 +718,25 @@ class Export extends BaseRepository
                     $headerColumn = $this->formatExportExcelHeader($cacheKey,$dataRow);
 
                     //kolom terakhir header
-                    $countHeader = count($headerColumn);
-                    $reader = Excel::setCell($reader, $headerColumn);
-                    $reader = Excel::setBorder($reader,'A1:'.Excel::excol($countHeader).'1');
-                    $reader = Excel::setFontBold($reader,'A1:'.Excel::excol($countHeader).'1');
-                    $reader = Excel::setBackground($reader,'A1:'.Excel::excol($countHeader).'1','CCCCCC');
+                    // $countHeader = count($headerColumn);
+                    $styleHeading = (new StyleBuilder())
+                        ->setFontBold()
+                        ->setBorder($border)
+                        ->setBackgroundColor('CCCCCC')
+                        ->build();
+
+                    $writer->addRow(
+                        WriterEntityFactory::createRowFromArray($headerColumn,$styleHeading)
+                    );
+                    
+                    // if($exportData['driver']=='phpspreadsheet'){
+                    //     $reader = Excel::setCell($reader, $headerColumn);
+                    //     $reader = Excel::setBorder($reader,'A1:'.Excel::excol($countHeader).'1');
+                    //     $reader = Excel::setFontBold($reader,'A1:'.Excel::excol($countHeader).'1');
+                    //     $reader = Excel::setBackground($reader,'A1:'.Excel::excol($countHeader).'1','CCCCCC');
+                    // }else{
+
+                    // }
                     $isFirstRow = false;//tandai flag first row agar tidak masuk ke sini lg di row selanjutnya
                 }
 
@@ -677,16 +749,22 @@ class Export extends BaseRepository
                     );
                 }
 
-                $reader = Excel::insertRow($reader, $GLOBALS['synapse_export_indexExcelRow'], $insertRow);            
+                // $reader = Excel::insertRow($reader, $GLOBALS['synapse_export_indexExcelRow'], $insertRow);
+
+                $writer->addRow(
+                    WriterEntityFactory::createRowFromArray($insertRow,$styleBorder)
+                );
+
                 $GLOBALS['synapse_export_indexExcelRow']++;
                 $GLOBALS['synapse_export_indexData']++;                
             }
             
             //break proses setiap kurang dari setengah jam 
-            if((microtime(true)-$startTime)>=1800){
+            // if((microtime(true)-$startTime)>=1800){
+            if((microtime(true)-$startTime)>=5){
                 $chunkedData = null;
                 unset($chunkedData);
-                $this->breakToNextExport($cacheKey, $reader,$GLOBALS['synapse_export_indexExcelRow'],$GLOBALS['synapse_export_indexData']);
+                $this->breakToNextExport($cacheKey, $tmpFilename, $reader, $writer, $GLOBALS['synapse_export_indexExcelRow'],$GLOBALS['synapse_export_indexData']);
                 $GLOBALS['synapse_export_isBreaking'] = true;
                 return false;
             }
@@ -698,24 +776,30 @@ class Export extends BaseRepository
 
         if($GLOBALS['synapse_export_isBreaking'])return true;
 
-        if($deleteRow) $reader->getActiveSheet()->removeRow($deleteRow);   
+        // if($deleteRow) $reader->getActiveSheet()->removeRow($deleteRow);   
         
-        if(!empty($exportData['template']['coreLastFormaterMethod'])){
-            $exportData['template']['coreLastFormaterMethod'][0]::{$exportData['template']['coreLastFormaterMethod'][1]}($exportData,$reader);
-        }
-
         $exportData = $this->getExport($cacheKey);
         $exportData['count'] = $GLOBALS['synapse_export_indexData']-1;        
         $this->updateExport($cacheKey,$exportData); 
 
         $this->appendExportLog($cacheKey,'<br>Save file to : '.$exportData['filename'].'<br>');
 
-        Excel::save($reader,$exportData['filepath']);
+        $reader->close();
+        $writer->close();
 
+        // unlink($exportData['filepath']);
+        rename($tmpFilename, $exportData['filepath']);
+        
+        if(!empty($exportData['template']['coreLastFormaterMethod'])){
+            $exportData['template']['coreLastFormaterMethod'][0]::{$exportData['template']['coreLastFormaterMethod'][1]}(
+                $exportData,$exportData['filepath']
+            );
+        }
+
+        
         //pastikan semua selesai dan memory di-free-kan kembali
-        $reader->disconnectWorksheets();// Good to disconnect
-        $reader->garbageCollect(); // Add this too
         $reader = null;
+        $writer = null;
         $data = null;
         unset($reader,$data);
 
@@ -771,13 +855,13 @@ class Export extends BaseRepository
             $i=0;
             foreach($exportData['template']['headerCaption'] as $format){ 
                 $i++; 
-                $headerColumn[Excel::excol($i).'1'] = empty($format[1]['caption'])?str_replace('_',' ',$format[0]):$format[1]['caption'];
+                $headerColumn[] = empty($format[1]['caption'])?str_replace('_',' ',$format[0]):$format[1]['caption'];
             }
         }else{
             $i=0;
             foreach($row1 as $fieldName => $fieldValue){ 
                 $i++; 
-                $headerColumn[Excel::excol($i).'1'] = str_replace('_',' ',$fieldName);
+                $headerColumn[] = str_replace('_',' ',$fieldName);
             }
 
         }
@@ -800,7 +884,7 @@ class Export extends BaseRepository
         if(!empty($exportData['template']['headerCaption'])){
             foreach($exportData['template']['headerCaption'] as $format){
                 $i++; 
-                $insertRow[Excel::excol($i)] = 
+                $insertRow[] = 
                     empty($row[$format[0]]) && isset($format[1]['default'])?
                     $format[1]['default']:
                     $this->exportFormatRowValue($row[$format[0]],$format[1]);
@@ -808,7 +892,7 @@ class Export extends BaseRepository
         }else{
             foreach($row as $fieldValue){ 
                 $i++; 
-                $insertRow[Excel::excol($i)] = is_array($fieldValue)?'':$fieldValue;
+                $insertRow[] = is_array($fieldValue)?'':$fieldValue;
             }
         }
 
@@ -877,7 +961,7 @@ class Export extends BaseRepository
     /**
      * saat jobs dipecah ke jobs selanjurnya
      */
-    private function breakToNextExport($cacheKey,&$reader,$lastExcelRow=1,$lastTableRow=1)
+    private function breakToNextExport($cacheKey,$tmpFilename,&$reader,&$writer,$lastExcelRow=1,$lastTableRow=1)
     {
         $exportData = $this->getExport($cacheKey);
         if($exportData==false)return false;
@@ -888,6 +972,13 @@ class Export extends BaseRepository
         );
 
         Excel::save($reader,$exportData['filepath']);
+
+        
+        $reader->close();
+        $writer->close();
+
+        // unlink($exportData['filepath']);
+        rename($tmpFilename, $exportData['filepath']);
 
         //pastikan semua selesai dan memory di-free-kan kembali
         $reader->disconnectWorksheets();// Good to disconnect
