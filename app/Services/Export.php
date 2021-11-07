@@ -231,8 +231,12 @@ class Export extends BaseRepository
      * delete log export dan file hasil exportnya
      */
     public function deleteExport($cacheKey)
-    {
-
+    {        
+        $this->_deleteCache(
+            $this->_mainCacheKeyGroup,
+            $this->_mainCacheKeyDetailPrefix.$cacheKey
+        );
+        return true;
     }
 
     /**

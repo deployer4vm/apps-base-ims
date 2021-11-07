@@ -18,6 +18,7 @@ Route::get('/system-queue/export/list', 'QueueController@listQueue')->name('syst
 Route::get('/system-queue/export/list/history', 'QueueController@historyQueue')->name('system.queue.export.history');
 Route::get('/system-queue/export/detail/{cacheKey}', 'QueueController@detailQueue')->name('system.queue.detail');
 Route::get('/system-queue/export/detail/{cacheKey}/cancel', 'QueueController@cancelQueue')->name('system.queue.cancel');
+Route::get('/system-queue/export/detail/{cacheKey}/delete', 'QueueController@deleteQueue')->name('system.queue.delete');
 
 Route::get('/upload{any}', 'UploadController@index')->where('any', '.*');
 //jika artisan web access aktif, maka buka

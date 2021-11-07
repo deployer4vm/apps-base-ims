@@ -89,6 +89,19 @@ class QueueController extends BaseController
         return $this->done();
 
     }
+
+    
+    public function deleteQueue(Request $request)
+    {
+        if($export = Export::getExport($request->route('cacheKey'))){
+            Export::deleteExport($export['cacheKey']);
+            $this->output['message'] = 'Delete Success';
+        }else{
+            $this->setError('Detail Export <b>'.$request->route('cacheKey').'</b> tidak ditemukan !');
+        }
+        $this->response = redirect()->route('system.queue.export.list');
+        return $this->done();
+    }
     
     public function detailQueue(Request $request)
     {
