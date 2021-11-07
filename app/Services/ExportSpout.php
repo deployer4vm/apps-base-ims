@@ -760,8 +760,8 @@ class ExportSpout extends BaseRepository
             }
             
             //break proses setiap kurang dari setengah jam 
-            // if((microtime(true)-$startTime)>=1800){
-            if((microtime(true)-$startTime)>=5){
+            if((microtime(true)-$startTime)>=1800){
+            // if((microtime(true)-$startTime)>=5){
                 
                 // $this->appendExportLog($cacheKey,'<br><span class="text-info">Break on last id </span>'.$lastId.' ('.$GLOBALS['synapse_export_indexData'].')<br>');
                 $chunkedData = null;
