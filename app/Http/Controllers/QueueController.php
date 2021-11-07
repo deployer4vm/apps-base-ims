@@ -89,7 +89,6 @@ class QueueController extends BaseController
         return $this->done();
 
     }
-
     
     public function deleteQueue(Request $request)
     {
@@ -99,7 +98,7 @@ class QueueController extends BaseController
         }else{
             $this->setError('Detail Export <b>'.$request->route('cacheKey').'</b> tidak ditemukan !');
         }
-        $this->response = redirect()->route('system.queue.export.list');
+        $this->response = redirect()->route('system.queue.export.history');
         return $this->done();
     }
     

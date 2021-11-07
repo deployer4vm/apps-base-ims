@@ -51,11 +51,11 @@
                         <td>{!!$v['user']?('['.$v['user']['id'].'] <b>'.$v['user']['username'].'</b> <i>('.$v['user']['name'].')</i>'):'-'!!}</td>
                         <td>{{$v['cacheKey']}}</td>
                         <td>  
-                            <a href="{{route('system.queue.delete',['cacheKey'=>$v['cacheKey'],'isHistory'=>true])}}" class="btn btn-info btn-xs">
-                                <i class="ion ion-md-close"></i> Delete
-                            </a> 
                             <a href="{{route('system.queue.detail',['cacheKey'=>$v['cacheKey'],'isHistory'=>true])}}" class="btn btn-info btn-xs">
                                 <i class="ion ion-md-create"></i> Detail
+                            </a> &nbsp; 
+                            <a href="{{route('system.queue.delete',['cacheKey'=>$v['cacheKey'],'isHistory'=>true])}}" class="btn btn-danger btn-xs">
+                                <i class="ion ion-md-close"></i> Delete
                             </a> 
                         </td>
                     </tr>
