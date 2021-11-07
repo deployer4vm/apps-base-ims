@@ -593,8 +593,7 @@ class ExportSpout extends BaseRepository
                         
             $offset = $exportData['resumeJobParam']['lastTableRow'];
             $limit = $exportData['count']+1000;
-
-            $deleteRow = $exportData['template']['dataStartRow'];//row yg harus didelete, kenapa didelete untuk memastikan style header tidak terbawa
+            
             $GLOBALS['synapse_export_indexExcelRow'] = $exportData['resumeJobParam']['lastExcelRow'];
             $isFirstRow = false;//flag untuk penanda baris pertama dari data
             $GLOBALS['synapse_export_indexData'] = $exportData['resumeJobParam']['lastTableRow'];
@@ -619,7 +618,6 @@ class ExportSpout extends BaseRepository
             $this->appendExportLog($cacheKey,'Url will be at : '.$exportData['fileurl'].'<br>');
             
 
-
             $tmpFileReader = $exportData['template']['filepath']?$exportData['template']['filepath']:resource_path('doc/generalExport.xlsx');
 
             // we need a reader to read the existing file...
@@ -633,9 +631,8 @@ class ExportSpout extends BaseRepository
 
             
             $GLOBALS['synapse_export_indexExcelRow']=$exportData['template']['dataStartRow'];//urutan baris excel    
-            $deleteRow=$GLOBALS['synapse_export_indexExcelRow'];//row yg harus didelete, kenapa didelete untuk memastikan style header tidak terbawa
             $GLOBALS['synapse_export_indexExcelRow']++;//start row ditambah satu agar style header tidak terbawa, karena nanti first row ini akan didelete juga
-            $GLOBALS['synapse_export_indexData'] = 1;//nomor urut data dari 1 dst
+            $GLOBALS['synapse_export_indexData'] = 0;//nomor urut data dari 0 dst
             $isFirstRow = true;//flag untuk penanda baris pertama dari data
             $offset = 0;
             $limit = null;
@@ -679,6 +676,7 @@ class ExportSpout extends BaseRepository
          * proses export
          */        
         $GLOBALS['synapse_export_isBreaking'] = false;
+        $GLOBALS['first_row'] = true;
         $this->chunkWithLimit($data,100,$offset,$limit, function ($chunkedData) use(
             $cacheKey, 
             $isFirstRow,
@@ -694,6 +692,7 @@ class ExportSpout extends BaseRepository
             $chunkedData = $chunkedData->toArray();
             
             usleep(200);
+            $lastId = 0;
 
             foreach ($chunkedData as $dataRow) {
                 if(!empty($exportData['template']['coreMainLoopingMethod'])){
@@ -745,7 +744,7 @@ class ExportSpout extends BaseRepository
 
                 if(!empty($exportData['template']['coreRowFormaterMethod'])){
                     $insertRow = $exportData['template']['coreRowFormaterMethod'][0]::{$exportData['template']['coreRowFormaterMethod'][1]}(
-                        $exportData,$insertRow,$dataRow,$GLOBALS['synapse_export_indexExcelRow'],$GLOBALS['synapse_export_indexData']
+                        $exportData,$insertRow,$dataRow,$GLOBALS['synapse_export_indexExcelRow'],$GLOBALS['synapse_export_indexData']+1
                     );
                 }
 
@@ -756,30 +755,30 @@ class ExportSpout extends BaseRepository
                 );
 
                 $GLOBALS['synapse_export_indexExcelRow']++;
-                $GLOBALS['synapse_export_indexData']++;                
+                $GLOBALS['synapse_export_indexData']++;    
+                $lastId = $dataRow['id'];            
             }
             
             //break proses setiap kurang dari setengah jam 
             // if((microtime(true)-$startTime)>=1800){
             if((microtime(true)-$startTime)>=5){
+                
+                // $this->appendExportLog($cacheKey,'<br><span class="text-info">Break on last id </span>'.$lastId.' ('.$GLOBALS['synapse_export_indexData'].')<br>');
                 $chunkedData = null;
                 unset($chunkedData);
                 $this->breakToNextExport($cacheKey, $tmpFilename, $reader, $writer, $GLOBALS['synapse_export_indexExcelRow'],$GLOBALS['synapse_export_indexData']);
                 $GLOBALS['synapse_export_isBreaking'] = true;
                 return false;
             }
-            usleep(500);
         });
 
         $exportData = $this->getExport($cacheKey);
         if($exportData==false || $exportData['forceCancle']==1)return false;
 
         if($GLOBALS['synapse_export_isBreaking'])return true;
-
-        // if($deleteRow) $reader->getActiveSheet()->removeRow($deleteRow);   
         
         $exportData = $this->getExport($cacheKey);
-        $exportData['count'] = $GLOBALS['synapse_export_indexData']-1;        
+        $exportData['count'] = $GLOBALS['synapse_export_indexData'];        
         $this->updateExport($cacheKey,$exportData); 
 
         $this->appendExportLog($cacheKey,'<br>Save file to : '.$exportData['filename'].'<br>');
@@ -970,9 +969,6 @@ class ExportSpout extends BaseRepository
             $cacheKey,
             '<br><span class="text-info">Break process to the next job, please wait</span>...<br>'
         );
-
-        Excel::save($reader,$exportData['filepath']);
-
         
         $reader->close();
         $writer->close();
@@ -981,9 +977,10 @@ class ExportSpout extends BaseRepository
         rename($tmpFilename, $exportData['filepath']);
 
         //pastikan semua selesai dan memory di-free-kan kembali
-        $reader->disconnectWorksheets();// Good to disconnect
-        $reader->garbageCollect(); // Add this too
+        // $reader->disconnectWorksheets();// Good to disconnect
+        // $reader->garbageCollect(); // Add this too
         $reader = null;
+        $writer = null;
         unset($objWriter, $reader);
 
         $exportData['isResumeJob'] = true;
