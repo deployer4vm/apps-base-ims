@@ -31,7 +31,7 @@ class QueueController extends BaseController
     {
         $tmpUser = [];
         // -----------------------
-        $this->output['data']['jobs'] = Job::where('payload','LIKE','%\\\\Export\\"%')->orderBy('attempts','DESC')->orderBy('queue','ASC')->get()->append(['formated_payload']);        
+        $this->output['data']['jobs'] = Job::where('payload','LIKE','%\\\\Export\\"%')->orWhere('payload','LIKE','%\\\\ExportSpout\\"%')->orderBy('attempts','DESC')->orderBy('queue','ASC')->get()->append(['formated_payload']);
         $newJobs = [];
         $i=0;
         foreach($this->output['data']['jobs'] as $v){

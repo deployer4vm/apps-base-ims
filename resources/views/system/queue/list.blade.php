@@ -41,7 +41,6 @@
                         <th>JOB ID</th>
                         <th>Queue</th>
                         <th>User</th>
-                        <th>Dispatch Time</th>
                         <th>Start Time</th>
                         <th>Export Key</th>
                         <th>Data Count</th>
@@ -58,8 +57,8 @@
                         <td>{{$v['id']}}</td> 
                         <td>{{$v['queue']}}</td> 
                         <td>{!!$v['user']?('['.$v['user']['id'].'] <b>'.$v['user']['username'].'</b> <i>('.$v['user']['name'].')</i>'):'-'!!}</td> 
-                        <td>{{$v['formated_payload']['data']['command']['startTime']}}</td>
-                        <td><?php echo $v['reserved_at']?date('Y-m-d H:i:s',$v['reserved_at']):''; ?></td> 
+                        <td>{{$v['export']['inputTime']}}</td>
+                        <!-- <td><?php echo $v['reserved_at']?date('Y-m-d H:i:s',$v['reserved_at']):''; ?></td>  -->
                         <td>{{$v['formated_payload']['data']['command']['cacheKey']}}</td>
                         <td>{{number_format($v['export']['count'],0,',','.')}}<br><i>(processed <b>{{number_format($v['export']['processedCount'],0,',','.')}}</b>)</i></td>
                         <td>                            

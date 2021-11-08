@@ -242,7 +242,11 @@ class ExportSpout extends BaseRepository
      */
     public function deleteExport($cacheKey)
     {
-
+        $this->_deleteCache(
+            $this->_mainCacheKeyGroup,
+            $this->_mainCacheKeyDetailPrefix.$cacheKey
+        );
+        return true;
     }
 
     /**
@@ -529,17 +533,19 @@ class ExportSpout extends BaseRepository
         if($exportData==false)
             return false;
             
-        if($exportData['forceCancle']==1){            
+        if($exportData['forceCancle']==1 || $exportData['forceCancle']!=0 || $exportData['forceCancle']=='1'){            
             $exportData['log'] .= '<br><b class="text-danger">Export Canceled !</b><br>';
             $exportData['log'] .= '<span class="text-info">Jobs ended at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>';
             $exportData['filename'] = '';
             $exportData['fileurl'] = '';
             $exportData['status'] = self::$EXPORT_STATUS_FAILED;//4: failed
             $this->updateExport($cacheKey,$exportData);
+            $GLOBALS['FORCE_CANCEL'] = true;
             return false;
         }
 
         $exportData['log'] .= '. ';
+        $exportData['processedCount']++;
         $this->updateExport($cacheKey,$exportData);
         return true;
     }
@@ -677,6 +683,7 @@ class ExportSpout extends BaseRepository
          */        
         $GLOBALS['synapse_export_isBreaking'] = false;
         $GLOBALS['first_row'] = true;
+        $GLOBALS['FORCE_CANCEL'] = false;
         $this->chunkWithLimit($data,100,$offset,$limit, function ($chunkedData) use(
             $cacheKey, 
             $isFirstRow,
@@ -692,7 +699,6 @@ class ExportSpout extends BaseRepository
             $chunkedData = $chunkedData->toArray();
             
             usleep(200);
-            $lastId = 0;
 
             foreach ($chunkedData as $dataRow) {
                 if(!empty($exportData['template']['coreMainLoopingMethod'])){
@@ -708,9 +714,7 @@ class ExportSpout extends BaseRepository
                 // jika false berarti di cancel
                 if($this->_checkAndCounter($cacheKey)==false){
                     return false;
-                }
-
-                $this->exportIncrementProcessedCount($cacheKey);                
+                }            
 
                 //jika tanpa template dan row 1 maka simpan nama2 kolomnya, untuk dijadikan header caption
                 if($isFirstRow && empty($exportData['template']['filepath'])){                
@@ -728,14 +732,6 @@ class ExportSpout extends BaseRepository
                         WriterEntityFactory::createRowFromArray($headerColumn,$styleHeading)
                     );
                     
-                    // if($exportData['driver']=='phpspreadsheet'){
-                    //     $reader = Excel::setCell($reader, $headerColumn);
-                    //     $reader = Excel::setBorder($reader,'A1:'.Excel::excol($countHeader).'1');
-                    //     $reader = Excel::setFontBold($reader,'A1:'.Excel::excol($countHeader).'1');
-                    //     $reader = Excel::setBackground($reader,'A1:'.Excel::excol($countHeader).'1','CCCCCC');
-                    // }else{
-
-                    // }
                     $isFirstRow = false;//tandai flag first row agar tidak masuk ke sini lg di row selanjutnya
                 }
 
@@ -755,8 +751,7 @@ class ExportSpout extends BaseRepository
                 );
 
                 $GLOBALS['synapse_export_indexExcelRow']++;
-                $GLOBALS['synapse_export_indexData']++;    
-                $lastId = $dataRow['id'];            
+                $GLOBALS['synapse_export_indexData']++;         
             }
             
             //break proses setiap kurang dari setengah jam 
@@ -772,8 +767,7 @@ class ExportSpout extends BaseRepository
             }
         });
 
-        $exportData = $this->getExport($cacheKey);
-        if($exportData==false || $exportData['forceCancle']==1)return false;
+        if($GLOBALS['FORCE_CANCEL'])return false;
 
         if($GLOBALS['synapse_export_isBreaking'])return true;
         
@@ -942,13 +936,6 @@ class ExportSpout extends BaseRepository
 
     }
 
-    public function exportIncrementProcessedCount($cacheKey)
-    {
-        $exportData = $this->getExport($cacheKey);
-        $exportData['processedCount']++;
-        $this->updateExport($cacheKey,$exportData);
-    }
-
     private function isExportJobsPerTenant($cacheKey)
     {
         $exportData = $this->getExport($cacheKey);
@@ -975,13 +962,10 @@ class ExportSpout extends BaseRepository
 
         // unlink($exportData['filepath']);
         rename($tmpFilename, $exportData['filepath']);
-
-        //pastikan semua selesai dan memory di-free-kan kembali
-        // $reader->disconnectWorksheets();// Good to disconnect
-        // $reader->garbageCollect(); // Add this too
+        
         $reader = null;
         $writer = null;
-        unset($objWriter, $reader);
+        unset($writer, $reader);
 
         $exportData['isResumeJob'] = true;
         $exportData['resumeJobParam']['lastExcelRow'] = $lastExcelRow;
