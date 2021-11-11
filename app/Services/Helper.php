@@ -34,6 +34,11 @@ class Helper
         return isset($this->hari[$date->dayOfWeek])?$this->hari[$date->dayOfWeek]:'';
     }
 
+    public function indMonth($dateString) {
+        $date = new Carbon($dateString);
+        return isset($this->bulan[$date->month])?$this->bulan[$date->month]:'';
+    }
+
     /**
      * 
      */
