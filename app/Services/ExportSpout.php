@@ -698,7 +698,7 @@ class ExportSpout extends BaseRepository
             
             $chunkedData = $chunkedData->toArray();
             
-            usleep(200);
+            usleep(100);
 
             foreach ($chunkedData as $dataRow) {
                 if(!empty($exportData['template']['coreMainLoopingMethod'])){

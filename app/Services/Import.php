@@ -469,7 +469,8 @@ class Import extends BaseRepository
         // pastikan format data nya sudah ada, jika belum ada maka generate default
         if(empty($importData['format']['formatRow']) || empty($importData['format']['coreRowFormaterMethod']))
             $importData['format']['formatRow'] = $this->formatImportDefault($importData);
-
+        
+        $startTime = microtime(true);        
         // let's read the entire spreadsheet...
         foreach ($reader->getSheetIterator() as $sheetIndex => $sheet) {
             foreach ($sheet->getRowIterator() as $row) {
@@ -510,6 +511,10 @@ class Import extends BaseRepository
 
                 $this->iimportIncrementProcessedCount($cacheKey);
                 $idxRow++;
+
+                if((microtime(true)-$startTime)>=10){
+                    usleep(100);
+                }
             }
         }
 
