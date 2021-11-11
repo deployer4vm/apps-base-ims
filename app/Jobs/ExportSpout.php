@@ -23,7 +23,7 @@ class ExportSpout implements ShouldQueue
     public $cacheKey,$curQueue,$startTime;
 
     public $tries = 1;
-    // public $retryAfter = 10;
+    public $retryAfter = 10;
     public $timeout = 36000;
     
     /**
@@ -39,7 +39,7 @@ class ExportSpout implements ShouldQueue
         $this->curQueue = $curQueue;
         $this->startTime = now()->format('Y-m-d H:i:s');
     }
-
+    
     public function failed(Throwable $error)
     {        
         FExport::setExportJobFailed($this->cacheKey,$error);

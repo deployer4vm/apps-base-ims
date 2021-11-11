@@ -17,7 +17,12 @@ class Tcpdf
     public function init(array $config=[]) 
     {
         error_reporting(0);
-        $this->TCPDF = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);		
+        if(isset($config['class'])){
+            $this->TCPDF = new $config['class'](PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);	
+        }else{
+            $this->TCPDF = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);	
+        }
+        	
 
 		// set document information
 		$this->TCPDF->SetCreator(PDF_CREATOR);
