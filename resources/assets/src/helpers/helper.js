@@ -22,6 +22,13 @@ export default {
         //     return +(Math.round(+arr[0] + "e" + sig + (+arr[1] + scale)) + "e-" + scale);
         // }
     },
+    
+    countDecimals(value) {
+        if(typeof value == 'undefined')return 0;
+        if (Math.floor(value) !== value)
+            return value.toString().split(".")[1].length || 0;
+        return 0;
+    },
     /**
      * convert array to query string
      **/

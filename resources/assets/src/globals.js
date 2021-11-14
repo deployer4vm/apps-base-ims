@@ -182,15 +182,15 @@ formater.format = {
     decimalMask: textMaskAddons.createNumberMask(formater.config.decimalMask),//mask with decimal 
     // -- set mask dengan config tambahan/update an
     currencyMaskWithConfig: function(addsConfig){
-        let config = _.merge(formater.config.currencyMask,addsConfig);
+        let config = _.merge(JSON.parse(JSON.stringify(formater.config.currencyMask)),addsConfig);
         return textMaskAddons.createNumberMask(config);
     },    
     numberMaskWithConfig: function(addsConfig){
-        let config = _.merge(formater.config.numberMask,addsConfig);
+        let config = _.merge(JSON.parse(JSON.stringify(formater.config.numberMask)),addsConfig);
         return textMaskAddons.createNumberMask(config);
     },    
     decimalMaskWithConfig: function(addsConfig){
-        let config = _.merge(formater.config.decimalMask,addsConfig);
+        let config = _.merge(JSON.parse(JSON.stringify(formater.config.decimalMask)),addsConfig);
         return textMaskAddons.createNumberMask(config);
     },     
 };
@@ -199,8 +199,11 @@ formater.format = {
  * format function nya
  */
 
-formater.formatCurrency = function(number) {
-    if(isNaN(number))number = formater.resetNumber(number);
+formater.formatCurrency = function(number,decimalLimit=0) {
+    if(isNaN(number))number = formater.resetNumber(number); 
+
+    if(decimalLimit>0)
+        var config = formater.format.currencyMaskWithConfig({decimalLimit:decimalLimit});   
 
     if(formater.config.currencyMask.decimalSymbol == ','){
         number = String(number);
@@ -210,7 +213,7 @@ formater.formatCurrency = function(number) {
     }
     return conformToMask(
             number,
-            formater.format.currencyMask,
+            (typeof config !== 'undefined')?config:formater.format.currencyMask,
             {guide: false}
         ).conformedValue;
 };
@@ -226,8 +229,11 @@ formater.formatNumber = function(number) {
         ).conformedValue;
 };
 
-formater.formatDecimal = function(number) {
+formater.formatDecimal = function(number,decimalLimit=0) {
     if(isNaN(number))number = formater.resetNumber(number);
+
+    if(decimalLimit>0)
+        var config = formater.format.decimalMaskWithConfig({decimalLimit:decimalLimit});
 
     if(formater.config.decimalMask.decimalSymbol == ','){
         number = String(parseFloat(number));
@@ -237,7 +243,7 @@ formater.formatDecimal = function(number) {
     }
     return conformToMask(
             number,
-            formater.format.decimalMask,
+            (typeof config !== 'undefined')?config:formater.format.decimalMask,
             {guide: false}
         ).conformedValue;
 };
