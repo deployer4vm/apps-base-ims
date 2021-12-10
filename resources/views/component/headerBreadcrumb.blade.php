@@ -1,4 +1,4 @@
-<?php 
+<?php
 /**
  * @param String $title *optional
  * @param String|Array $goback *optional
@@ -11,9 +11,9 @@ $goback = is_array($goback)?route($goback[0],isset($goback[1])?$goback[1]:[]):$g
     <div class="d-flex align-items-center">
         @if($goback)
         <b-btn
-            class="p-3 rounded-0 btn btn-outline-default bg-light border-right d-inline-block borderless text-muted text-nowrap" 
+            class="p-3 rounded-0 btn btn-outline-default bg-light border-right d-inline-block borderless text-muted text-nowrap"
             href="{{$goback}}"
-        > 
+        >
             <span class="ion ion-ios-arrow-back"></span>&nbsp; {{__('lang.back')}}
         </b-btn>
         @endif
