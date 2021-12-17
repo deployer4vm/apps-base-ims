@@ -22,10 +22,10 @@
         
         <ul class="nav nav-tabs">
             <li class="nav-item">
-                <a class="nav-link" href="{{route('system.queue.export.list')}}"><h3 class="m-0">Export Jobs List</h3></a>
+                <a class="nav-link" href="{{route('system.queue.import.list')}}"><h3 class="m-0">Import Jobs List</h3></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link active" href="#"><h3 class="m-0">Export History</h3></a>
+                <a class="nav-link active" href="#"><h3 class="m-0">Import History</h3></a>
             </li>
         </ul>
         
@@ -38,7 +38,7 @@
                     <tr>
                         <th>No</th>
                         <th>User</th>
-                        <th>Export Key</th>
+                        <th>Import Key</th>
                         <th style="width: 100px;">Aksi</th>
                     </tr>
                 </thead>
@@ -51,10 +51,10 @@
                         <td>{!!$v['user']?('['.$v['user']['id'].'] <b>'.$v['user']['username'].'</b> <i>('.$v['user']['name'].')</i>'):'-'!!}</td>
                         <td>{{$v['cacheKey']}}</td>
                         <td>  
-                            <a href="{{route('system.queue.export.detail',['cacheKey'=>$v['cacheKey'],'isHistory'=>true])}}" class="btn btn-info btn-xs">
+                            <a href="{{route('system.queue.import.detail',['cacheKey'=>$v['cacheKey'],'isHistory'=>true])}}" class="btn btn-info btn-xs">
                                 <i class="ion ion-md-create"></i> Detail
                             </a> &nbsp; 
-                            <a href="{{route('system.queue.export.delete',['cacheKey'=>$v['cacheKey'],'isHistory'=>true])}}" class="btn btn-danger btn-xs">
+                            <a href="{{route('system.queue.import.delete',['cacheKey'=>$v['cacheKey'],'isHistory'=>true])}}" class="btn btn-danger btn-xs">
                                 <i class="ion ion-md-close"></i> Delete
                             </a> 
                         </td>
