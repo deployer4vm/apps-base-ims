@@ -22,10 +22,10 @@
         
         <ul class="nav nav-tabs">
             <li class="nav-item">
-                <a class="nav-link active" href="#"><h3 class="m-0">Export Jobs List</h3></a>
+                <a class="nav-link active" href="#"><h3 class="m-0">Import Jobs List</h3></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{{route('system.queue.export.history')}}"><h3 class="m-0">Export History</h3></a>
+                <a class="nav-link" href="{{route('system.queue.import.history')}}"><h3 class="m-0">Import History</h3></a>
             </li>
         </ul>
         
@@ -42,7 +42,7 @@
                         <th>Queue</th>
                         <th>User</th>
                         <th>Start Time</th>
-                        <th>Export Key</th>
+                        <th>Import Key</th>
                         <th>Data Count</th>
                         <th>Attempts</th>
                         <th style="width: 100px;">Aksi</th>
@@ -57,23 +57,23 @@
                         <td>{{$v['id']}}</td> 
                         <td>{{$v['queue']}}</td> 
                         <td>{!!$v['user']?('['.$v['user']['id'].'] <b>'.$v['user']['username'].'</b> <i>('.$v['user']['name'].')</i>'):'-'!!}</td> 
-                        <td>{{$v['export']['inputTime']}}</td>
+                        <td>{{$v['import']['inputTime']}}</td>
                         <!-- <td><?php echo $v['reserved_at']?date('Y-m-d H:i:s',$v['reserved_at']):''; ?></td>  -->
                         <td>{{$v['formated_payload']['data']['command']['cacheKey']}}</td>
-                        <td>{{number_format($v['export']['count'],0,',','.')}}<br><i>(processed <b>{{number_format($v['export']['processedCount'],0,',','.')}}</b>)</i></td>
+                        <td>{{isset($v['import']['count'])?(number_format($v['import']['count'],0,',','.').'<br>'):''}}<i>(processed <b>{{number_format($v['import']['processedCount'],0,',','.')}}</b>)</i></td>
                         <td>                            
                             @if($v['attempts']>=1)
                             <div class="badge badge-success">
                                 Jobs sedang berjalan
                             </div>   
                             
-                            <a href="{{route('system.queue.export.cancel',['cacheKey'=>$v['formated_payload']['data']['command']['cacheKey']])}}" class="btn btn-danger btn-xs">
+                            <a href="{{route('system.queue.import.cancel',['cacheKey'=>$v['formated_payload']['data']['command']['cacheKey']])}}" class="btn btn-danger btn-xs">
                                 <i class="ion ion-md-close"></i> Cancel Job
                             </a>                          
                             @endif
                         </td> 
                         <td>  
-                            <a href="{{route('system.queue.export.detail',['cacheKey'=>$v['formated_payload']['data']['command']['cacheKey']])}}" class="btn btn-info btn-xs">
+                            <a href="{{route('system.queue.import.detail',['cacheKey'=>$v['formated_payload']['data']['command']['cacheKey']])}}" class="btn btn-info btn-xs">
                                 <i class="ion ion-md-create"></i> Detail
                             </a> 
                         </td>
