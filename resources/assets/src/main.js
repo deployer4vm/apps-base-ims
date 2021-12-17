@@ -127,6 +127,7 @@ var VM = new Vue({
             this.$store.commit('setAppReady');
             var that = this;
             setTimeout(() => {
+                that.layoutHelpers.destroy();
                 that.layoutHelpers.init();
                 that.layoutHelpers.update();
                 that.layoutHelpers.setAutoUpdate(true);                

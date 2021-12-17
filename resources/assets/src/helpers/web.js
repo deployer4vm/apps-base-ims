@@ -1,7 +1,6 @@
 import globals from "@/globals";
 import modulesMultitenant from "@/../../../app/MainApp/resources/js/modulesMultitenant";
 
-
 /**
  * TEMPLATE MAIN HELPER
  * Diakses via this.Web di vue instance atau via globals (globals().Web). Setiap proses yg berhubungan dengan template tidak langsung
@@ -119,6 +118,19 @@ export default {
         this.store.dispatch('reloadTenant',groupApp).then((val)=>{
             this.tenantList = this.store.getters.getTenantList;
         });       
+    },
+    // set tenant aktif adalah aplikasi tenant manager nya
+    setTenantManagementIsActive(group_app='') {
+        this.store.commit('setTenant',{
+            active_tenant_group:[],
+            active_tenant:{
+                id: 0,
+                name: 'Tenant Management',
+                group_app: group_app,
+                is_main: 1,
+            }
+        });
+        this.store.commit('setActiveTenant');
     },
     /**
      * get defautl tenant route, format :
@@ -249,7 +261,6 @@ export default {
     setModule(module) {
         this.store.commit("setModule", module);
         return this;
-
     },
     getModule() {
         return this.store.getters.getModule;

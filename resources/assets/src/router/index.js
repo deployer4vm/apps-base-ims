@@ -23,7 +23,7 @@ Vue.use(Meta);
 var newModulesAdminRoutes = [];
 newModulesAdminRoutes = newModulesAdminRoutes.concat(modulesAdminRoutes);
 
-if(globals().AppConfig.system.multitenant.active && modulesAdminRoutesPerTenant[tenantId]){
+if(tenantId && globals().AppConfig.system.multitenant.active && modulesAdminRoutesPerTenant[tenantId]){
     newModulesAdminRoutes = newModulesAdminRoutes.concat(modulesAdminRoutesPerTenant[tenantId]);
 }
 
@@ -37,7 +37,7 @@ let tmpRoutes = [...projectRoutes];
 // }
 tmpRoutes = tmpRoutes.concat(modulesRoutes);
 
-if(globals().AppConfig.system.multitenant.active && modulesAdminRoutesPerTenant[tenantId]){
+if(tenantId && globals().AppConfig.system.multitenant.active && modulesAdminRoutesPerTenant[tenantId]){
     tmpRoutes.concat(modulesRoutesPerTenant[tenantId]);
 }
 
@@ -49,7 +49,6 @@ const router = new Router({
 
 var _groupApp = '';
 router.afterEach((to, from) => {
-    
 
     if(globals().AppConfig.system.multitenant.active){
         
@@ -61,12 +60,18 @@ router.afterEach((to, from) => {
 
         if(globals().LocalApi.defaults.headers.common["Group-App"] != _groupApp)
             globals().LocalApi.defaults.headers.common["Group-App"] = _groupApp;
-        
+            
         //jika tenant berubah atau jika saat pertama kali akses
         if(_groupApp != globals().Web.getTenantGroupApp()){
             console.log('tenant berubah : old=',globals().Web.getTenantGroupApp(),' , new=',_groupApp);
+
+            // jika sedang di owner apps
+            if(isTenantManagementActive){
+                console.log('tenant management active');
+                globals().Web.setTenantManagementIsActive(globals().AppConfig.system.multitenant.owner_subfolder?globals().AppConfig.system.multitenant.owner_subfolder:'');
+                
             //jika pertama kali akses dan tidak mengakses tenant maka redirect ke default tenant
-            if(_groupApp==undefined && globals().Web.getTenantGroupApp()==''){
+            }else if(_groupApp==undefined && globals().Web.getTenantGroupApp()==''){
                 console.log('First access, go to default tenant (from main router)');
                 globals().Web.goToDefaultTenant();
                 return;

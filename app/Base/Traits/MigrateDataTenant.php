@@ -10,6 +10,27 @@ use App\Facades\Tenant;
  */
 trait MigrateDataTenant
 {
+    public $_tenantMigrateMode = false;
+
+    public function setTenantId($tenantId)
+    {
+        $this->tenantId = $tenantId;
+    }
+
+    public function setTenantMigrateMode($tenantMigrateMode)
+    {
+        $this->_tenantMigrateMode = $tenantMigrateMode;
+    }
+
+    /**
+     * true jika migrasi dijalan dari Tenant service
+     * false jika migrasi dijalan kan dari fitur artisan migrate
+     */
+    public function tenantMigrateMode()
+    {
+        return $this->_tenantMigrateMode;
+    }
+
     public function createPerTenant($table,$bluePrint)
     {
         //jika mode nya tidak share dalam 1 table

@@ -2,15 +2,17 @@
 
 namespace App\Services;
 
+use Exception;
+
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+use App\Base\BaseRepository;
+
 use App\Models\Tenant as MTenant;
 use App\Models\TenantGroup;
 use App\Models\TenantGroupTenant;
-
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Exception;
-
-use App\Base\BaseRepository;
 
 class Tenant extends BaseRepository
 {   
@@ -42,14 +44,70 @@ class Tenant extends BaseRepository
     {
         if(config('AppConfig.system.multitenant.data_mode',1) != 3)
             return config('database.connections.'.config('database.default'));
-        
 
         $dbConfigName = $this->getDbConnectionName($tenantId);
-        $dbConfig = config('database.connections.'.config('database.perTenant'));
-        $dbConfig['database'] = $this->getDbName($tenantId);
-        config(['database.connections.'.$dbConfigName => $dbConfig]);
 
+        // jika multidatabase server aktif maka detek dan sinkronkan konfig db nya
+        if(config('database.multi_database_server.enable',false)){
+            $dbConfig = $this->getDbConnection_getServer($tenantId);
+        }else{
+            $dbConfig = config('database.connections.'.config('database.perTenant'));
+        }
+
+        $dbConfig['database'] = $dbConfig['database_prefix'].$tenantId;
+        config(['database.connections.'.$dbConfigName => $dbConfig]);
+        
         return $dbConfig;
+    }
+
+        private function getDbConnection_getServer($tenantId)
+        {
+            if(config('tenant.id')!=$tenantId){
+                // $tenant = MTenant::select('db')->where('id',$tenantId)->first();
+                $server = config('database.multi_database_server.servers.'.$this->_getTenantById($tenantId)->db);
+            }else{
+                $server = config('database.multi_database_server.servers.'.config('tenant.db'));
+            }
+            
+            return $server;
+        }
+
+    private $_tmpTenantList=[],
+    $_tmpTenantListByGroupApp=[],
+    $_tmpTenantListByDomain=[];
+    
+    private function _getTenantById($tenantId)
+    {
+        if(!isset($this->_tmpTenantList[$tenantId])){
+            $this->_tmpTenantList[$tenantId] = $this->getTenantModel()->where('id',$tenantId)->first();
+            $this->_tmpTenantListByGroupApp[$this->_tmpTenantList[$tenantId]['group_app']] = $this->_tmpTenantList[$tenantId];
+            $this->_tmpTenantListByDomain[$this->_tmpTenantList[$tenantId]['domain']] = $this->_tmpTenantList[$tenantId];
+        }
+
+        return $this->_tmpTenantList[$tenantId];
+    }
+
+    
+    private function _getTenantByGroupApp($groupApp)
+    {
+        if(!isset($this->_tmpTenantListByGroupApp[$groupApp])){
+            $this->_tmpTenantListByGroupApp[$groupApp] = $this->getTenantModel()->where('group_app',$groupApp)->first();
+            $this->_tmpTenantList[$this->_tmpTenantListByGroupApp[$groupApp]['id']] = $this->_tmpTenantListByGroupApp[$groupApp];
+            $this->_tmpTenantListByDomain[$this->_tmpTenantListByGroupApp[$groupApp]['domain']] = $this->_tmpTenantListByGroupApp[$groupApp];
+        }
+
+        return $this->_tmpTenantListByGroupApp[$groupApp];
+    }
+
+    private function _getTenantByDomain($domain)
+    {
+        if(!isset($this->_tmpTenantListByDomain[$domain])){
+            $this->_tmpTenantListByDomain[$domain] = $this->getTenantModel()->where('domain',$domain)->first();
+            $this->_tmpTenantListByGroupApp[$this->_tmpTenantListByDomain[$domain]['group_app']] = $this->_tmpTenantListByDomain[$domain];
+            $this->_tmpTenantList[$this->_tmpTenantListByDomain[$domain]['id']] = $this->_tmpTenantListByDomain[$domain];
+        }
+
+        return $this->_tmpTenantListByDomain[$domain];
     }
 
     /**
@@ -65,10 +123,13 @@ class Tenant extends BaseRepository
      */
     public function getDbName($tenantId)
     {
-        if(config('AppConfig.system.multitenant.data_mode',1) != 3)
-            return config('database.connections.'.config('database.default').'.database');
+        $dbConfig = $this->getDbConnection($tenantId);
+        return $dbConfig['database'];
 
-        return config('database.connections.'.config('database.perTenant').'.database_prefix').$tenantId;
+        // if(config('AppConfig.system.multitenant.data_mode',1) != 3)
+        //     return config('database.connections.'.config('database.default').'.database');
+
+        // return config('database.connections.'.config('database.perTenant').'.database_prefix').$tenantId;
     }
 
     /**
@@ -76,7 +137,8 @@ class Tenant extends BaseRepository
      */
     public function dbExists($tenantId)
     {
-        $schemaName = config("database.connections.".config("database.perTenant").".database_prefix").$tenantId;
+        // $schemaName = config("database.connections.".config("database.perTenant").".database_prefix").$tenantId;
+        $schemaName = $this->getDbName($tenantId);
         $query = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME =  ?";
         $db = DB::select($query, [$schemaName]);
         
@@ -89,6 +151,7 @@ class Tenant extends BaseRepository
      */
     public function setDb($tenantId)
     {        
+        // data_mode : 1 dalam table yg sama, 2 dalam table berbeda tp database sama, 3 beda database
         if(config('AppConfig.system.multitenant.data_mode',1) != 3)
             return true;
             
@@ -101,6 +164,125 @@ class Tenant extends BaseRepository
             config(['database.connections.'.$dbConfigName => $dbConfig]);
         }
         return true;
+    }
+
+    /**
+     * memigrasikan seluruh migrasi per tenant di 1 tenant baru
+     */
+    public function migrate($tenantId)
+    {
+        //jika database belum ada maka tolak
+        if (!$this->dbExists($tenantId)) {
+            return false;
+        }
+
+        $migrations = config('hpsynapse.migration_path');
+        foreach ($migrations as $migrationpath) {
+            $migrationFileList = glob($migrationpath.DIRECTORY_SEPARATOR.'*.php');
+            foreach ($migrationFileList as $migration) {  
+                include_once $migration;
+                $migrationClass = ucfirst(Str::camel(substr(str_replace('.php','',basename($migration)),18)));                
+                $tmpClass = new $migrationClass;
+                if(method_exists($tmpClass,'tenantMigrateMode')){
+                    if(!property_exists($tmpClass,'tenantId') || $tmpClass->tenantId==$tenantId){
+                        $tmpClass->setTenantMigrateMode(true);
+                        $tmpClass->setTenantId($tenantId);
+                        $tmpClass->up();
+                    }
+                }
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * create database per Koperasi, saat ini hanya support MariaDB/MySQL
+     */
+    public function createDatabase($tenantId,$dbServerId=0)
+    {
+        if(
+            ($dbServerId==0 && config('xmlapi.dbcreate_use_cpanel')) ||
+            ($dbServerId!=0 && config("database.multi_database_server.servers.".$dbServerId.".cpanel.dbcreate_use_cpanel",false)) 
+        ) {
+            return $this->createDatabaseCpanel($tenantId,$dbServerId);
+        }else{
+            return $this->createDatabaseSql($tenantId,$dbServerId);
+        }
+    }
+
+    /**
+     * create database menggunakan query sql
+     */
+    public function createDatabaseSql($tenantId,$dbServerId=0)
+    {
+        
+        //jika database sudah ada maka tolak
+        if ($this->dbExists($tenantId)) {
+            return false;
+        }
+
+        // jika di server db utama
+        if($dbServerId==0){
+            $schemaName = config("database.connections.".config("database.perTenant").".database_prefix").$tenantId;
+            $charset = config("database.connections.".config("database.perTenant").".charset",'utf8mb4');
+            $collation = config("database.connections.".config("database.perTenant").".collation",'utf8mb4_general_ci');
+            DB::statement("CREATE DATABASE IF NOT EXISTS $schemaName CHARACTER SET $charset COLLATE $collation;");
+        }else{
+            $schemaName = config("database.multi_database_server.servers.".$dbServerId.".database_prefix").$tenantId;
+            $charset = config("database.multi_database_server.servers.".$dbServerId.".charset",'utf8mb4');
+            $collation = config("database.multi_database_server.servers.".$dbServerId.".collation",'utf8mb4_general_ci');
+
+            $pdo = new \PDO(
+                "mysql:host=".config("database.multi_database_server.servers.".$dbServerId.".host"), 
+                config("database.multi_database_server.servers.".$dbServerId.".username"), 
+                config("database.multi_database_server.servers.".$dbServerId.".password")
+            );
+            // $pdo = Tenant::getDbRawPDO($koperasiId);
+            $pdo->exec("CREATE DATABASE IF NOT EXISTS $schemaName CHARACTER SET $charset COLLATE $collation;");
+        }
+        // generate connection config per tenant nya
+        // Tenant::getDbConnection($koperasiId);
+        // DB::connection(Tenant::getDbConnectionName($koperasiId))->statement("CREATE DATABASE IF NOT EXISTS $schemaName CHARACTER SET $charset COLLATE $collation;");
+        
+        return true;
+    }
+
+    /**
+     * create database menggunakan api cpanel
+     */
+    public function createDatabaseCpanel($tenantId,$dbServerId=0)
+    {
+        
+        // jika di server db utama
+        if($dbServerId==0){
+            $dbPrefix = config("database.connections.".config("database.perTenant").".database_prefix");
+            $cpanel = [
+                'username' => config('xmlapi.username'), 
+                'password' => config('xmlapi.password'), 
+                'domain' => config('xmlapi.domain')        
+            ];
+        }else{
+            $dbPrefix = config('database.multi_database_server.servers.'.$dbServerId.'.database_prefix');
+            $cpanel = [
+                'username' => config('database.multi_database_server.servers.'.$dbServerId.'.cpanel.username'), 
+                'password' => config('database.multi_database_server.servers.'.$dbServerId.'.cpanel.password'), 
+                'domain' => config('database.multi_database_server.servers.'.$dbServerId.'.cpanel.domain')        
+            ];            
+        }
+
+        $schemaName = $dbPrefix.$tenantId;
+        $uapi = new \App\Services\cpanelAPI(
+            $cpanel['username'], 
+            $cpanel['password'], 
+            $cpanel['domain']
+        ); //instantiate the object
+        $ret = $uapi->uapi->Mysql->create_database(array('name' => $schemaName));
+
+        if($ret->status==0)
+            $this->error = $ret->errors[0];        
+
+        return $ret->status?true:false;
     }
 
     /**
@@ -211,6 +393,7 @@ class Tenant extends BaseRepository
     public function db($tenantId=false)
     {
         if(!$tenantId)$tenantId=config('tenant.id');
+        $this->getDbConnection($tenantId);// generate dulu confignya
         return DB::connection($this->getDbConnectionName($tenantId));
     }
 
@@ -219,7 +402,7 @@ class Tenant extends BaseRepository
      */
         
     /**
-     * START - GROUP MANAGE ACTIAVE TENANT
+     * START - GROUP MANAGE ACTIVE TENANT
      */
     private function getTenantModel()
     {
@@ -232,24 +415,50 @@ class Tenant extends BaseRepository
     
     public function setActiveTenantById($tenantId)
     {
-        $tenant = $this->getTenantModel()->where('id',$tenantId)->first();
+        $tenant = $this->_getTenantById($tenantId);//$this->getTenantModel()->where('id',$tenantId)->first();
         if($tenant)
             $this->setActiveTenant($tenant->toArray());
     }
-
-    public function setActiveTenantByGroup($appGroup)
+    
+    public function setActiveTenantByGroup($appGroup=false)
     {
-        $tenant = $this->getTenantModel()->where('group_app',$appGroup)->first();
-        if($tenant)
-            $this->setActiveTenant($tenant->toArray());
-    }
+        if(!$appGroup)
+            if(!($appGroup = request()->header('Group-App',false))){
+                if(!($appGroup = request()->route('group_app',false))){ 
+                    $appGroup = request()->input('group_app',false);
+                }
+            }
+        
+        // jika mengakses aplikasi tenant
+        if(
+            (!$appGroup && config('AppConfig.system.multitenant.owner_subfolder','')=='') || 
+            ($appGroup && $appGroup == config('AppConfig.system.multitenant.owner_subfolder'))
+        ){
+            $this->setTenantManagementIsActive();
+        }else{
 
+            $tenant = $this->_getTenantByGroupApp($appGroup);//$this->getTenantModel()->where('group_app',$appGroup)->first();
+            if($tenant)
+                $this->setActiveTenant($tenant->toArray());
+        }
+    }
+    
+    /**
+     * set active tenant by domain
+     * fungsi ini dieksekusi di RouteServiceProvider utama jika multi tentant nya didetect via subdomain
+     */
     public function setActiveTenantByDomain($domain=false)
     {
         $domain = $domain?$domain:request()->getHttpHost();
-        $tenant = $this->getTenantModel()->where('domain',$domain)->first();
-        if($tenant)
-            $this->setActiveTenant($tenant->toArray());
+        
+        // jika mengakses domain owner maka tandai sebagai koneksi domain owner
+        if($domain==config('AppConfig.system.multitenant.owner_domain')){
+            $this->setTenantManagementIsActive();
+        }else{
+            $tenant = $this->_getTenantByDomain($domain);//$this->getTenantModel()->where('domain',$domain)->first();
+            if($tenant)
+                $this->setActiveTenant($tenant->toArray());
+        }
     }
 
     public function setActiveTenant(array $dataTenant)
@@ -271,6 +480,26 @@ class Tenant extends BaseRepository
     {
         return config($field?('tenant.'.$field):'tenant');
     }
+    
+    /**
+     * set aplikasi yang sedang aktif adalah tenant management (owner) bukan aplikasi per tenantnya
+     */
+    public function setTenantManagementIsActive()
+    {
+        $config = app('config');
+        $config->set('tenant',['isTenantManagementActive'=>true]);
+    }
+
+    /**
+     * apakah yang aktif sekarang adalah aplikasi tenant managementnya ?
+     * 
+     * @return Boolean true jika yang aktif adalah aplikasi tenant management, false jika bukan
+     */
+    public function isTenantManagementActive() 
+    {
+        return config('tenant.isTenantManagementActive',false);
+    }
+    
     
     /**
      * END - GROUP MANAGE ACTIAVE TENANT

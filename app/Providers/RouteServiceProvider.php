@@ -46,14 +46,7 @@ class RouteServiceProvider extends ServiceProvider
     {
         // jika detect by subfolder
         if(config('AppConfig.system.multitenant.detect_mode',1)==1){
-            if(!($appGroup = request()->header('Group-App'))){
-                if(!($appGroup = request()->route('group_app'))){ 
-                    $appGroup = request()->input('group_app');
-                }
-            }
-            
-            if($appGroup)
-                \App\Facades\Tenant::setActiveTenantByGroup($appGroup); 
+            \App\Facades\Tenant::setActiveTenantByGroup(); 
 
         // jika detect by subdomain
         }else{

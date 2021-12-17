@@ -1,11 +1,15 @@
 <?php
 
-namespace App\Http\Middleware;
+namespace App\Http\Middleware\DELETED;
 
 use Closure;
 // use Illuminate\Support\Facades\Auth;
 use App\Facades\Tenant;
 
+/**
+ * SUDAH TIDAK DIGUNAKAN
+ * dipindah ke routeserviceprovider
+ */
 class AppGroupCheck
 {
     /**

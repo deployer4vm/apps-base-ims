@@ -6,6 +6,7 @@ let AppConfig = {
     binding: require("../../../app/MainApp/config/_binding.json"),
     client: require("../../../app/MainApp/config/_client.json"),
     packageLocal: require("../../../app/MainApp/config/_packageLocal.json"),
+    packageLocalPerTenant: require("../../../app/MainApp/config/_packageLocalPertenant.json"),
     package: require("../../../app/MainApp/config/package.json"),
     // listener: require("../../../app/MainApp/config/listener.json"),
     endpoint: require("../../../app/MainApp/config/_endpoint.json"),
@@ -20,21 +21,8 @@ AppConfig.isModuleEnable = function(module) {
 AppConfig['sidenavOri'] = JSON.parse(JSON.stringify(AppConfig.sidenav));
 
 // jika multi tenant aktif maka replace packageLocal utama dengan packageLocalPerTenant
-if(AppConfig.system.multitenant.active && AppConfig.packageLocalPerTenant[tenantId]){
+if(tenantId && AppConfig.system.multitenant.active && AppConfig.packageLocalPerTenant[tenantId]){
     AppConfig.packageLocal = AppConfig.packageLocalPerTenant[tenantId];
 }
-
-// let varPackageLocal = require("../../../app/MainApp/config/packageLocal.json");
-// let varPackageLocalEnv = require("../../../app/MainApp/config/packageLocalEnv.json");
-
-// _.forEach(AppConfig.package, (value, index) => {
-//     AppConfig.packageLocal[value.package_namespace] = _.merge(
-//         _.merge(
-//             AppConfig.package[value.package_namespace],
-//             varPackageLocal[value.package_namespace]
-//         ),
-//         varPackageLocalEnv[value.package_namespace]
-//     );
-// });
 
 export default AppConfig;

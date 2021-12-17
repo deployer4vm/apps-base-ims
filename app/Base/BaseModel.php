@@ -26,8 +26,30 @@ class BaseModel extends Model
      */
     public function getFillable()
     {
-        if(empty($this->fillable))$this->setAutoFillable();
+        if(empty($this->fillable))$this->setAutoFillableWithCache();
         return $this->fillable;
+    }
+
+    /**
+     * fungsinya untuk load list field tidak live query ke database, tapi ambil dari cache
+     */    
+    public function setAutoFillableWithCache()
+    {
+        $tableName = $this->getTable();
+        $key = 'autoFillable-'.$this->getConnectionName().'-'.$tableName;
+        $fillableKeyList = CacheConfig::getConfig('autoFillable-list',[],false);
+        $fillable = CacheConfig::getConfig($key,false,false);
+        if($fillable && in_array($key,$fillableKeyList)){
+            $this->fillable = $fillable;
+        }else{
+            $this->setAutoFillable();
+            CacheConfig::setConfig('autoFillable-'.$this->getConnectionName().'-'.$tableName, $this->fillable);
+
+            if(!in_array($key,$fillableKeyList))
+                $fillableKeyList[] = $key;
+                
+            CacheConfig::setConfig('autoFillable-list', $fillableKeyList);
+        }        
     }
 
     public function setAutoFillable()
@@ -37,26 +59,6 @@ class BaseModel extends Model
         $this->fillable = array_filter($fields,function($v) use ($guarded) {
             return !in_array($v,$guarded);
         });
-
-    }
-    
-    /**
-     * BELUM DIGUNAKAN : hasilnya masih belum sesuai, jadi nanti pikirikan lagi
-     * fungsinya untuk load list field tidak live query ke database, tapi ambil dari cache
-     */
-    public function setAutoFillableWithCache()
-    {
-        $tableName = $this->getTable();
-        $guarded = $this->getGuarded();
-        $fillable = CacheConfig::getConfig('autoFillable-'.$tableName,false,false);
-        if(!$fillable){
-            $fields = Schema::connection($this->getConnectionName())->getColumnListing($tableName);
-            $fillable = array_filter($fields,function($v) use ($guarded) {
-                return !in_array($v,$guarded);
-            });
-            CacheConfig::setConfig('autoFillable-'.$tableName,$fillable);
-        }
-        return $fillable;
     }
     
     public function createdby()
