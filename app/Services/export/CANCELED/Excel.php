@@ -72,6 +72,7 @@ class Excel
     public function insertRow(&$reader,$row, $templateVar){
         return $this->driver->insertRow($reader,$row, $templateVar);
     }
+    
     /**
      * write data ke berdasarkan cell nya
      */

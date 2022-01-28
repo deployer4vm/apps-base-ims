@@ -10,7 +10,7 @@ use App\Base\BaseController;
 /**
  * handle serving file yang sudah diupload
  */
-class UploadController extends BaseController
+class StorageController extends BaseController
 {
     /**
      * Create a new controller instance.

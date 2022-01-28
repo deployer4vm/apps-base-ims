@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 use App\Base\BaseRepository;
 
@@ -307,7 +308,8 @@ class Tenant extends BaseRepository
      * 
      * @return Boolean true jika berhasil, false atau throw error jika gagal
      */
-    public function dbBeginTransactionIfNotExist($that, $func, $rollbackFunc=null){
+    public function dbBeginTransactionIfNotExist($that, $func, $rollbackFunc=null)
+    {
         // jika belum ada transaksi aktif maka aktifkan
         $dontHaveTransactionLevel = !$this->dbTransactionLevel();
         
@@ -528,5 +530,81 @@ class Tenant extends BaseRepository
         }
         $this->error = __('lang.data_attribute_not_found',['attribute'=>'Tenant']);
         return false;
+    }    
+    
+    /**
+     * STORAGE
+     */
+
+    /**
+     * get disk yang digunakan tenant yang disertakan, jika tidak ada maka akan
+     * return disk default.
+     * 
+     * @param Integer Id tenant, jika 0 berarti akan ambil tenant yang aktif
+     * 
+     * @return String nama disknya
+     */
+    public function storageGetDisk($tenantId=0)
+    {
+        $disk = config('filesystems.default');
+        $serverId = config('tenant.s3storage',0);
+        
+        // jika mendefinisikan id tenant
+        if($tenantId && config('tenant.id',0) != $tenantId){
+            $tmpTenant = $this->getTenantModel()->select('s3storage')->where('id',$tenantId)->first();
+            if($tmpTenant){
+                $serverId = $tmpTenant->s3storage;
+            }
+        }
+
+        // jika multi tenant aktif dan menggunakan s3 storage
+        if(
+            config('AppConfig.system.multitenant.active') && 
+            config('filesystems.s3_multi_server') && 
+            $serverId != 0 && 
+            config('filesystems.disks.s3_'.$serverId,false)!=false
+        ){
+            $disk = 's3_'.config('tenant.s3storage');
+        }
+
+        return $disk;
+    }
+
+    /**
+     * get Storage instance per tenant
+     * 
+     * @param Integer Id tenant, jika 0 berarti akan ambil tenant yang aktif
+     * @return StorageInstance
+     */
+    public function storage($tenantId=0)
+    {
+        return Storage::disk($this->storageGetDisk($tenantId));
+    }
+
+    /**
+     * get apakah tenant tersebut menggunakan storage S3 atau tidak
+     * 
+     * @param Integer Id tenant, jika 0 berarti akan ambil tenant yang aktif
+     */
+    public function storageIsS3($tenantId=0)
+    {
+        return config('filesystems.disks.'.$this->storageGetDisk($tenantId).'.driver','local') == 's3'?true:false;
+    }
+
+    /**
+     * get apakah tenant tersebut menggunakan storage S3 per tenant
+     * 
+     * @param Integer Id tenant, jika 0 berarti akan ambil tenant yang aktif
+     */
+    public function storageIsS3tenant($tenantId=0)
+    {
+        $serverId = config('tenant.s3storage',0);
+        if($tenantId && config('tenant.id',0) != $tenantId){
+            $tmpTenant = $this->getTenantModel()->select('s3storage')->where('id',$tenantId)->first();
+            if($tmpTenant){
+                $serverId = $tmpTenant->s3storage;
+            }
+        }
+        return $serverId>0?true:false;
     }
 }

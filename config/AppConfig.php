@@ -211,7 +211,7 @@ $sidenav = [];
 if (!function_exists('processAcl')) {
     function processAcl($acl,$packageName,$aclPrefix,$children){
         foreach ($children as $aclId => $value) {
-            if($value['enable'] && $value['acl_config']['show']){
+            if(isset($value['enable']) && $value['enable'] && $value['acl_config']['show']){
                 $aclPrefixTmp = $aclPrefix.'.'.$aclId;
 
                 $acl[$packageName]['children'][$aclPrefixTmp] = $value['acl_config'];
@@ -238,7 +238,7 @@ if (!function_exists('processSidenav')) {
     function processSidenav($children){
         $res = [];
         foreach ($children as $aclId => $value) {
-            if($value['enable'] && $value['is_navbar']){
+            if(isset($value['enable']) && $value['enable'] && $value['is_navbar']){
                 $res[$aclId] = $value;
                 //jika masih ada child nya proses terus
                 if(isset($value['children'])){
