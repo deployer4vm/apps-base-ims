@@ -23,7 +23,7 @@ Vue.use(Meta);
 var newModulesAdminRoutes = [];
 newModulesAdminRoutes = newModulesAdminRoutes.concat(modulesAdminRoutes);
 
-if(tenantId && globals().AppConfig.system.multitenant.active && modulesAdminRoutesPerTenant[tenantId]){
+if(globals().AppConfig.system.multitenant.active && typeof tenantId !== 'undefined' && modulesAdminRoutesPerTenant[tenantId]){
     newModulesAdminRoutes = newModulesAdminRoutes.concat(modulesAdminRoutesPerTenant[tenantId]);
 }
 
@@ -37,7 +37,7 @@ let tmpRoutes = [...projectRoutes];
 // }
 tmpRoutes = tmpRoutes.concat(modulesRoutes);
 
-if(tenantId && globals().AppConfig.system.multitenant.active && modulesAdminRoutesPerTenant[tenantId]){
+if(globals().AppConfig.system.multitenant.active && typeof tenantId !== 'undefined' && modulesAdminRoutesPerTenant[tenantId]){
     tmpRoutes.concat(modulesRoutesPerTenant[tenantId]);
 }
 
