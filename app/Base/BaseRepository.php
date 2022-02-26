@@ -176,7 +176,9 @@ abstract class BaseRepository {
                 $filter, 
                 isset($arguments[1])?$arguments[1]:0, 
                 isset($arguments[2])?$arguments[2]:0, 
-                isset($arguments[3])?$arguments[3]:[]);
+                isset($arguments[3])?$arguments[3]:[], 
+                isset($arguments[4])?$arguments[4]:false
+            );
         }
         
         throw new Exception("Method $name is not defined");
@@ -612,14 +614,16 @@ abstract class BaseRepository {
      *      with                    array|string        list custom relation yg akan ditampilkan
      *      idAsKey                 boolean             true jika key data menggunakan ID, false jika urutan array default (default false)
      *     
-     *      ADDITIONAL_PARAM array where untuk default filter
+     *      ADDITIONAL_PARAM        array               where untuk default filter
      * @param int $offset
-     * @param int $limit jika 0 maka view all
-     * @param array $orderBy [['field','DESC/ASC'],['other_field','ASC/DESC']] atau array 1 level jika memang cuma 1 yg di order by nya
+     * @param int $limit                jika 0 maka view all
+     * @param array $orderBy            [['field','DESC/ASC'],['other_field','ASC/DESC']] atau array 1 level jika memang cuma 1 yg di order by nya
+     * @param Boolean $returnModel      True jika yang direturn hasil model eloquen, False jika format _list synapse
+     *                                  Jika true berarti fungsi2 setelah builder (seperti apend) tidak akan tereksekusi
      * 
      * @return array
      */
-    final protected function _list($model, array $filter = [], int $offset = 0, int $limit = 0, array $orderBy = []) 
+    final protected function _list($model, array $filter = [], int $offset = 0, int $limit = 0, array $orderBy = [], $returnModel=false) 
     {
 
         if (!empty($orderBy)) {
@@ -678,6 +682,9 @@ abstract class BaseRepository {
             //     $this->pagination['data'] = $model->get()->toArray();
             // }
             
+            if($returnModel)
+                return $model;
+                
             $this->_tmpListData = [];
             $this->chunkWithLimit($model,100,$offset,$limit?$limit:null, function ($chunkedData) use($appendAttribut) {
                 // $model->chunk(100, function ($data) use($appendAttribut) {

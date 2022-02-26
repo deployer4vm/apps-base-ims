@@ -94,6 +94,12 @@ export default {
     isMultiTenant() {
         return this.multitenantConfig.active?true:false;
     },
+    isTenantLoaded() {
+        return this.store.getters.isTenantLoaded;
+    },
+    isOnTenantManager() {
+        return this.store.getters.isOnTenantManager;
+    },
     getEndpoint(endPoint) {
         return endPoint.replace(':group_app',this.router.currentRoute.params.group_app);
     },

@@ -52,10 +52,14 @@ export default {
     },
     methods:{
         goBack() {
-            if(this.backToTopWindow){
-                this.topWindowHref(this.backPath);
+            if(this.backPath){
+                if(this.backToTopWindow && typeof this.topWindowHref == 'function'){
+                    this.topWindowHref(this.backPath);
+                }else{
+                    this.$router.push(this.backPath);
+                }
             }else{
-                this.$router.push(this.backPath);
+                this.$router.go(-1);
             }
         },
         breadcrumbLink(ev) {

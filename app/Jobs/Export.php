@@ -56,7 +56,8 @@ class Export implements ShouldQueue
             FExport::processExport($this->cacheKey,$this->curQueue);        
         } catch (Exception $e) {
             Log::error('Export Jobs '.$this->cacheKey.' ERROR : '.$e->getMessage());
-            throw $e;
+            FExport::setExportJobFailed($this->cacheKey,$e);
+            // throw $e;
         }
     }
 }
