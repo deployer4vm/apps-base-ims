@@ -9,6 +9,10 @@ use Carbon\Carbon;
  */
 trait ResCacheTrait {    
     
+    /**
+     * data cache yang sudah di load di local variable per eksekusi per class (controller, repo, dll), format
+     * $cacheData[$cacheMainPrefix.$prefix][$id] = $dataCache;
+     */
     protected $cacheData;
     protected $cacheIndex;
     protected $cacheIndexField=[];
@@ -18,7 +22,7 @@ trait ResCacheTrait {
      * format :
      *      ['prefix'=> ['method'],..]
      */
-//    private $_cachedMethod = [];
+    // private $_cachedMethod = [];
     //prefix utama
     protected $cacheMainPrefix = '';
     protected $cacheActive = false;
@@ -141,12 +145,14 @@ trait ResCacheTrait {
     }
     
     /**
-     * 
-     * @param string        $prefix
-     * @param string        $key
+     * @param String        $prefix
+     * @param String        $key             id / prefix key per data nya
+     * @param Mix           $defaultValue   default value saat cache belum ada
+     * @param Boolean       $reload         True jika load data cache nya langsung ke cache engine
+     *                                      False jika load data dari local var
      * @return mix
      */
-    protected function _getCache($prefix,$key,$defaultValue=null)
+    protected function _getCache($prefix,$key,$defaultValue=null,$reload=false)
     {
         if($this->skipCache)return null;        
         if(!$this->cacheActive)return null;//$this->_getCacheOnEngine($prefix,$key,$defaultValue);
@@ -154,15 +160,16 @@ trait ResCacheTrait {
         $fullPrefix = $this->cacheMainPrefix.'.'.$prefix;
         $fullPrefixKey = $fullPrefix.'.'.$key;
         
+        //jika sudah diload sebelumnya maka ambil dari local var
+        if($reload==false && isset($this->cacheData[$fullPrefix]) && isset($this->cacheData[$fullPrefix][$key]))
+            return $this->cacheData[$fullPrefix][$key];
+
         if (Cache::store($this->cacheEngine)->has($fullPrefixKey)) {
-            return Cache::store($this->cacheEngine)->get($fullPrefixKey);
+            $this->cacheData[$fullPrefix][$key] = Cache::store($this->cacheEngine)->get($fullPrefixKey);
+            return $this->cacheData[$fullPrefix][$key];
         }
+
         return $defaultValue;
-//        $prefix = $this->cacheMainPrefix.'.'.$prefix;
-//        
-//        if(isset($this->cacheData[$prefix][$id]))
-//            return $this->cacheData[$prefix][$key];
-//        return $defaultValue;
     }    
     
     /**

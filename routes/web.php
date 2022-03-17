@@ -15,19 +15,21 @@ use App\Services\Utilities;
 |
 */
 Route::group(['prefix'=>'system-queue'],function(){
+    // listing and manage export
     Route::group(['prefix'=>'export'],function(){
-        Route::get('list', 'QueueController@listQueue')->name('system.queue.export.list');
-        Route::get('list/history', 'QueueController@historyQueue')->name('system.queue.export.history');
-        Route::get('detail/{cacheKey}', 'QueueController@detailQueue')->name('system.queue.export.detail');
-        Route::get('detail/{cacheKey}/cancel', 'QueueController@cancelQueue')->name('system.queue.export.cancel');
-        Route::get('detail/{cacheKey}/delete', 'QueueController@deleteQueue')->name('system.queue.export.delete');
+        Route::get('list', 'queue\ExportController@listQueue')->name('system.queue.export.list');
+        Route::get('list/history', 'queue\ExportController@historyQueue')->name('system.queue.export.history');
+        Route::get('detail/{cacheKey}', 'queue\ExportController@detailQueue')->name('system.queue.export.detail');
+        Route::get('detail/{cacheKey}/cancel', 'queue\ExportController@cancelQueue')->name('system.queue.export.cancel');
+        Route::get('detail/{cacheKey}/delete', 'queue\ExportController@deleteQueue')->name('system.queue.export.delete');
     });
+    // listing and manage import
     Route::group(['prefix'=>'import'],function(){
-        Route::get('list', 'ImportQueueController@listQueue')->name('system.queue.import.list');
-        Route::get('list/history', 'ImportQueueController@historyQueue')->name('system.queue.import.history');
-        Route::get('detail/{cacheKey}', 'ImportQueueController@detailQueue')->name('system.queue.import.detail');
-        Route::get('detail/{cacheKey}/cancel', 'ImportQueueController@cancelQueue')->name('system.queue.import.cancel');
-        Route::get('detail/{cacheKey}/delete', 'ImportQueueController@deleteQueue')->name('system.queue.import.delete');
+        Route::get('list', 'queue\ImportController@listQueue')->name('system.queue.import.list');
+        Route::get('list/history', 'queue\ImportController@historyQueue')->name('system.queue.import.history');
+        Route::get('detail/{cacheKey}', 'queue\ImportController@detailQueue')->name('system.queue.import.detail');
+        Route::get('detail/{cacheKey}/cancel', 'queue\ImportController@cancelQueue')->name('system.queue.import.cancel');
+        Route::get('detail/{cacheKey}/delete', 'queue\ImportController@deleteQueue')->name('system.queue.import.delete');
     });
 });
 

@@ -24,6 +24,29 @@ class Tenant extends BaseRepository
     ];
     
     /**
+     * apakah yang sekarang aktif adalah project dan tenant id yg diinput
+     */
+	public function isCurrentTenant($project, $tenantId)
+	{
+		$project_code = config('AppConfig.client.project_code');
+		if($project_code != $project){
+			return false;
+		}
+        
+		if (is_array($tenantId)) {
+			if(!in_array(config('tenant.instance_data.id'), $tenantId)){
+				return false;
+			}
+		}else{
+			if(config('tenant.instance_data.id') != $tenantId){
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+    /**
      * START - GROUP MANAGE PEMISAHAN DATABASE ATAU TABLE PER TENANT
      */
 
@@ -49,13 +72,17 @@ class Tenant extends BaseRepository
         $dbConfigName = $this->getDbConnectionName($tenantId);
 
         // jika multidatabase server aktif maka detek dan sinkronkan konfig db nya
-        if(config('database.multi_database_server.enable',false)){
-            $dbConfig = $this->getDbConnection_getServer($tenantId);
+        if(config('database.multi_database_server.enable',false)){            
+            if(!($dbConfig = $this->getDbConnection_getServer($tenantId))){
+                return false;
+            }
         }else{
             $dbConfig = config('database.connections.'.config('database.perTenant'));
         }
 
         $dbConfig['database'] = $dbConfig['database_prefix'].$tenantId;
+        $dbConfig['name'] = $dbConfig['name'].' '.$tenantId;
+
         config(['database.connections.'.$dbConfigName => $dbConfig]);
         
         return $dbConfig;
@@ -64,8 +91,9 @@ class Tenant extends BaseRepository
         private function getDbConnection_getServer($tenantId)
         {
             if(config('tenant.id')!=$tenantId){
-                // $tenant = MTenant::select('db')->where('id',$tenantId)->first();
-                $server = config('database.multi_database_server.servers.'.$this->_getTenantById($tenantId)->db);
+                if(!($tenant = $this->_getTenantById($tenantId)))
+                    return false;
+                $server = config('database.multi_database_server.servers.'.$tenant->db);
             }else{
                 $server = config('database.multi_database_server.servers.'.config('tenant.db'));
             }
@@ -80,7 +108,12 @@ class Tenant extends BaseRepository
     private function _getTenantById($tenantId)
     {
         if(!isset($this->_tmpTenantList[$tenantId])){
-            $this->_tmpTenantList[$tenantId] = $this->getTenantModel()->where('id',$tenantId)->first();
+            
+            if(!($this->_tmpTenantList[$tenantId] = $this->getTenantModel()->where('id',$tenantId)->first())){
+                $this->error = 'Tenant not found';
+                return false;
+            }
+
             $this->_tmpTenantListByGroupApp[$this->_tmpTenantList[$tenantId]['group_app']] = $this->_tmpTenantList[$tenantId];
             $this->_tmpTenantListByDomain[$this->_tmpTenantList[$tenantId]['domain']] = $this->_tmpTenantList[$tenantId];
         }
@@ -123,8 +156,9 @@ class Tenant extends BaseRepository
      * generate and get nama database untuk database pertenant
      */
     public function getDbName($tenantId)
-    {
-        $dbConfig = $this->getDbConnection($tenantId);
+    {        
+        if(!($dbConfig = $this->getDbConnection($tenantId)))
+            return false;
         return $dbConfig['database'];
 
         // if(config('AppConfig.system.multitenant.data_mode',1) != 3)
@@ -147,6 +181,13 @@ class Tenant extends BaseRepository
         return empty($db)?false:true;
     }
 
+    public function tableExists($tableName,$tenantId=false)
+    {
+        if(!$tenantId)$tenantId=config('tenant.id');
+        $this->getDbConnection($tenantId);// generate dulu confignya
+        return Schema::connection($this->getDbConnectionName($tenantId))->hasTable($tableName);
+    }
+    
     /**
      * set connection active database per tenant session saat ini
      */

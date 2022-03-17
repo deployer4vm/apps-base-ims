@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\queue;
 
 use Illuminate\Http\Request;
 
@@ -11,11 +11,11 @@ use App\Facades\Web;
 use App\Facades\Trans;
 
 
-use App\Facades\Import;
+use App\Facades\Export;
 use hpsynapse\moduser\Models\User;
 use Illuminate\Support\Facades\DB;
 
-class ImportQueueController extends BaseController
+class ExportController extends BaseController
 {
     /**
      * Create a new controller instance.
@@ -31,7 +31,7 @@ class ImportQueueController extends BaseController
     {
         $tmpUser = [];
         // -----------------------
-        $this->output['data']['jobs'] = Job::where('payload','LIKE','%\\\\Import\\"%')->orWhere('payload','LIKE','%\\\\Import\\"%')->orderBy('attempts','DESC')->orderBy('queue','ASC')->get()->append(['formated_payload']);
+        $this->output['data']['jobs'] = Job::where('payload','LIKE','%\\\\Export\\"%')->orWhere('payload','LIKE','%\\\\ExportSpout\\"%')->orderBy('attempts','DESC')->orderBy('queue','ASC')->get()->append(['formated_payload']);
         $newJobs = [];
         $i=0;
         foreach($this->output['data']['jobs'] as $v){
@@ -42,7 +42,7 @@ class ImportQueueController extends BaseController
                 $tmpUser[$userId] = User::where('id',$userId)->first();
 
             $newJobs[$i]['user'] = $tmpUser[$userId];
-            $newJobs[$i]['import'] = Import::getImport($v->formated_payload['data']['command']['cacheKey']);
+            $newJobs[$i]['export'] = Export::getExport($v->formated_payload['data']['command']['cacheKey']);
             $i++;
         }
         $this->output['data']['jobs'] = $newJobs;
@@ -51,20 +51,20 @@ class ImportQueueController extends BaseController
 
         // set data2 khusus jika bukan API
         if($this->isWebCall()){
-            $this->response = 'system.queue.importList';
+            $this->response = 'system.queue.list';
         }
         return $this->done();
     }
 
     public function cancelQueue(Request $request)
     {
-        if($import = Import::getImport($request->route('cacheKey'))){
-            Import::cancelImport($import['cacheKey']);
+        if($export = Export::getExport($request->route('cacheKey'))){
+            Export::cancelExport($export['cacheKey']);
             $this->output['message'] = 'Cancel Success';
         }else{
-            $this->setError('Detail import <b>'.$request->route('cacheKey').'</b> tidak ditemukan !');
+            $this->setError('Detail Export <b>'.$request->route('cacheKey').'</b> tidak ditemukan !');
         }
-        $this->response = redirect()->route('system.queue.import.list');
+        $this->response = redirect()->route('system.queue.export.list');
         return $this->done();
     }
 
@@ -72,7 +72,7 @@ class ImportQueueController extends BaseController
     {        
         $tmpUser = [];
 
-        $this->output['data']['list'] = Import::listImport();
+        $this->output['data']['list'] = Export::listExport();
         foreach($this->output['data']['list'] as $v){
             $this->output['data']['list'][$v] = ['cacheKey'=>$v];
             $userId = explode('.',$v);
@@ -84,7 +84,7 @@ class ImportQueueController extends BaseController
 
         // set data2 khusus jika bukan API
         if($this->isWebCall()){
-            $this->response = 'system.queue.importHistory';
+            $this->response = 'system.queue.history';
         }
         return $this->done();
 
@@ -92,20 +92,20 @@ class ImportQueueController extends BaseController
     
     public function deleteQueue(Request $request)
     {
-        if($import = Import::getImport($request->route('cacheKey'))){
-            Import::deleteImport($import['cacheKey']);
+        if($export = Export::getExport($request->route('cacheKey'))){
+            Export::deleteExport($export['cacheKey']);
             $this->output['message'] = 'Delete Success';
         }else{
-            $this->setError('Detail import <b>'.$request->route('cacheKey').'</b> tidak ditemukan !');
+            $this->setError('Detail Export <b>'.$request->route('cacheKey').'</b> tidak ditemukan !');
         }
-        $this->response = redirect()->route('system.queue.import.history');
+        $this->response = redirect()->route('system.queue.export.history');
         return $this->done();
     }
     
     public function detailQueue(Request $request)
     {
         $this->output['data']['isHistory'] = $request->input('isHistory',false);
-        $this->output['data']['data'] = Import::getImport($request->route('cacheKey'));
+        $this->output['data']['data'] = Export::getExport($request->route('cacheKey'));
         if($this->output['data']['data']){
             $userId = explode('.',$this->output['data']['data']['cacheKey']);
             $this->output['data']['data']['user'] = User::where('id',$userId[count($userId)-1])->first();
@@ -116,12 +116,12 @@ class ImportQueueController extends BaseController
         if($this->isWebCall()){
             
             if(!$this->output['data']['data']){       
-                $this->setError('Detail import <b>'.$request->route('cacheKey').'</b> tidak ditemukan !');
-                $this->response = redirect()->route('system.queue.import.list');
+                $this->setError('Detail Export <b>'.$request->route('cacheKey').'</b> tidak ditemukan !');
+                $this->response = redirect()->route('system.queue.export.list');
                 return $this->done();
             }
             
-            $this->response = 'system.queue.importDetail';
+            $this->response = 'system.queue.detail';
         }
         return $this->done();
     }

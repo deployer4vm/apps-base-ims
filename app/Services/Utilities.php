@@ -141,4 +141,82 @@ class Utilities
         }
         return ['comamnd'=>$command,'return'=>$ret];
     }
+    
+    /**
+     * List queue comamnd
+     * 
+     * @param Boolean|String    false view all, ID GROUP view queue per group,
+     *                          ID GROUP : default, tenant, additional
+     * 
+     * @return Array    List command queue
+     */
+    public static function listQueueCommand($group=false)
+    {
+        // group : default
+        if($group=='default' || $group==false){
+            $queueList = [
+                'queue:work --tries=1 --queue=verification,email',
+                'queue:work --tries=1 --queue=high,default,low'
+            ];
+            
+            // aktifkan queue worker export general jika export_handler = 2 atau 3
+            if(config('AppConfig.system.jobs.export_handler',1) >= 2){
+                // Export Worker General
+                $exportChildCount = config('AppConfig.system.jobs.export_worker',2);
+                for ($i=1; $i <= $exportChildCount; $i++) { 
+                    $queueList[] = 'queue:work --tries=1 --queue=export'.$i;
+                }
+            }
+
+            // aktifkan queue worker import general jika export_handler = 2 atau 3
+            if(config('AppConfig.system.jobs.import_handler',1) >= 2){
+                // Import Worker General
+                $importChildCount = config('AppConfig.system.jobs.import_worker',2);
+                for ($i=1; $i <= $importChildCount; $i++) { 
+                    $queueList[] = 'queue:work --tries=1 --queue=import'.$i;
+                }
+            }
+        }
+        if($group=='default')return $queueList;
+
+        if($group=='additional' || $group==false){
+            // load queuetambahan jika ada, bisa digunakan untuk per tenant juga
+            $queueAdds = config('AppConfig.system.jobs.queue_addlist',config('AppConfig.system.jobs.queue_adds',[]));
+            foreach($queueAdds as $queue){
+                $queueList[] = 'queue:work --tries=1 --queue='.$queue;
+            }
+        }
+        if($group=='additional')return $queueList;
+        
+        if($group=='tenant' || $group==false){
+            // load queue tambahan per tenant jika aktif
+            if(config('AppConfig.system.jobs.multitenant_add',false)){
+                $queueAdds = config('AppConfig.tenant',[]);
+                foreach($queueAdds as $queue){
+
+                    // Worker per tenant
+                    $queueList[] = 'queue:work --tries=1 --queue=tenant'.$queue;
+
+                    // aktifkan queue worker export per tenant jika export_handler = 3
+                    if(config('AppConfig.system.jobs.export_handler',1) == 3){
+                        // Export Worker per tenant
+                        for ($i=1; $i <= $exportChildCount; $i++) { 
+                            $queueList[] = 'queue:work --tries=1 --queue=tenant'.$queue.'export'.$i;
+                        }
+                    }
+
+                    // aktifkan queue worker export per tenant jika export_handler = 3
+                    if(config('AppConfig.system.jobs.import_handler',1) == 3){
+                        // Import Worker per tenant
+                        for ($i=1; $i <= $importChildCount; $i++) { 
+                            $queueList[] = 'queue:work --tries=1 --queue=tenant'.$queue.'import'.$i;
+                        }
+                    }
+                }
+            }
+        }
+        if($group=='tenant')return $queueList;
+
+        return $queueList;
+    }
 }

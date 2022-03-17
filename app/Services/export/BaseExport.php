@@ -112,8 +112,10 @@ class BaseExport extends BaseRepository
      * get data export
      * 
      * @param String $cacheKey key / kode unik per export
+     * @param Boolean $reload True jika load data cache nya langsung ke cache engine
+     *                        False jika load data dari local var
      */
-    public function getExport($cacheKey) 
+    public function getExport($cacheKey,$reload=false) 
     {
         // $this->_deleteCache(
         //     $this->_mainCacheKeyGroup,
@@ -122,7 +124,8 @@ class BaseExport extends BaseRepository
         return $this->_getCache(
             $this->_mainCacheKeyGroup,
             $this->_mainCacheKeyDetailPrefix.$cacheKey,
-            false
+            false,
+            $reload
         );
     }
 
@@ -135,6 +138,7 @@ class BaseExport extends BaseRepository
      * @param String $listingModel     full class namespace model
      * @param Array $listingParams 
      *      filter Array *optional
+     *      orderBy
      * @param Integer $userId
      * @param Integer $tenantId
      * @param String $driver 
@@ -193,11 +197,13 @@ class BaseExport extends BaseRepository
         );
 
         // tambah detail nya
-        $this->_saveCache(
-            $this->_mainCacheKeyGroup,
-            $this->_mainCacheKeyDetailPrefix.$cacheKey,
-            $exportData
-        );
+        // $this->_saveCache(
+        //     $this->_mainCacheKeyGroup,
+        //     $this->_mainCacheKeyDetailPrefix.$cacheKey,
+        //     $exportData
+        // );
+
+        $this->updateExport($cacheKey,$exportData);
 
         if($driver!='spout'){
             $this->setDriver($cacheKey,$driver);
@@ -685,7 +691,7 @@ class BaseExport extends BaseRepository
         $log .= str_replace("\n",'<br>', $exception->getTraceAsString());
 
         $this->appendExportLog($log);
-        report($exception); //lanjutkan error ke login (meureun)
+        // report($exception); //lanjutkan error ke login (meureun)
     }
 
     public function appendExportLog($cacheKey,string $log='')
@@ -747,6 +753,7 @@ class BaseExport extends BaseRepository
     /**
      * proses utama yang dieksekusi dari jobs saat jobs nya dijalankan, di proses ini
      * juga si queue di set (saat createExport queue nya hanya default)
+     * 
      * SECARA DEFAULT MENGGUNAKAN DRIVER SPOUT
      * 
      * @param String $cacheKey key / kode unik per export
@@ -761,7 +768,7 @@ class BaseExport extends BaseRepository
         /**
          * init status & var
          */
-        $exportData = $this->getExport($cacheKey);
+        $exportData = $this->getExport($cacheKey,true);
         if($exportData['tenantId']!=0)
             Tenant::setActiveTenantById($exportData['tenantId']);
 
@@ -901,7 +908,9 @@ class BaseExport extends BaseRepository
             $styleBorder,
             $tmpFilename
         ) {
-            
+            if(!empty($exportData['listingParams']['filter']['append']))
+                $chunkedData = $chunkedData->append($exportData['listingParams']['filter']['append']);
+
             $chunkedData = $chunkedData->toArray();
             
             usleep(100);
@@ -916,12 +925,7 @@ class BaseExport extends BaseRepository
                         $dataRow
                     );
                     continue;
-                }
-
-                // jika false berarti di cancel
-                if($this->_checkAndCounter($cacheKey)==false){
-                    return false;
-                }            
+                }  
 
                 //jika tanpa template dan row 1 maka simpan nama2 kolomnya, untuk dijadikan header caption
                 if($isFirstRow && empty($exportData['template']['filepath'])){                
@@ -954,8 +958,12 @@ class BaseExport extends BaseRepository
                         $GLOBALS['synapse_export_indexExcelRow'],// index/nomor urut baris excel yang saat ini diinsert
                         $GLOBALS['synapse_export_indexData']+1 // index/nomor urut data yang saat ini sedang diinsert
                     );
-                }
 
+                    // jika false berarti diskip
+                    if($insertRow==false)
+                        continue;
+                }
+                
                 // $reader = Excel::insertRow($reader, $GLOBALS['synapse_export_indexExcelRow'], $insertRow);
 
                 $writer->addRow(
@@ -963,7 +971,12 @@ class BaseExport extends BaseRepository
                 );
 
                 $GLOBALS['synapse_export_indexExcelRow']++;
-                $GLOBALS['synapse_export_indexData']++;         
+                $GLOBALS['synapse_export_indexData']++;   
+                
+                // jika false berarti di cancel
+                if($this->_checkAndCounter($cacheKey)==false){
+                    return false;
+                }           
             }
             
             //break proses setiap kurang dari setengah jam 
