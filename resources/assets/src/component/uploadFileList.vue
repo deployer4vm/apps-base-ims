@@ -192,6 +192,11 @@
                 }
             }
         },
+        watch:{
+            files(v){
+                this.loadFiles();
+            }
+        },
         data: () => ({
 
             intUploadUrl: '',
