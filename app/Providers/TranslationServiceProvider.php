@@ -15,8 +15,13 @@ class TranslationServiceProvider extends BaseTranslationServiceProvider
      */
     protected function registerLoader()
     {
-        $this->app->singleton('translation.loader', function ($app) {
-            return new DistributedFileLoader($app['files'], config('hpsynapse.lang_path',[]));
+        $langPath = array_merge(
+            config('hpsynapse.lang_path.pertenant.'.config('tenant.id',0),[]),            
+            config('hpsynapse.lang_path.general',[])
+        );
+
+        $this->app->singleton('translation.loader', function ($app) use ($langPath) {
+            return new DistributedFileLoader($app['files'], $langPath);
         });
     }
 }

@@ -15,20 +15,31 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        $modulePath = Utilities::listModulePath(config('hpsynapse.namespaces'), function($namespace,$pathToModule){              
+        /**
+         * Load seed per module
+         */
+        $namespaces = config('hpsynapse.namespaces.general',[]);
+        $nameSpaceTenant = config('hpsynapse.namespaces.pertenant',[]);
+        foreach ($nameSpaceTenant as $key => $value) {
+            $namespaces[] = $value;
+        }
+        $modulePath = Utilities::listModulePath($namespaces, function($namespace,$pathToModule){              
             $moduleNamespace = explode('\\',trim($namespace,'\\'));
             $moduleNamespace = array_pop($moduleNamespace);     
             $pathToModule .= DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'SeedList.php';
             if(config('AppConfig.packageLocal.'.$moduleNamespace.'.database.run_seed',true) && file_exists($pathToModule)){
                 return $pathToModule;
             }
-        });
-        
-        $projectSeeds = include(app_path('MainApp/database/SeedList.php'));
+        });        
         $moduleSeeds = [];
         foreach($modulePath as $value){
             if($value) $moduleSeeds = array_merge($moduleSeeds,include($value));
         }
+
+        /**
+         * Load seed project, dan merge kan dengan seed per module yg sebelumnya diload
+         */
+        $projectSeeds = include(app_path('MainApp/database/SeedList.php'));
         $projectSeeds = array_merge($moduleSeeds,$projectSeeds);
 
         foreach($projectSeeds as $class){

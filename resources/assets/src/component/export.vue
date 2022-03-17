@@ -43,14 +43,19 @@
 export default {
     name: "export",
     props: [
+        //url parameter
         "api-export-generate",//url api generate export
         "api-export-status",//url api get status export
+
+        //parameter config tambahan
+        "component-config",// config component tambahan, misal style botton atau hide/show log
+        "adds-jobs-params", // parameter array tambahan        
+        
+        //list event callback
         "on-start",// callback saat export start
         "on-get-status",// callback setelah get status export berhasil
         "on-success",// callback setelah proses export selesai dan berhasil
         "on-fail",// callback setelah proses export gagal
-        "component-config",// config component tambahan, misal style botton atau hide/show log
-        "adds-jobs-params", // parameter array tambahan
     ],
     data() {
         return {            

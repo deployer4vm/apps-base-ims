@@ -9,9 +9,9 @@ $disk = [
 
     'public' => [
         'driver' => 'local',
-        'root' => base_path('public/files'),
+        'root' => storage_path('app/public'),
         // 'url' => env('APP_URL').'/storage',
-        'url' => '/storage',
+        'url' => '/public_storage',
         'visibility' => 'public',
     ],
 
@@ -100,9 +100,6 @@ return [
     */
 
     'links' => [
-        public_path('storage') => storage_path('app/public'),
+        public_path('public_storage') => storage_path('app/public'),
     ],
-
-
-
 ];

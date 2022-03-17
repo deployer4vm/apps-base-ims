@@ -8,8 +8,9 @@ if(!function_exists('initHPsynapseConfig')){
 
         $config = [
             'namespaces' => [
-                'App\\MainApp\\Modules' => [app_path('MainApp' . DIRECTORY_SEPARATOR . 'Modules') . DIRECTORY_SEPARATOR, false],
-                'hpsynapse' => [base_path('vendor' . DIRECTORY_SEPARATOR . 'hp-synapse') . DIRECTORY_SEPARATOR, ['mod-','apps-']]
+                'general'=>[],
+                'pertenant'=>[],
+                'all'=>[]
             ],
             'language_folder_name' => 'lang',
             'resource_namespace' => 'resources',
@@ -18,7 +19,16 @@ if(!function_exists('initHPsynapseConfig')){
 
         // jika multi project, maka masukan namespace project active nya
         if(isset($system['multiproject']['active']) && $system['multiproject']['active']==1)
-            $config['namespaces']['App\\MainApp\\Projects\\'.$client['project_code'].'\\Modules'] = [app_path('MainApp' . DIRECTORY_SEPARATOR . 'Projects' . DIRECTORY_SEPARATOR . $client['project_code'] . DIRECTORY_SEPARATOR . 'Modules') . DIRECTORY_SEPARATOR, false];
+            $config['namespaces']['general']['App\\MainApp\\Projects\\'.$client['project_code'].'\\Modules'] = [
+                app_path('MainApp' . DIRECTORY_SEPARATOR . 'Projects' . DIRECTORY_SEPARATOR . $client['project_code'] . DIRECTORY_SEPARATOR . 'Modules') . DIRECTORY_SEPARATOR,
+                false
+            ];
+
+        // masukan default2 path dari yg paling priority di load ke yg less priority
+        $config['namespaces']['general']['App\\MainApp\\Modules'] = [app_path('MainApp' . DIRECTORY_SEPARATOR . 'Modules') . DIRECTORY_SEPARATOR, false];
+        $config['namespaces']['general']['hpsynapse'] = [base_path('vendor' . DIRECTORY_SEPARATOR . 'hp-synapse') . DIRECTORY_SEPARATOR, ['mod-','apps-']];
+        
+        $config['namespaces']['all'] = $config['namespaces']['general'];
 
         if(isset($system['multitenant']['active']) && $system['multitenant']['active']==1){
             $tenantConfigPath = __DIR__ . '/../app/MainApp/config/_tenant.json';
@@ -26,58 +36,124 @@ if(!function_exists('initHPsynapseConfig')){
             if(!file_exists($tenantConfigPath))                
                 file_put_contents($tenantConfigPath, json_encode([], JSON_PRETTY_PRINT));
 
+            // tenant list ini digunakan juga di process2 selanjutnya
             $tenantList = json_decode(file_get_contents($tenantConfigPath), true);
+
             foreach ($tenantList as $tenantId) {
                 if(isset($system['multiproject']['active']) && $system['multiproject']['active'] == 1){
-                    $config['namespaces']['App\\MainApp\\Projects\\'.$client['project_code'].'\\Tenants\\ID'.$tenantId.'\\Modules'] = [app_path('MainApp' . DIRECTORY_SEPARATOR . 'Projects' . DIRECTORY_SEPARATOR . $client['project_code'] . DIRECTORY_SEPARATOR  . 'Tenants' . DIRECTORY_SEPARATOR . 'ID' . $tenantId . DIRECTORY_SEPARATOR . 'Modules') . DIRECTORY_SEPARATOR, false];
+                    $config['namespaces']['pertenant'][$tenantId]['App\\MainApp\\Projects\\'.$client['project_code'].'\\Tenants\\ID'.$tenantId.'\\Modules'] = [
+                        app_path('MainApp' . DIRECTORY_SEPARATOR . 'Projects' . DIRECTORY_SEPARATOR . $client['project_code'] . DIRECTORY_SEPARATOR  . 'Tenants' . DIRECTORY_SEPARATOR . 'ID' . $tenantId . DIRECTORY_SEPARATOR . 'Modules') . DIRECTORY_SEPARATOR, 
+                        false
+                    ];
+                    $config['namespaces']['all']['App\\MainApp\\Projects\\'.$client['project_code'].'\\Tenants\\ID'.$tenantId.'\\Modules'] = [
+                        app_path('MainApp' . DIRECTORY_SEPARATOR . 'Projects' . DIRECTORY_SEPARATOR . $client['project_code'] . DIRECTORY_SEPARATOR  . 'Tenants' . DIRECTORY_SEPARATOR . 'ID' . $tenantId . DIRECTORY_SEPARATOR . 'Modules') . DIRECTORY_SEPARATOR, 
+                        false
+                    ];
                 }else{
-                    $config['namespaces']['App\\MainApp\\Tenants\\ID'.$tenantId.'\\Modules'] = [app_path('MainApp' . DIRECTORY_SEPARATOR . 'Tenants' . DIRECTORY_SEPARATOR . 'ID' . $tenantId . DIRECTORY_SEPARATOR . 'Modules') . DIRECTORY_SEPARATOR, false];
+                    $config['namespaces']['pertenant'][$tenantId]['App\\MainApp\\Tenants\\ID'.$tenantId.'\\Modules'] = [
+                        app_path('MainApp' . DIRECTORY_SEPARATOR . 'Tenants' . DIRECTORY_SEPARATOR . 'ID' . $tenantId . DIRECTORY_SEPARATOR . 'Modules') . DIRECTORY_SEPARATOR, 
+                        false
+                    ];
+                    $config['namespaces']['all']['App\\MainApp\\Tenants\\ID'.$tenantId.'\\Modules'] = [
+                        app_path('MainApp' . DIRECTORY_SEPARATOR . 'Tenants' . DIRECTORY_SEPARATOR . 'ID' . $tenantId . DIRECTORY_SEPARATOR . 'Modules') . DIRECTORY_SEPARATOR, 
+                        false
+                    ];
                 }
             }
         }
 
         /**
          * Load Controller path
+         * ---------------------------------------------------------------------
          */
-        $tmpControllerPath = Utilities::listModulePath($config['namespaces'], function($namespace,$pathToModule) {
+        //
+        $controllerPath=['general'=>[],'pertenant'=>[]];
+        // load path general
+        $tmpControllerPath = Utilities::listModulePath($config['namespaces']['general'], function($namespace,$pathToModule) {
             return [$namespace,$pathToModule];
         });
-        $controllerPath=[];
         foreach ($tmpControllerPath as $key => $value) {
-            $controllerPath[$value[0]] = $value[1];
+            $controllerPath['general'][$value[0]] = $value[1];
+        }
+
+        // load path pertenant
+        if(isset($system['multitenant']['active']) && $system['multitenant']['active']==1){
+            
+            foreach ($tenantList as $tenantId) {
+                $tmpControllerPath = Utilities::listModulePath($config['namespaces']['pertenant'][$tenantId], function($namespace,$pathToModule) {
+                    return [$namespace,$pathToModule];
+                });
+                foreach ($tmpControllerPath as $key => $value) {
+                    $controllerPath['pertenant'][$tenantId][$value[0]] = $value[1];
+                }
+            }
         }
 
         /**
          * Load LANG path
+         * ---------------------------------------------------------------------
          */
-        $langPath = Utilities::findNamespaceResources(
-            $config['namespaces'] ,
+        $langPath = ['general'=>[],'pertenant'=>[]];
+        // load general
+        $langPath['general'] = Utilities::findNamespaceResources(
+            $config['namespaces']['general'] ,
             $config['language_folder_name'],
             $config['resource_namespace']
         );
 
-        $langPath = array_merge(
+        $langPath['general'] = array_merge(
             [
                 resource_path('lang')
             ], 
-            $langPath
+            $langPath['general']
         );
 
-        $langPath[] = app_path('MainApp' . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'lang');
+        $langPath['general'][] = app_path('MainApp' . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'lang');
+
+        // load path pertenant
+        if(isset($system['multitenant']['active']) && $system['multitenant']['active']==1){            
+            foreach ($tenantList as $tenantId) {
+                $langPath['pertenant'][$tenantId] = Utilities::findNamespaceResources(
+                    $config['namespaces']['pertenant'][$tenantId] ,
+                    $config['language_folder_name'],
+                    $config['resource_namespace']
+                );        
+            }
+        }
+
 
         /**
          * Load view path
+         * ---------------------------------------------------------------------
          */
-        $viewPath = Utilities::findNamespaceResources(
-            $config['namespaces'], $config['view_folder_name'], $config['resource_namespace']
+        $viewPath = ['general'=>[],'pertenant'=>[]];
+        // load general
+        $viewPath['general'] = Utilities::findNamespaceResources(
+            $config['namespaces']['general'], $config['view_folder_name'], $config['resource_namespace']
         );
-        $viewPath[] = app_path('MainApp' . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'views');
+        $viewPath['general'] = array_merge(
+            [
+                base_path('resources' . DIRECTORY_SEPARATOR . 'views'),
+                app_path('MainApp' . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'views')
+            ],
+            $viewPath['general']
+        );
+        
+        // load path pertenant
+        if(isset($system['multitenant']['active']) && $system['multitenant']['active']==1){            
+            foreach ($tenantList as $tenantId) {                
+                $viewPath['pertenant'][$tenantId] = Utilities::findNamespaceResources(
+                    $config['namespaces']['pertenant'][$tenantId], $config['view_folder_name'], $config['resource_namespace']
+                );    
+            }
+        }
 
         /**
          * Load migration path
+         * ---------------------------------------------------------------------
          */
         $packageLocal = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/config/_packageLocal.json'), true);
-        $migrationModulePath = Utilities::listModulePath($config['namespaces'], function($namespace,$pathToModule) use ($packageLocal){            
+        $migrationModulePath = Utilities::listModulePath($config['namespaces']['all'], function($namespace,$pathToModule) use ($packageLocal){            
             $moduleNamespace = explode('\\',trim($namespace,'\\'));
             $moduleNamespace = array_pop($moduleNamespace);            
             $pathToModule .= DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
@@ -104,7 +180,7 @@ if(!function_exists('initHPsynapseConfig')){
         if(isset($system['multiproject']['active']) && $system['multiproject']['active']==1) 
             $migrationPath[] = app_path('MainApp'.DIRECTORY_SEPARATOR.'Project'.DIRECTORY_SEPARATOR.$client['project_code'].DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations'); 
 
-        // jika multi tenant maka load path lang per tenant
+        // jika multi tenant maka load path migration per tenant
         if(isset($system['multitenant']['active']) && $system['multitenant']['active']==1){
             foreach ($tenantList as $tenantId) {
                 if(isset($system['multiproject']['active']) && $system['multiproject']['active'] == 1){
@@ -119,6 +195,8 @@ if(!function_exists('initHPsynapseConfig')){
             }
         }
         
+        unset($config['namespaces']['all']);
+
         return [
             'bindings' => [
                 'controller'=>[],

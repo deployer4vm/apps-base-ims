@@ -237,7 +237,7 @@ if(systemVar.web_admin.full_vue){
 
 if(systemVar.web_admin.web){
     var buildJs = require("./app/MainApp/resources/js/webBuild.js");
-    buildJs().build(fs,mix);
+    buildJs(fs,mix);
     mix.js("resources/assets/src/web-entry-point.js", "dist/webapp.js").version();//web
     mix.copyDirectory("resources/assets/vendor/webcss", publicPath + "/dist/vendor/webcss")//web
 }

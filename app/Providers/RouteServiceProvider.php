@@ -101,8 +101,12 @@ class RouteServiceProvider extends ServiceProvider
      * initiate route untuk Admin area Vue Frontend di web akses
      */
     protected function registerControllerNamespace()
-    {
-        $controllerPaths = config('hpsynapse.controller_path');
+    {        
+        $controllerPaths = array_merge(
+            config('hpsynapse.controller_path.pertenant.'.config('tenant.id',0),[]),
+            config('hpsynapse.controller_path.general',[]),
+        );
+
         foreach ($controllerPaths as $namespace => $pathToModule) {
             
             $fileNames = [

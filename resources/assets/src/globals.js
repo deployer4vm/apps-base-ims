@@ -273,7 +273,7 @@ export default function () {
         publicUrl: AppConfig.system.public_url?AppConfig.system.public_url:'/',
 
         // Upload url
-        uploadedUrl: AppConfig.system.uploaded_url?AppConfig.system.uploaded_url:'/upload/',
+        uploadedUrl: AppConfig.system.uploaded_url?AppConfig.system.uploaded_url:'/storage/',
                 
         // Layout helpers
         layoutHelpers,
