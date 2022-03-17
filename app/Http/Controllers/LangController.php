@@ -36,8 +36,14 @@ class LangController extends BaseController
         }
         $lang = app()->getLocale();
         $trans = [];
+        
+        $langPath = array_merge(
+            config('hpsynapse.lang_path.pertenant.'.config('tenant.id',0),[]),            
+            config('hpsynapse.lang_path.general',[])
+        );
+        
         //get all language namespace
-        foreach (config('hpsynapse.lang_path') as $path) {
+        foreach ($langPath as $path) {
             $langItem = glob($path.DIRECTORY_SEPARATOR.$lang.DIRECTORY_SEPARATOR.'*');                
             foreach($langItem as $langFile){
                 $filename = basename($langFile, ".php");
