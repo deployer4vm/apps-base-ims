@@ -194,10 +194,12 @@
         },
         watch:{
             files(v){
-                this.loadFiles();
+                if(this.dataNotLoaded)
+                    this.loadFiles();
             }
         },
         data: () => ({
+            dataNotLoaded: true,
 
             intUploadUrl: '',
             //
@@ -243,7 +245,6 @@
             },
             loadFiles(){
                 this.intUploadUrl = this.uploadUrl?this.uploadUrl:this.uploadedUrl;
-
                 _.forEach(this.files,(v,k)=>{                                
                     this.intFiles.push({
                         id: v.filepath,
@@ -256,6 +257,7 @@
                         response: {id:k}
                     });                    
                 });
+                this.dataNotLoaded = false;
             },
             /**
              * VUE FILE UPLOAD
@@ -337,7 +339,8 @@
             },
         },
         created() {
-            this.loadFiles();
+            if(this.files.length > 0)
+                this.loadFiles();
         }
     }
 </script>
