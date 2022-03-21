@@ -28,7 +28,6 @@
             @input-file="inputFile" 
             ref="upload" 
         /> 
-
         <div class="table-responsive">
             <table class="table">
                 <thead>
@@ -232,6 +231,7 @@
         }),
         methods: {            
             updateFiles(){
+                this.dataNotLoaded = false;
                 var newFiles = [];
                 _.forEach(this.intFiles,(v,k)=>{
                     newFiles.push({
