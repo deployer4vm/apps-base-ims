@@ -3,9 +3,9 @@
         <div class="d-flex justify-content-between px-2 pt-2 mb-0">
             <b>{{ title }}</b>
             
-            <b-dd v-if="!disabled" size="sm" split :right="isRTL" @click="$refs.upload.$el.querySelector('input').click()">
+            <b-dd v-if="!disabled" size="sm" split :right="isRTL" @click="$refs[refID].$el.querySelector('input').click()">
                 <template slot="button-content"> <i class="ion ion-md-add"></i> Add Files </template>
-                <b-dd-item @click="onAddFolder">Add folder</b-dd-item>
+                <b-dd-item v-if="multiple" @click="onAddFolder">Add folder</b-dd-item>
             </b-dd>
         </div>        
 
@@ -26,7 +26,7 @@
             v-model="intFiles" 
             @input-filter="inputFilter" 
             @input-file="inputFile" 
-            ref="upload" 
+            :ref="refID" 
         /> 
         <div class="table-responsive">
             <table class="table">
@@ -50,7 +50,7 @@
                                     {{dropFilesCaption}}
                                     <div class="text-muted small my-3">or</div>
                                 </h4>
-                                <label :for="inputFileName" class="btn btn-primary btn-xs">Select Files</label>
+                                <label @click="$refs[refID].$el.querySelector('input').click()" class="btn btn-primary btn-xs">Select Files</label>
                             </div>
                             <div v-else>
                                 No Files
@@ -158,6 +158,11 @@
             accept: {
                 default() {
                     return "image/png,image/gif,image/jpeg";
+                }
+            },
+            refID: {
+                default() {
+                    return "upload";
                 }
             },
             extensions: {
@@ -313,7 +318,7 @@
                         // beforeSend
                         // min size
                         if (newFile.size >= 0 && this.minSize > 0 && newFile.size < this.minSize) {
-                            this.$refs.upload.update(newFile, { error: "size" });
+                            this.$refs[this.refID].update(newFile, { error: "size" });
                         }
                     }
                 }
@@ -321,11 +326,11 @@
             },
             // add folader
             onAddFolder() {
-                if (!this.$refs.upload.features.directory) {
+                if (!this.$refs[this.refID].features.directory) {
                     alert("Your browser does not support");
                     return;
                 }
-                let input = this.$refs.upload.$el.querySelector("input");
+                let input = this.$refs[this.refID].$el.querySelector("input");
                 input.directory = true;
                 input.webkitdirectory = true;
                 this.directory = true;
