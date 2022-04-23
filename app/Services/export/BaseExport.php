@@ -2,7 +2,8 @@
 
 namespace App\Services\export;
 
-use Exception;
+// use Exception;
+use Throwable;
 use Carbon\Carbon;
 
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
@@ -23,6 +24,7 @@ use App\Facades\Excel;
 use App\Facades\Tenant;
 
 use App\Models\Job;
+use App\Models\Export;
 
 Use App\Jobs\Export as JExport;
 
@@ -60,14 +62,72 @@ class BaseExport extends BaseRepository
      */
 
     /**
+     * mengconvert data format record database, ke format cache lama (agar tidak banyak mengubah bisnis proses)
+     */
+    private function convertDbToCache($data)
+    {        
+        $newData = [
+            'tenantId'=>$data['tenant_id'],
+            'userId'=>$data['user_id'],
+            'cacheKey'=>$data['cache_key'],
+            'jobsId'=>$data['jobs_id'],
+            'processId'=>$data['process_id'],
+            'queue'=>$data['queue'],
+            'jobDispatchTime'=>$data['job_dispatch_time'],
+            'jobStartTime'=>$data['job_start_time'],
+            'log'=>$data['log'],
+            'status'=>$data['status'],
+        ];
+        $newData = array_merge($newData,$data['data']);
+        return $newData;
+    }
+
+    /**
+     * mengconvert data format cache lama, ke format record database (agar tidak banyak mengubah bisnis proses)
+     */
+    private function convertCacheToDb($data)
+    {        
+        $newData = [
+            'tenant_id'=>$data['tenantId'],
+            'user_id'=>$data['userId'],
+            'cache_key'=>$data['cacheKey'],
+            'jobs_id'=>$data['jobsId'],
+            'process_id'=>$data['processId'],
+            'queue'=>$data['queue'],
+            'job_dispatch_time'=>$data['jobDispatchTime'],
+            'job_start_time'=>$data['jobStartTime'],
+            'log'=>$data['log'],
+            'status'=>$data['status'],
+        ];
+        unset(
+            $data['tenantId'],
+            $data['userId'],
+            $data['cacheKey'],
+            $data['jobsId'],
+            $data['processId'],
+            $data['queue'],
+            $data['jobDispatchTime'],
+            $data['jobStartTime'],
+            $data['log'],
+            $data['status'],
+        );
+        $newData = array_merge($newData,['data'=>$data]);
+        return $newData;
+    }
+
+    /**
      * list seluruh export
      */
     public function listExport()
     {
-        $list = $this->_getCache($this->_mainCacheKeyGroup,$this->_mainCacheKeyList,[]);
-        return $list;
+        $list = $this->_list(new Export);
+        $newData = [];
+        foreach($list['data'] as $v){
+            $newData[] = $this->convertDbToCache($v);
+        }
+        return $list['data'];
     }
-    
+
     /**
      * get queue yg available selanjutnya
      */
@@ -117,16 +177,8 @@ class BaseExport extends BaseRepository
      */
     public function getExport($cacheKey,$reload=false) 
     {
-        // $this->_deleteCache(
-        //     $this->_mainCacheKeyGroup,
-        //     $this->_mainCacheKeyDetailPrefix.$cacheKey
-        // );
-        return $this->_getCache(
-            $this->_mainCacheKeyGroup,
-            $this->_mainCacheKeyDetailPrefix.$cacheKey,
-            false,
-            $reload
-        );
+        $tmp = Export::where('cache_key',$cacheKey)->first(); 
+        return $tmp?$this->convertDbToCache($tmp->toArray()):false;
     }
 
     /**
@@ -148,21 +200,12 @@ class BaseExport extends BaseRepository
     ){
         $tenantId = $tenantId?$tenantId:config('tenant.id',0);
         
-        $exportList = $this->_getCache(
-            $this->_mainCacheKeyGroup,
-            $this->_mainCacheKeyList,
-            []
-        );
-
-        // jika belum ada maka create
-        if(!isset($exportList[$cacheKey])){
-            $exportList[$cacheKey] = $cacheKey;
-
-        // jika sudah ada pastikan tidak dalam proses
-        }else{
-            $exportData= $this->getExport($cacheKey);
-            if($exportData==false)$exportData= $this->initExportStatus();
-            
+        $exportData = $this->getExport($cacheKey);
+        $createNew = true;
+        
+        // jika data ada maka pastikan sedang tidak berjalan
+        if($exportData){
+            $createNew = false;
             // jika sedang dalam proses
             if(
                 $exportData['status']==self::$EXPORT_STATUS_DISPATCHED || 
@@ -180,30 +223,20 @@ class BaseExport extends BaseRepository
             }
         }
 
-
         // set baru export
-        $exportData= $this->initExportStatus();
+        $exportData = $this->initExportStatus();
         $exportData['cacheKey'] = $cacheKey;
         $exportData['listingModel'] = $listingModel;
         $exportData['listingParams'] = $listingParams;
         $exportData['userId'] = $userId;
         $exportData['tenantId'] = $tenantId;
 
-        // tambahkan ke list
-        $this->_saveCache(
-            $this->_mainCacheKeyGroup,
-            $this->_mainCacheKeyList,
-            $exportList
-        );
-
         // tambah detail nya
-        // $this->_saveCache(
-        //     $this->_mainCacheKeyGroup,
-        //     $this->_mainCacheKeyDetailPrefix.$cacheKey,
-        //     $exportData
-        // );
-
-        $this->updateExport($cacheKey,$exportData);
+        if($createNew){
+            Export::create($this->convertCacheToDb($exportData));
+        }else{
+            $this->updateExport($cacheKey,$exportData);
+        }
 
         if($driver!='spout'){
             $this->setDriver($cacheKey,$driver);
@@ -250,6 +283,7 @@ class BaseExport extends BaseRepository
         $exportData['status'] = self::$EXPORT_STATUS_DISPATCHED;
         $exportData['queue'] = $this->nextExportQueue($exportData['tenantId']);
         $this->updateExport($cacheKey,$exportData);
+        
         JExport::dispatch($cacheKey,$exportData['queue'])->onQueue($exportData['queue']);
 
         return $exportData;
@@ -286,24 +320,7 @@ class BaseExport extends BaseRepository
             Storage::disk('local')->delete($exportData['relativeFilepath']);
         }   
 
-        // delete detail export
-        $this->_deleteCache(
-            $this->_mainCacheKeyGroup,
-            $this->_mainCacheKeyDetailPrefix.$cacheKey
-        );
-
-        // delete di list export nya
-        $exportList = $this->_getCache(
-            $this->_mainCacheKeyGroup,
-            $this->_mainCacheKeyList,
-            []
-        );
-        unset($exportList[$cacheKey]);
-        $this->_saveCache(
-            $this->_mainCacheKeyGroup,
-            $this->_mainCacheKeyList,
-            $exportList
-        );
+        Export::where('cache_key',$cacheKey)->delete();
 
         return true;
     }
@@ -603,11 +620,8 @@ class BaseExport extends BaseRepository
      */
     protected function updateExport($cacheKey,$exportData) 
     {   
-        $this->_saveCache(
-            $this->_mainCacheKeyGroup,
-            $this->_mainCacheKeyDetailPrefix.$cacheKey,
-            $exportData
-        );
+        $exportData = $this->convertCacheToDb($exportData);
+        Export::where('cache_key',$cacheKey)->update($exportData);
     }
 
     /**
@@ -679,9 +693,9 @@ class BaseExport extends BaseRepository
      * set dari cronjob, jika cronjob ada uncaught error
      * 
      * @param String $cacheKey key / kode unik per export
-     * @param Exception $exception instance Exception dari job failed
+     * @param Throwable $exception instance Exception dari job failed
      */
-    public function setExportJobFailed($cacheKey,Exception $exception)
+    public function setExportJobFailed($cacheKey, Throwable $exception)
     {
         $this->setExportFailed($cacheKey); 
 
@@ -925,7 +939,7 @@ class BaseExport extends BaseRepository
                         $dataRow
                     );
                     continue;
-                }  
+                }    
 
                 //jika tanpa template dan row 1 maka simpan nama2 kolomnya, untuk dijadikan header caption
                 if($isFirstRow && empty($exportData['template']['filepath'])){                
@@ -962,8 +976,7 @@ class BaseExport extends BaseRepository
                     // jika false berarti diskip
                     if($insertRow==false)
                         continue;
-                }
-                
+                }               
                 // $reader = Excel::insertRow($reader, $GLOBALS['synapse_export_indexExcelRow'], $insertRow);
 
                 $writer->addRow(
@@ -971,12 +984,12 @@ class BaseExport extends BaseRepository
                 );
 
                 $GLOBALS['synapse_export_indexExcelRow']++;
-                $GLOBALS['synapse_export_indexData']++;   
+                $GLOBALS['synapse_export_indexData']++;                     
                 
                 // jika false berarti di cancel
                 if($this->_checkAndCounter($cacheKey)==false){
                     return false;
-                }           
+                }        
             }
             
             //break proses setiap kurang dari setengah jam 

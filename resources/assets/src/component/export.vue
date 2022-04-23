@@ -14,27 +14,27 @@
                 </button>
             </div>
         </div>
-        <div class="alert alert-success show pr-0" style="max-height: 150px; overflow-x: auto;">            
+        <div class="alert alert-success show p-0" style="max-height: 200px; overflow-x: auto;">            
             <template v-if="downloadStatus.status==1 || downloadStatus.status==2 || downloadStatus.status==4">
-                <i v-if="downloadStatus.status==1 || downloadStatus.status==2">
+                <i v-if="downloadStatus.status==1 || downloadStatus.status==2" class="p-2 d-inline-block">
                     File download sedang digenerate, mohon tunggu...
                 </i>
-                <i v-if="downloadStatus.status==4" class="text-danger">
+                <i v-if="downloadStatus.status==4" class="text-danger p-2 d-inline-block">
                     Generate gagal !
                 </i> - 
-                <b>
+                <b class="p-2 d-inline-block">
                     Data count : <span v-text="downloadStatus.count"></span></b> - <b>Processed count : <span v-text="downloadStatus.processedCount"></span>
                 </b>                       
-                <div v-if="config.showLog" v-html="downloadStatus.log" class="p-1" style="background: rgba(0,0,0,0.1); max-height: 200px; overflow-x: auto;"></div>
+                <div v-if="config.showLog" v-html="downloadStatus.log" class="p-2" style="background: rgba(0,0,0,0.1); overflow-x: auto;"></div>
             </template>
             <!-- jika berhasil / selesai -->
             <template v-else-if="downloadStatus.status==3">
-                <i>Log download terkahir :</i>
-                <div v-if="config.showLog" v-html="downloadStatus.log" class="p-1" style="background: rgba(0,0,0,0.1); max-height: 200px; overflow-x: auto;"></div>
+                <i class="p-2 d-inline-block">Log download terkahir :</i>
+                <div v-if="config.showLog" v-html="downloadStatus.log" class="p-2" style="background: rgba(0,0,0,0.1); overflow-x: auto;"></div>
             </template>    
             <!-- jika belum ada data export sebelumnya -->
             <template v-else>
-                <i><b class="text-danger">-belum ada file download-</b></i>
+                <i><b class="text-danger pl-2 d-inline-block">-belum ada file download-</b></i>
             </template>                      
         </div>  
     </div> 

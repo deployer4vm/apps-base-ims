@@ -2,7 +2,8 @@
 
 namespace App\Services;
 
-use Exception;
+// use Exception;
+use Throwable;
 use Carbon\Carbon;
 
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
@@ -23,8 +24,10 @@ use App\Facades\Excel;
 use App\Facades\Tenant;
 
 use App\Models\Job;
+use App\Models\Import as MImport;
 
 Use App\Jobs\Import as JImport;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class Import extends BaseRepository
@@ -33,14 +36,22 @@ class Import extends BaseRepository
 
     // 0 new process
     // 1 sudah diinput/dispatch ke jobs
-    // 2 jobs sudah / sedang berjalan
-    // 3 jobs selesai
-    // 4 jobs gagal
+    // 2 process import sudah / sedang berjalan
+    // 3 process import selesai dan berhasil
+    // 4 process import gagal (bisa gagal saat import pertama, ataupun gagal saat approve ataupun cancle approve)
+    // 5 process approve import on progress
+    // 6 process approve import berhasil
+    // 7 process cancel approve import on progress
+    // 8 process cancel approve import berhasil
     static $IMPORT_STATUS_NEW = 0;
     static $IMPORT_STATUS_DISPATCHED = 1;
     static $IMPORT_STATUS_ON_PROGRESS = 2;
     static $IMPORT_STATUS_SUCCESS = 3;
     static $IMPORT_STATUS_FAILED = 4;
+    static $IMPORT_STATUS_APPROVE_ON_PROGRESS = 5;
+    static $IMPORT_STATUS_APPROVE_SUCCESS = 6;
+    static $IMPORT_STATUS_CANCEL_APPROVE_ON_PROGRESS = 7;
+    static $IMPORT_STATUS_CANCEL_APPROVE_SUCCESS = 8;
 
     //
     protected $_mainCacheKeyGroup = 'synapse.import';//
@@ -56,43 +67,130 @@ class Import extends BaseRepository
      * -------------------------------------------------------------------------
      */
 
+
+    /**
+     * mengconvert data format record database, ke format cache lama (agar tidak banyak mengubah bisnis proses)
+     */
+    private function convertDbToCache($data)
+    {        
+        $newData = [
+            'tenantId'=>$data['tenant_id'],
+            'userId'=>$data['user_id'],
+            'cacheKey'=>$data['cache_key'],
+            'jobsId'=>$data['jobs_id'],
+            'processId'=>$data['process_id'],
+            'queue'=>$data['queue'],
+            'jobDispatchTime'=>$data['job_dispatch_time'],
+            'jobStartTime'=>$data['job_start_time'],
+            'log'=>$data['log'],
+            'status'=>$data['status'],
+        ];
+        $newData = array_merge($newData,$data['data']);
+        return $newData;
+    }
+
+    /**
+     * mengconvert data format cache lama, ke format record database (agar tidak banyak mengubah bisnis proses)
+     */
+    private function convertCacheToDb($data)
+    {        
+        $newData = [
+            'tenant_id'=>$data['tenantId'],
+            'user_id'=>$data['userId'],
+            'cache_key'=>$data['cacheKey'],
+            'jobs_id'=>$data['jobsId'],
+            'process_id'=>$data['processId'],
+            'queue'=>$data['queue'],
+            'job_dispatch_time'=>$data['jobDispatchTime'],
+            'job_start_time'=>$data['jobStartTime'],
+            'log'=>$data['log'],
+            'status'=>$data['status'],
+        ];
+        unset(
+            $data['tenantId'],
+            $data['userId'],
+            $data['cacheKey'],
+            $data['jobsId'],
+            $data['processId'],
+            $data['queue'],
+            $data['jobDispatchTime'],
+            $data['jobStartTime'],
+            $data['log'],
+            $data['status'],
+        );
+        $newData = array_merge($newData,['data'=>$data]);
+        return $newData;
+    }
+
     /**
      * list seluruh import
      */
     public function listImport()
     {
-        $list = $this->_getCache($this->_mainCacheKeyGroup,$this->_mainCacheKeyList,[]);
-        return $list;
+        $list = $this->_list(new MImport);
+        $newData = [];
+        foreach($list['data'] as $v){
+            $newData[] = $this->convertDbToCache($v);
+        }
+        return $list['data'];
     }
     
-    public function nextImportQueue()
+    public function nextImportQueue($tenantId=0)
     {        
-        $idxQueue=1;
-        while (Job::where('queue','import'.$idxQueue)->exists()) {
-            $idxQueue++;
-            // berarti semua penuh, maka tambahkan ke yg paling sedikit
-            if($idxQueue>5){
-                $ret = DB::select("SELECT * FROM (SELECT COUNT(*) AS 'jm_queue',`queue` FROM `jobs` WHERE `queue` LIKE 'import%' GROUP BY `queue`) AS tmp_table ORDER BY `jm_queue` ASC LIMIT 1");
-                return isset($ret['queue'])?$ret['queue']:'import1';
+        // $idxQueue=1;
+        // while (Job::where('queue','import'.$idxQueue)->exists()) {
+        //     $idxQueue++;
+        //     // berarti semua penuh, maka tambahkan ke yg paling sedikit
+        //     if($idxQueue>5){
+        //         $ret = DB::select("SELECT * FROM (SELECT COUNT(*) AS 'jm_queue',`queue` FROM `jobs` WHERE `queue` LIKE 'import%' GROUP BY `queue`) AS tmp_table ORDER BY `jm_queue` ASC LIMIT 1");
+        //         return isset($ret['queue'])?$ret['queue']:'import1';
+        //     }
+        // }
+        // return 'import'.$idxQueue;
+
+        
+        $isPerTenant = config('AppConfig.system.jobs.multitenant_add',false) && !empty($tenantId) && $tenantId>0?true:false;
+
+        // jika queue worker dihandle oleh default atau default per tenant
+        if(config('AppConfig.system.jobs.import_handler',1)==1){
+            return $isPerTenant?('tenant'.$tenantId):'default';
+        
+        // jika queue worker dihandle oleh worker import genaral
+        }else if(config('AppConfig.system.jobs.import_handler',1)==2){
+            $idxQueue=1;
+            while (Job::where('queue','import'.$idxQueue)->exists()) {
+                $idxQueue++;
+                // berarti semua penuh, maka tambahkan ke yg paling sedikit
+                if($idxQueue>config('AppConfig.system.jobs.import_worker',2)){
+                    $ret = DB::select("SELECT * FROM (SELECT COUNT(*) AS 'jm_queue',`queue` FROM `jobs` WHERE `queue` LIKE 'import%' GROUP BY `queue`) AS tmp_table ORDER BY `jm_queue` ASC LIMIT 1");
+                    return isset($ret['queue'])?$ret['queue']:'import1';
+                }
             }
+            return 'import'.$idxQueue;
+
+        // jika queue worker dihandle oleh import handle per tenant
+        }else if(config('AppConfig.system.jobs.import_handler',1)==3 && $isPerTenant){
+            $idxQueue=1;
+            while (Job::where('queue','tenant'.$tenantId.'import'.$idxQueue)->exists()) {
+                $idxQueue++;
+                // berarti semua penuh, maka tambahkan ke yg paling sedikit
+                if($idxQueue>config('AppConfig.system.jobs.import_worker',2)){
+                    $ret = DB::select("SELECT * FROM (SELECT COUNT(*) AS 'jm_queue',`queue` FROM `jobs` WHERE `queue` LIKE 'tenant".$tenantId."import%' GROUP BY `queue`) AS tmp_table ORDER BY `jm_queue` ASC LIMIT 1");
+                    return isset($ret['queue'])?$ret['queue']:('tenant'.$tenantId.'import1');
+                }
+            }
+            return 'tenant'.$tenantId.'import'.$idxQueue;
+
         }
-        return 'import'.$idxQueue;
     }
 
     /**
      * get data import
      */
-    public function getImport($cacheKey) 
-    {
-        // $this->_deleteCache(
-        //     $this->_mainCacheKeyGroup,
-        //     $this->_mainCacheKeyDetailPrefix.$cacheKey
-        // );
-        return $this->_getCache(
-            $this->_mainCacheKeyGroup,
-            $this->_mainCacheKeyDetailPrefix.$cacheKey,
-            false
-        );
+    public function getImport($cacheKey,$reload=true) 
+    {        
+        $tmp = MImport::where('cache_key',$cacheKey)->first(); 
+        return $tmp?$this->convertDbToCache($tmp->toArray()):false;
     }
 
     /**
@@ -101,33 +199,36 @@ class Import extends BaseRepository
      * membuat process import baru
      * 
      * @param String $cacheKey
-     * @param String $importModel
-     * @param String $filepath     full path excel yg diimport
+     * @param String $importModel       String path model nya, tidak perlu diisi jika setCoreMainLooping digunakan
+     * @param String $filepath          false jika didetek otomatis atau isi dengan full path excel yg diimport (sudah diupload dengan sempurna)
      * @param Integer $dataStartRow
+     * @param Bigint $userId
+     * @param Bigint $tenantId
+     * @param Tinyint $importApproval
      */
-    public function createImport($cacheKey,$importModel,$filepath,$dataStartRow,$userId=0,$tenantId=0)
+    public function createImport($cacheKey,$importModel=false,$filepath=false,$dataStartRow,$userId=0,$tenantId=0,$importApproval=false)
     {
+        $request = request();
+
+        if(empty($filepath)){
+            $filepath = $request->file('importFile')->store('system_import/'.config('tenant.id').'/'.$cacheKey.'/');
+            $filepath = Storage::path($filepath); 
+        }
+
         $tenantId = $tenantId?$tenantId:config('tenant.id',0);
         
-        $importList = $this->_getCache(
-            $this->_mainCacheKeyGroup,
-            $this->_mainCacheKeyList,
-            []
-        );
+        $importData= $this->getImport($cacheKey);
+        $createNew = true;
+        
+        if($importData){
+            $createNew = false;
 
-        // jika belum ada maka create
-        if(!isset($importList[$cacheKey])){
-            $importList[$cacheKey] = $cacheKey;
-
-        // jika sudah ada pastikan tidak dalam proses
-        }else{
-            $importData= $this->getImport($cacheKey);
-            if($importData==false)$importData= $this->initImportStatus();
-            
             // jika sedang dalam proses
             if(
                 $importData['status']==self::$IMPORT_STATUS_DISPATCHED || 
-                $importData['status']==self::$IMPORT_STATUS_ON_PROGRESS
+                $importData['status']==self::$IMPORT_STATUS_ON_PROGRESS|| 
+                $importData['status']==self::$IMPORT_STATUS_CANCEL_APPROVE_ON_PROGRESS|| 
+                $importData['status']==self::$IMPORT_STATUS_APPROVE_ON_PROGRESS
             ){
                 $this->error = 'Jobs already exists';
                 return false;
@@ -137,34 +238,33 @@ class Import extends BaseRepository
             }
         }
 
+        $lastImport = $importModel::orderBy('import_id','DESC')->first();
+        
         // set baru import
         $importData= $this->initImportStatus();
+        $importData['importApproval'] = $importApproval?1:$request->input('importApproval',1);
         $importData['cacheKey'] = $cacheKey;
+        $importData['importId'] = !$lastImport || $lastImport->import_id == 0 ?1:($lastImport->import_id++);
         $importData['importModel'] = $importModel;
         $importData['filepath'] = $filepath;
         $importData['format']['dataStartRow'] = $dataStartRow;
         $importData['userId'] = $userId;
         $importData['tenantId'] = $tenantId;
-
-        // tambahkan ke list
-        $this->_saveCache(
-            $this->_mainCacheKeyGroup,
-            $this->_mainCacheKeyList,
-            $importList
-        );
-
+        
         // tambah detail nya
-        $this->_saveCache(
-            $this->_mainCacheKeyGroup,
-            $this->_mainCacheKeyDetailPrefix.$cacheKey,
-            $importData
-        );
+        if($createNew){
+            MImport::create($this->convertCacheToDb($importData));
+        }else{
+            $this->updateImport($cacheKey,$importData);
+        }
 
         return $importData;
     }
 
         
     /**
+     * STEP TERAKHIR - step terakhir di controllernya
+     * 
      * dispatch import ke queue untuk pertama kali
      * dieksekusi setelah createImport dan set-set config
      */
@@ -175,23 +275,20 @@ class Import extends BaseRepository
         
         $importData['jobDispatchTime'] = now()->format('Y-m-d H:i:s');
         $importData['status'] = self::$IMPORT_STATUS_DISPATCHED;
+        $importData['queue'] = $this->nextImportQueue($importData['tenantId']);
         
         $this->updateImport($cacheKey,$importData);
-        $queueName = $this->nextImportQueue();
-
-        if($this->isImportJobsPerTenant($cacheKey)){
-            JImport::dispatch($cacheKey,'tenant'.$importData['tenantId'].$queueName)->onQueue('tenant'.$importData['tenantId'].$queueName);
-        }else{
-            JImport::dispatch($cacheKey,$queueName)->onQueue($queueName);;
-        }
-
+        
+        JImport::dispatch($cacheKey,$importData['queue'])->onQueue($importData['queue']);
+        
         return $importData;
     }
 
     /**
+     * BELUM DISET DI PROCESS NYA, JADI BELUM BERFUNGSI
      * cancel import yg sedang berjalan
      */
-    public function cancelImport($cacheKey)
+    public function stopImport($cacheKey)
     {
         $importData = $this->getImport($cacheKey); 
         if($importData==false)return false;
@@ -206,10 +303,12 @@ class Import extends BaseRepository
      */
     public function deleteImport($cacheKey)
     {
-        $this->_deleteCache(
-            $this->_mainCacheKeyGroup,
-            $this->_mainCacheKeyDetailPrefix.$cacheKey
-        );
+        $importData = $this->getImport($cacheKey); 
+        if($importData==false)return false;
+        
+        Storage::delete($importData['filepath']);
+        
+        MImport::where('cache_key',$cacheKey)->delete();
         return true;
 
     }
@@ -235,10 +334,16 @@ class Import extends BaseRepository
     }
 
     /**
-     * OVERIDE MAIN PROCESS
+     * Untuk meng-OVERIDE main process
      * method-method untuk mengganti method utama dalam pemrosesan data
+     * -------------------------------------------------------------------------
+     */    
+     
+    /**
+     * fungsi untuk meng-OVERIDE looping data utama
+     * 
+     * @param String $cacheKey key / kode unik per export
      */
-
     public function setCoreMainLooping($cacheKey, string $coreMainLoopingClass, string $coreMainLoopingMethod)
     {
         $importData = $this->getImport($cacheKey);
@@ -278,6 +383,35 @@ class Import extends BaseRepository
         return true;
     }
 
+    
+    /**
+     * set class dan method untuk 
+     */
+    public function setCoreApprove($cacheKey, string $coreApproveClass, string $coreApproveMethod)
+    {
+        $importData = $this->getImport($cacheKey);
+        if($importData==false)return false;
+
+        $importData['format']['coreApproveMethod'] = [$coreApproveClass,$coreApproveMethod];
+        
+        $this->updateImport($cacheKey,$importData);
+        return true;
+    }
+    
+    /**
+     * set class dan method untuk
+     */
+    public function setCoreCancel($cacheKey, string $coreCancelClass, string $coreCancelMethod)
+    {
+        $importData = $this->getImport($cacheKey);
+        if($importData==false)return false;
+
+        $importData['format']['coreCancelMethod'] = [$coreCancelClass,$coreCancelMethod];
+        
+        $this->updateImport($cacheKey,$importData);
+        return true;
+    }
+
     /**
      * CORE - TIDAK DIAKSES / DIGUNAKAN DARI APLIKASI SECARA LANGSUNG
      * -------------------------------------------------------------------------
@@ -287,37 +421,20 @@ class Import extends BaseRepository
     {  
         $importData = [];
 
-        $importData['jobsId'] = 0;//id table jobs
-        $importData['processId'] = 0;//id process
-        $importData['forceCancle'] = 0;//1 jika force cancel
-
+        $importData['tenantId'] = 0;
+        $importData['userId'] = 0;
         $importData['cacheKey'] = '';
+
+        $importData['jobsId'] = 0;//id table jobs
+        $importData['processId'] = 0;//id process (system process)
+
         $importData['queue'] = '';
 
-        $importData['addsParam'] = [];//general additional parameter jika diperlukan
-        $importData['importModel'] = '';//bisa array [class,static method]
-
-        $importData['userId'] = 0;
-        $importData['tenantId'] = 0;
-
-        $importData['log'] = '';//log status
-
-        $importData['format'] = [
-            'formatRow'=>[],// format per index kolom (dari 0 dst)
-            'dataStartRow'=>2,//baris pertama data diget
-            'coreMainLoopingMethod' => [],// [class,static method]			
-			'coreRowFormaterMethod'=>[],// [class,static method]			
-			'coreLastFormaterMethod'=>[],// [class,static method]
-        ];
-
-        $importData['filepath'] = '';// file path excel yang diupload
-				
-        $importData['processedCount'] = 0;//jumlah record yg sudah diproses
-
-        $importData['inputTime'] = now()->format('Y-m-d H:i:s');//waktu import dicreate pertama kali
         $importData['jobDispatchTime'] = '';//waktu pertama kali jobs diproses (saat ke status 1)
         $importData['jobStartTime'] = '';//waktu jobs pertama pertama kali diproses (saat ke status 2)
         
+        $importData['log'] = '';//log status
+
         $importData['status'] = 0;
         // status :
         // 0 new process
@@ -325,16 +442,39 @@ class Import extends BaseRepository
         // 2 jobs sudah di dispatch (run) / sedang berjalan
         // 3 jobs selesai
         // 4 jobs gagal
+
+        //----------------------------------------------------------------------
+
+        $importData['forceCancle'] = 0;//1 jika force cancel
+        $importData['importId'] = 0;//id dari import_id di table yg diimportnya, otomatis generate saat insert pertama kali
+        $importData['importApproval'] = 1;//apakah ada process approve & cancel atau tidak
+
+        $importData['addsParam'] = [];//general additional parameter jika diperlukan
+        $importData['importModel'] = '';//string namespace class model nya, khusus jika tidak mengisi coreMainLoopingMethod
+
+        $importData['format'] = [
+            'formatRow'=>[],// format per index kolom (dari 0 dst)
+            'dataStartRow'=>2,//baris pertama data diget
+            'coreMainLoopingMethod' => [],// [class,static method]			
+			'coreRowFormaterMethod'=>[],// [class,static method]			
+			'coreLastFormaterMethod'=>[],// [class,static method]
+            'coreApproveMethod' => [],// [class,static method]
+            'coreCancelMethod' => [],// [class,static method]	
+        ];
+
+        $importData['filepath'] = '';// file path excel yang diupload
+				
+        $importData['processedCount'] = 0;//jumlah record yg sudah diproses
+
+        $importData['inputTime'] = now()->format('Y-m-d H:i:s');//waktu import dicreate pertama kali
+        
         return $importData;
     }
 
     protected function updateImport($cacheKey,$importData) 
-    {   
-        $this->_saveCache(
-            $this->_mainCacheKeyGroup,
-            $this->_mainCacheKeyDetailPrefix.$cacheKey,
-            $importData
-        );
+    {
+        $importData = $this->convertCacheToDb($importData);
+        MImport::where('cache_key',$cacheKey)->update($importData);
     }
 
     protected function setImportDone($cacheKey)
@@ -366,9 +506,10 @@ class Import extends BaseRepository
     /**
      * set dari cronjob, jika cronjob ada uncaught error
      * 
-     * @param Exception $exception instance Exception dari job failed
+     * @param String $cacheKey key / kode unik per import
+     * @param Throwable $exception instance Exception dari job failed
      */
-    public function setImportJobFailed($cacheKey,Exception $exception)
+    public function setImportJobFailed($cacheKey, Throwable $exception)
     {
         $this->setImportFailed($cacheKey); 
 
@@ -378,7 +519,7 @@ class Import extends BaseRepository
         $log .= str_replace("\n",'<br>', $exception->getTraceAsString());
 
         $this->appendImportLog($log);
-        report($exception); //lanjutkan error ke login (meureun)
+        // report($exception); //lanjutkan error ke login (meureun)
     }
 
     public function appendImportLog($cacheKey,string $log='')
@@ -430,7 +571,7 @@ class Import extends BaseRepository
         return true;
     }
     
-    public function iimportIncrementProcessedCount($cacheKey)
+    public function importIncrementProcessedCount($cacheKey)
     {
         $importData = $this->getImport($cacheKey);
         $importData['processedCount']++;
@@ -449,6 +590,9 @@ class Import extends BaseRepository
          * init status & var
          */
         $importData = $this->getImport($cacheKey);
+        if($importData['tenantId']!=0)
+            Tenant::setActiveTenantById($importData['tenantId']);
+
         $importData['status'] = self::$IMPORT_STATUS_ON_PROGRESS;
         $importData = $this->_initImportData($importData,$curQueue);       
 
@@ -493,23 +637,24 @@ class Import extends BaseRepository
                         $dataRow,
                         $idxRow
                     );
-                    continue;
-                }
-                        
-                if(empty($importData['format']['coreRowFormaterMethod'])){
-                    $insertRow = $this->formatImportExcelRow($importData,$dataRow,$idxRow);
                 }else{
-                    $insertRow = $importData['format']['coreRowFormaterMethod'][0]::{$importData['format']['coreRowFormaterMethod'][1]}(
-                        $importData,
-                        $dataRow,
-                        $idxRow
-                    );
-                }
-                
-                // default insert data
-                $importData['importModel']::insert($insertRow);
+                        
+                    if(empty($importData['format']['coreRowFormaterMethod'])){
+                        $insertRow = $this->formatImportExcelRow($importData,$dataRow,$idxRow);
+                    }else{
+                        $insertRow = $importData['format']['coreRowFormaterMethod'][0]::{$importData['format']['coreRowFormaterMethod'][1]}(
+                            $importData,
+                            $dataRow,
+                            $idxRow
+                        );
+                    }
+                    
+                    // default insert data
+                    $importData['importModel']::insert($insertRow);
 
-                $this->iimportIncrementProcessedCount($cacheKey);
+                }
+
+                $this->importIncrementProcessedCount($cacheKey);
                 $idxRow++;
 
                 if((microtime(true)-$startTime)>=10){
@@ -529,10 +674,110 @@ class Import extends BaseRepository
             );
         }        
 
-        //ubah status jadi ok
+        //ubah status jadi ok jika sudah benar-benar selesai
         $this->setImportDone($cacheKey);
 
         return true;        
+    }
+
+    public function approveImport($cacheKey)
+    {        
+        $importData = $this->getImport($cacheKey);
+        // proses approve hanya boleh dilakukan jika berstatus 3 (Import Berhasil)
+        if($importData && $importData['status']==3){
+            if(empty($importData['format']['coreApproveMethod'])){
+                $return = $this->approveImportDo($importData);
+            }else{
+                $return = $importData['format']['coreApproveMethod'][0]::{$importData['format']['coreRowFormaterMethod'][1]}(
+                    $this,
+                    $importData
+                );
+            }
+        }
+                
+        if($return){
+            return true;
+        }else{
+            $this->error = 'Data import yang bisa diapprove tidak ditemukan';
+            return false;
+        }
+        return false;
+    }
+
+        private function approveImportDo($importData)
+        {        
+            $importData['importModel']::where('import_id',$importData['importId'])
+                ->where('is_import',1)
+                ->where('is_import',1)
+                ->update([
+                    'import_publish_time'=>now(),
+                    'import_status'=>1
+                ]);
+            return true;
+        }
+    
+    protected function setImportApproveStart($cacheKey)
+    {
+        $importData = $this->getImport($cacheKey); 
+        if($importData==false)return false;
+
+        $importData['log'] .= '<br><b class="text-success">Import Done !</b><br>';
+        $importData['log'] .= '<span class="text-info">Jobs ended at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>';
+        $importData['status'] = self::$IMPORT_STATUS_APPROVE_ON_PROGRESS;//7: Approve success
+        $this->updateImport($cacheKey,$importData); 
+    }
+    
+    protected function setImportApproveSuccess($cacheKey)
+    {
+        $importData = $this->getImport($cacheKey); 
+        if($importData==false)return false;
+
+        $importData['log'] .= '<br><b class="text-success">Import Done !</b><br>';
+        $importData['log'] .= '<span class="text-info">Jobs ended at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>';
+        $importData['status'] = self::$IMPORT_STATUS_APPROVE_SUCCESS;//8: Approve success
+        $this->updateImport($cacheKey,$importData); 
+    }
+
+    public function cancelImport($cacheKey)
+    {        
+        $importData = $this->getImport($cacheKey);
+        // proses approve hanya boleh dilakukan jika berstatus 3 (Import Berhasil) atau 4 (import gagal)
+        if($importData && ($importData['status']==3 || $importData['status']==4)){
+            if(empty($importData['format']['coreCancelMethod'])){
+                $return = $this->cancelImportDo($importData);
+            }else{
+                $return = $importData['format']['coreCancelMethod'][0]::{$importData['format']['coreRowFormaterMethod'][1]}(
+                    $this,
+                    $importData
+                );
+            }
+        }
+        if($return){
+            return true;
+        }else{
+            $this->error = 'Data import yang bisa dibatalkan tidak ditemukan';
+            return false;
+        }
+    }
+
+    private function cancelImportDo($importData)
+    {
+        $importData['importModel']::where('import_id',$importData['importId'])
+            ->where('is_import',1)
+            ->delete();
+        return true;
+    }
+    
+    
+    protected function setImportCanceled($cacheKey)
+    {
+        $importData = $this->getImport($cacheKey); 
+        if($importData==false)return false;
+
+        $importData['log'] .= '<br><b class="text-success">Import Done !</b><br>';
+        $importData['log'] .= '<span class="text-info">Jobs ended at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>';
+        $importData['status'] = self::$IMPORT_STATUS_SUCCESS;//2: success
+        $this->updateImport($cacheKey,$importData); 
     }
     
     /**
@@ -646,6 +891,7 @@ class Import extends BaseRepository
         return $value;
 
     }
+
     private function isImportJobsPerTenant($cacheKey)
     {
         $importData = $this->getImport($cacheKey);
