@@ -37,6 +37,7 @@
                 <thead>
                     <tr>
                         <th>No</th>
+                        <th>Tenant ID</th>
                         <th>User</th>
                         <th>Export Key</th>
                         <th style="width: 100px;">Aksi</th>
@@ -48,13 +49,14 @@
                     <?php $i++; ?>
                     <tr>
                         <td>{{$i}}</td>
+                        <td>{{$v['tenant_id']}}</td>
                         <td>{!!$v['user']?('['.$v['user']['id'].'] <b>'.$v['user']['username'].'</b> <i>('.$v['user']['name'].')</i>'):'-'!!}</td>
-                        <td>{{$v['cacheKey']}}</td>
+                        <td>{{$v['cache_key']}}</td>
                         <td>  
-                            <a href="{{route('system.queue.export.detail',['cacheKey'=>$v['cacheKey'],'isHistory'=>true])}}" class="btn btn-info btn-xs">
+                            <a href="{{route('system.queue.export.detail',['cacheKey'=>$v['cache_key'],'isHistory'=>true])}}" class="btn btn-info btn-xs">
                                 <i class="ion ion-md-create"></i> Detail
                             </a> &nbsp; 
-                            <a href="{{route('system.queue.export.delete',['cacheKey'=>$v['cacheKey'],'isHistory'=>true])}}" class="btn btn-danger btn-xs">
+                            <a href="{{route('system.queue.export.delete',['cacheKey'=>$v['cache_key'],'isHistory'=>true])}}" class="btn btn-danger btn-xs">
                                 <i class="ion ion-md-close"></i> Delete
                             </a> 
                         </td>

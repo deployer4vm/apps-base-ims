@@ -287,7 +287,7 @@
                             this.onGetStatus(this.importStatus);
                         
                         //jika belum selesai atau baru mulai upload, maka request status lagi nanti
-                        if(this.importStatus.status==1||this.importStatus.status==2||this.importStatus.status==5||this.importStatus.status==6){
+                        if(this.importStatus.status==1||this.importStatus.status==2||this.importStatus.status==5||this.importStatus.status==7){
                             setTimeout(function() {
                                 that.getImportStatus();
                             },1000); 
@@ -333,6 +333,9 @@
                             that.getImportStatus();
                         },1000);
                     }).catch((res)=>{
+                        setTimeout(function() {
+                            that.getImportStatus();
+                        },1000);
                         this.Web.showAlert({text: "Request approve gagal : " + res.message,type: "warning"});
                     });
             },
@@ -348,6 +351,9 @@
                             that.getImportStatus();
                         },1000);
                     }).catch((res)=>{
+                        setTimeout(function() {
+                            that.getImportStatus();
+                        },1000);
                         this.Web.showAlert({text: "Request pembatalan gagal : " + res.message,type: "warning"});
                     });
             }

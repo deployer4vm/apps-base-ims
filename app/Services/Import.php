@@ -250,7 +250,7 @@ class Import extends BaseRepository
         $importData= $this->initImportStatus();
         $importData['importApproval'] = $importApproval?1:$request->input('importApproval',1);
         $importData['cacheKey'] = $cacheKey;
-        $importData['importId'] = $importId ;
+        $importData['importId'] = $importId;
         $importData['importModel'] = $importModel;
         $importData['filepath'] = $filepath;
         $importData['format']['dataStartRow'] = $dataStartRow;
@@ -403,9 +403,23 @@ class Import extends BaseRepository
         $this->updateImport($cacheKey,$importData);
         return true;
     }
+
+    /**
+     * set class jobs untuk approve
+     */
+    public function setCoreApproveJob($cacheKey, string $coreApproveJob)
+    {
+        $importData = $this->getImport($cacheKey);
+        if($importData==false)return false;
+
+        $importData['format']['coreApproveJob'] = $coreApproveJob;
+        
+        $this->updateImport($cacheKey,$importData);
+        return true;
+    }
     
     /**
-     * set class dan method untuk
+     * set class dan method untuk cancel import
      */
     public function setCoreCancel($cacheKey, string $coreCancelClass, string $coreCancelMethod)
     {
@@ -413,6 +427,20 @@ class Import extends BaseRepository
         if($importData==false)return false;
 
         $importData['format']['coreCancelMethod'] = [$coreCancelClass,$coreCancelMethod];
+        
+        $this->updateImport($cacheKey,$importData);
+        return true;
+    }
+    
+    /**
+     * set class djobs untuk cancel import
+     */
+    public function setCoreCancelJob($cacheKey, string $coreCancelJob)
+    {
+        $importData = $this->getImport($cacheKey);
+        if($importData==false)return false;
+
+        $importData['format']['coreCancelJob'] = $coreCancelJob;
         
         $this->updateImport($cacheKey,$importData);
         return true;
@@ -465,7 +493,9 @@ class Import extends BaseRepository
 			'coreRowFormaterMethod'=>[],// [class,static method]			
 			'coreLastFormaterMethod'=>[],// [class,static method]
             'coreApproveMethod' => [],// [class,static method]
+            'coreApproveJob' => '',// class jobs approve
             'coreCancelMethod' => [],// [class,static method]	
+            'coreCancelJob' => ''//class jobs cancle
         ];
 
         $importData['filepath'] = '';// file path excel yang diupload
@@ -689,19 +719,52 @@ class Import extends BaseRepository
     public function approveImport($cacheKey)
     {        
         $importData = $this->getImport($cacheKey);
+        $return = false;
+        $notOnJobs = true;
         // proses approve hanya boleh dilakukan jika berstatus 3 (Import Berhasil)
         if($importData && $importData['status']==3){
-            if(empty($importData['format']['coreApproveMethod'])){
-                $return = $this->approveImportDo($importData);
+            $this->setImportApproveStart($cacheKey); 
+            if(!empty($importData['format']['coreApproveJob'])){
+                $importData['format']['coreApproveJob']::withChain(function() use($cacheKey){
+                    $this->setImportApproveSuccess($cacheKey); 
+                });
+                $return = true;
+                $notOnJobs = false;
             }else{
-                $return = $importData['format']['coreApproveMethod'][0]::{$importData['format']['coreRowFormaterMethod'][1]}(
-                    $this,
-                    $importData
-                );
+                
+                $dontHaveTransactionLevel = !Tenant::dbTransactionLevel();
+                
+                if($dontHaveTransactionLevel)
+                    Tenant::dbBeginTransaction();
+                try{
+                    
+                    if(!empty($importData['format']['coreApproveMethod'])){
+                        $importData['format']['coreApproveMethod'][0]::{$importData['format']['coreApproveMethod'][1]}(
+                            $this,
+                            $importData
+                        );
+                    }else {
+                        $this->approveImportDo($importData);
+                    }
+                    
+                    if($dontHaveTransactionLevel)
+                        Tenant::dbCommit();
+                    $return = true;
+
+                } catch (\Exception  $e) {
+
+                    if($dontHaveTransactionLevel)
+                        Tenant::dbRollback();
+
+                    $return = false;
+                }
             }
         }
                 
         if($return){
+            //tandai sucess jika process approve nya tidak menggunakan jobs
+            if($notOnJobs)
+                $this->setImportApproveSuccess($cacheKey); 
             return true;
         }else{
             $this->error = 'Data import yang bisa diapprove tidak ditemukan';
@@ -719,7 +782,6 @@ class Import extends BaseRepository
                     'import_publish_time'=>now(),
                     'import_status'=>1
                 ]);
-            return true;
         }
     
     protected function setImportApproveStart($cacheKey)
@@ -727,9 +789,8 @@ class Import extends BaseRepository
         $importData = $this->getImport($cacheKey); 
         if($importData==false)return false;
 
-        $importData['log'] .= '<br><b class="text-success">Import Done !</b><br>';
-        $importData['log'] .= '<span class="text-info">Jobs ended at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>';
-        $importData['status'] = self::$IMPORT_STATUS_APPROVE_ON_PROGRESS;//7: Approve success
+        $importData['log'] .= '<br><b class="text-info">Import Approved...</b><br>';
+        $importData['status'] = self::$IMPORT_STATUS_APPROVE_ON_PROGRESS;//5 process approve import on progress
         $this->updateImport($cacheKey,$importData); 
     }
     
@@ -738,9 +799,9 @@ class Import extends BaseRepository
         $importData = $this->getImport($cacheKey); 
         if($importData==false)return false;
 
-        $importData['log'] .= '<br><b class="text-success">Import Done !</b><br>';
+        $importData['log'] .= '<br><b class="text-success">Import Approved Successfully !</b><br>';
         $importData['log'] .= '<span class="text-info">Jobs ended at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>';
-        $importData['status'] = self::$IMPORT_STATUS_APPROVE_SUCCESS;//8: Approve success
+        $importData['status'] = self::$IMPORT_STATUS_APPROVE_SUCCESS;//6 process approve import berhasil
         $this->updateImport($cacheKey,$importData); 
     }
 
@@ -749,40 +810,84 @@ class Import extends BaseRepository
         $importData = $this->getImport($cacheKey);
         // proses approve hanya boleh dilakukan jika berstatus 3 (Import Berhasil) atau 4 (import gagal)
         if($importData && ($importData['status']==3 || $importData['status']==4)){
-            if(empty($importData['format']['coreCancelMethod'])){
-                $return = $this->cancelImportDo($importData);
+            
+            $this->setImportCancelStart($cacheKey); 
+            $return = false;
+            $notOnJobs = true;
+            if(!empty($importData['format']['coreCancelJob'])){
+                $importData['format']['coreCancelJob']::withChain(function() use($cacheKey){
+                    $this->setImportCancelSuccess($cacheKey); 
+                });
+                $return = true;
+                $notOnJobs = false;
             }else{
-                $return = $importData['format']['coreCancelMethod'][0]::{$importData['format']['coreRowFormaterMethod'][1]}(
-                    $this,
-                    $importData
-                );
+                
+                $dontHaveTransactionLevel = !Tenant::dbTransactionLevel();
+                
+                if($dontHaveTransactionLevel)
+                    Tenant::dbBeginTransaction();
+                try{
+
+                    if(!empty($importData['format']['coreCancelMethod'])){
+                        $importData['format']['coreCancelMethod'][0]::{$importData['format']['coreCancelMethod'][1]}(
+                            $this,
+                            $importData
+                        );
+                    }else{
+                        $this->cancelImportDo($importData);
+                    }
+                    
+                    if($dontHaveTransactionLevel)
+                        Tenant::dbCommit();
+                    $return = true;
+
+                } catch (\Exception  $e) {
+
+                    if($dontHaveTransactionLevel)
+                        Tenant::dbRollback();
+
+                    $return = false;
+                }
             }
         }
+
         if($return){
+            //tandai sucess jika process cancel nya tidak menggunakan jobs
+            if($notOnJobs)
+                $this->setImportCancelSuccess($cacheKey); 
             return true;
         }else{
+            // $this->setImport($cacheKey); 
             $this->error = 'Data import yang bisa dibatalkan tidak ditemukan';
             return false;
         }
     }
 
-    private function cancelImportDo($importData)
-    {
-        $importData['importModel']::where('import_id',$importData['importId'])
-            ->where('is_import',1)
-            ->delete();
-        return true;
-    }
+        private function cancelImportDo($importData)
+        {
+            $importData['importModel']::where('import_id',$importData['importId'])
+                ->where('is_import',1)
+                ->delete();
+        }    
     
-    
-    protected function setImportCanceled($cacheKey)
+    protected function setImportCancelStart($cacheKey)
     {
         $importData = $this->getImport($cacheKey); 
         if($importData==false)return false;
 
-        $importData['log'] .= '<br><b class="text-success">Import Done !</b><br>';
+        $importData['log'] .= '<br><b class="text-info">Import Canceled...</b><br>';
+        $importData['status'] = self::$IMPORT_STATUS_CANCEL_APPROVE_ON_PROGRESS;//7: Approve success
+        $this->updateImport($cacheKey,$importData); 
+    }
+
+    protected function setImportCancelSuccess($cacheKey)
+    {
+        $importData = $this->getImport($cacheKey); 
+        if($importData==false)return false;
+
+        $importData['log'] .= '<br><b class="text-danger">Import Canceled Successfully !</b><br>';
         $importData['log'] .= '<span class="text-info">Jobs ended at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>';
-        $importData['status'] = self::$IMPORT_STATUS_SUCCESS;//2: success
+        $importData['status'] = self::$IMPORT_STATUS_CANCEL_APPROVE_SUCCESS;//8 process cancel approve import berhasil
         $this->updateImport($cacheKey,$importData); 
     }
     
