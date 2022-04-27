@@ -238,13 +238,19 @@ class Import extends BaseRepository
             }
         }
 
-        $lastImport = $importModel::orderBy('import_id','DESC')->first();
+        try{
+            $lastImport = $importModel::orderBy('import_id','DESC')->first();
+            $importId = !$lastImport || $lastImport->import_id == 0 ?1:($lastImport->import_id++);
+        } catch (\Exception  $e) {
+            // jika error berarti ga set field import_id
+            $importId = 1;
+        }
         
         // set baru import
         $importData= $this->initImportStatus();
         $importData['importApproval'] = $importApproval?1:$request->input('importApproval',1);
         $importData['cacheKey'] = $cacheKey;
-        $importData['importId'] = !$lastImport || $lastImport->import_id == 0 ?1:($lastImport->import_id++);
+        $importData['importId'] = $importId ;
         $importData['importModel'] = $importModel;
         $importData['filepath'] = $filepath;
         $importData['format']['dataStartRow'] = $dataStartRow;
