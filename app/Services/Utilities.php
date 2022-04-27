@@ -142,6 +142,23 @@ class Utilities
         return ['comamnd'=>$command,'return'=>$ret];
     }
     
+
+    /**
+     * untuk mereset semua worker artisan scheduller
+     */
+    public static function resetSchedulerWorker()
+    {
+        $ret = [];
+        // kill all artisan
+        $ret[] = shell_exec('pkill -f artisan');
+        // reset cache
+        $ret[] = self::artisan('optimize:clear');
+        $ret[] = self::artisan('optimize:clear');// 2 kali eksekusi untuk memastikan benar2 terhapus
+        $ret[] = self::artisan('config:cache');
+
+        return $ret;
+    }
+    
     /**
      * List queue comamnd
      * 

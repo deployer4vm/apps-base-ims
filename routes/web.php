@@ -31,6 +31,11 @@ Route::group(['prefix'=>'system-queue'],function(){
         Route::get('detail/{cacheKey}/cancel', 'queue\ImportController@cancelQueue')->name('system.queue.import.cancel');
         Route::get('detail/{cacheKey}/delete', 'queue\ImportController@deleteQueue')->name('system.queue.import.delete');
     });
+    // restart scheduller
+    Route::get('restart', function(Request $request){
+        $return = Utilities::resetSchedulerWorker();
+        return $return;
+    });
 });
 
 Route::get('/storage{any}', 'StorageController@index')->where('any', '.*');
