@@ -5,7 +5,7 @@ const path = require("path");
 const trim = require("lodash/trim");
 var fs = require("fs");
 
-let systemVar = JSON.parse(fs.readFileSync("app/MainApp/config/system.json"));
+let systemVar = JSON.parse(fs.readFileSync("app/MainApp/config/_system.json"));
 var publicPath = path.normalize(systemVar.public_path?trim(systemVar.public_path,'/'):'public');
 
 /*
@@ -244,13 +244,23 @@ if(systemVar.web_admin.web){
 // Core Stylesheets
 
 if(systemVar.web_admin.web || systemVar.web_admin.full_vue) {
-mix.sass(
-        "resources/assets/src/vendor/styles/theme-" +
-        systemVar.web_admin.theme +
-        ".scss",
-        "dist/css/theme-app.css"
-    )//web & full vue
-    .sass(
+    if(systemVar.web_admin.theme_custom==1){
+        mix.sass(
+            "app/MainApp/resources/themes/theme-" +
+            systemVar.web_admin.theme +
+            ".scss",
+            "dist/css/theme-app.css"
+        );//web & full vue
+    }else{
+        mix.sass(
+            "resources/assets/src/vendor/styles/theme-" +
+            systemVar.web_admin.theme +
+            ".scss",
+            "dist/css/theme-app.css"
+        );//web & full vue
+
+    }
+    mix.sass(
         "resources/assets/src/vendor/styles/bootstrap.scss",
         "dist/css/bootstrap.css"
     )//web & full vue
