@@ -66,9 +66,9 @@
                     Data count : <b v-text="importStatus.processedCount"></b>
                 </div>
                 <!-- download format file -->
-                <div class="col text-right" v-if="this.isFileFormat && this.apiUrl.formatFile">                    
+                <div class="col text-right" v-if="isFileFormat && apiUrl.formatFile">                    
                     <b-btn variant="info" @click="download(
-                        this.apiUrl.formatFile,
+                        apiUrl.formatFile,
                         apiImportFileFormatFilename?apiImportFileFormatFilename:'Import Format File.xlsx'
                     )"> 
                         <span class="ion ion-md-cloud-download"></span> &nbsp; Download Format File Import

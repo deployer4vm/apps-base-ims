@@ -1,6 +1,6 @@
 `<template>
     <div>
-        <div class="row mb-2">
+        <div class="row mb-3">
             <div class="col">                        
                 <template v-if="downloadStatus.status==3">
                     File download : <a :href="downloadStatus.fileurl" class="btn btn-sm btn-info" v-text="downloadStatus.filename"></a><br>
@@ -9,12 +9,12 @@
                 </template>  
             </div>
             <div class="col text-right">
-                <button @click="requestDownload" :class="config.btnVariant" :disabled="downloadStatus.status==1 || downloadStatus.status==2">
+                <b-btn @click="requestDownload" :class="config.btnVariant" :disabled="downloadStatus.status==1 || downloadStatus.status==2">
                     <span class="ion ion-md-cloud-download"></span>&nbsp; Generate Download Terbaru
-                </button>
+                </b-btn>
             </div>
         </div>
-        <div class="alert alert-success show p-0" style="max-height: 200px; overflow-x: auto;">            
+        <div class="alert alert-success show pr-0" style="max-height: 300px; overflow-x: auto;">
             <template v-if="downloadStatus.status==1 || downloadStatus.status==2 || downloadStatus.status==4">
                 <i v-if="downloadStatus.status==1 || downloadStatus.status==2" class="p-2 d-inline-block">
                     File download sedang digenerate, mohon tunggu...
@@ -25,16 +25,16 @@
                 <b class="p-2 d-inline-block">
                     Data count : <span v-text="downloadStatus.count"></span></b> - <b>Processed count : <span v-text="downloadStatus.processedCount"></span>
                 </b>                       
-                <div v-if="config.showLog" v-html="downloadStatus.log" class="p-2" style="background: rgba(0,0,0,0.1); overflow-x: auto;"></div>
+                <div v-if="config.showLog" v-html="downloadStatus.log" class="p-1" style="background: rgba(0,0,0,0.1); max-height: 200px; overflow-x: auto;"></div>
             </template>
             <!-- jika berhasil / selesai -->
             <template v-else-if="downloadStatus.status==3">
                 <i class="p-2 d-inline-block">Log download terkahir :</i>
-                <div v-if="config.showLog" v-html="downloadStatus.log" class="p-2" style="background: rgba(0,0,0,0.1); overflow-x: auto;"></div>
+                <div v-if="config.showLog" v-html="downloadStatus.log" class="p-1" style="background: rgba(0,0,0,0.1); max-height: 200px; overflow-x: auto;"></div>
             </template>    
             <!-- jika belum ada data export sebelumnya -->
             <template v-else>
-                <i><b class="text-danger pl-2 d-inline-block">-belum ada file download-</b></i>
+                <i><b class="text-danger">-belum ada file download-</b></i>
             </template>                      
         </div>  
     </div> 
@@ -68,10 +68,8 @@ export default {
             },
             config: {
                 btnVariant: {
-                    btn: true, 
                     'btn-success':true, 
-                    'btn-sm':true, 
-                    'd-inline-blcok': true
+                    'd-inline-block': true
                 },
                 showLog: true
             }
