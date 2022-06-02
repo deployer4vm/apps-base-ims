@@ -1,7 +1,9 @@
 <template>
     <div> 
         <div class="d-flex justify-content-between px-2 pt-2 mb-0">
-            <b>{{ title }}</b>
+            <div>
+                <b>{{ title }}</b> <i>(<small>File type : {{ extensions }}</small>)</i>
+            </div>
             
             <b-dd v-if="!disabled" size="sm" split :right="isRTL" @click="$refs[refID].$el.querySelector('input').click()">
                 <template slot="button-content"> <i class="ion ion-md-add"></i> Add Files </template>
