@@ -171,8 +171,11 @@ if(!function_exists('initHPsynapseConfig')){
             }
         });
 
-        $mainPath = database_path('migrations');
-        $migrationPath = array_merge([$mainPath], $migrationModulePath);
+        /**
+         * Set Migrations Path
+         */
+
+        $migrationPath = array_merge([database_path('migrations')], $migrationModulePath);
 
         $migrationPath[] = app_path('MainApp'.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations'); 
 
@@ -191,6 +194,33 @@ if(!function_exists('initHPsynapseConfig')){
                     $path = app_path('MainApp' . DIRECTORY_SEPARATOR . 'Tenants' . DIRECTORY_SEPARATOR . 'ID' . $tenantId . DIRECTORY_SEPARATOR . 'database'.DIRECTORY_SEPARATOR.'migrations');
                     if(file_exists($path))
                         $migrationPath[] = $path;
+                }
+            }
+        }
+
+        /**
+         * Set Seeds Path
+         */
+        
+        $seedPath = array_merge([database_path('seeds')], $migrationModulePath);
+
+        $seedPath[] = app_path('MainApp'.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'seeds'); 
+
+        // jika multi project maka load juga migration project nya
+        if(isset($system['multiproject']['active']) && $system['multiproject']['active']==1) 
+            $seedPath[] = app_path('MainApp'.DIRECTORY_SEPARATOR.'Project'.DIRECTORY_SEPARATOR.$client['project_code'].DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'seeds'); 
+
+        // jika multi tenant maka load path migration per tenant
+        if(isset($system['multitenant']['active']) && $system['multitenant']['active']==1){
+            foreach ($tenantList as $tenantId) {
+                if(isset($system['multiproject']['active']) && $system['multiproject']['active'] == 1){
+                    $path = app_path('MainApp' . DIRECTORY_SEPARATOR . 'Projects' . DIRECTORY_SEPARATOR . $client['project_code'] . DIRECTORY_SEPARATOR  . 'Tenants' . DIRECTORY_SEPARATOR . 'ID' . $tenantId . DIRECTORY_SEPARATOR . 'database'.DIRECTORY_SEPARATOR.'seeds');
+                    if(file_exists($path))
+                        $seedPath[] = $path;
+                }else{
+                    $path = app_path('MainApp' . DIRECTORY_SEPARATOR . 'Tenants' . DIRECTORY_SEPARATOR . 'ID' . $tenantId . DIRECTORY_SEPARATOR . 'database'.DIRECTORY_SEPARATOR.'seeds');
+                    if(file_exists($path))
+                        $seedPath[] = $path;
                 }
             }
         }
@@ -218,7 +248,8 @@ if(!function_exists('initHPsynapseConfig')){
             'lang_path' => $langPath,//language path
             'controller_path' => $controllerPath,//controller path
             'view_path' => $viewPath,//blade view path
-            'migration_path' => $migrationPath,//migration path
+            'migration_path' => $migrationPath,//migrations path
+            'seed_path' => $seedPath,//seeds path
             /*
             * namespace ke path lokasi daftar module module
             *  NAMESPACE => [path_to_module_group, FILTER PREFIX

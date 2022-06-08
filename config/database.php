@@ -10,7 +10,8 @@ $mysqlPerTenant = [
         'username' => env('CPANEL_USERNAME_PERTENANT'),
         'password' => env('CPANEL_PASSWORD_PERTENANT')
     ],
-    'driver' => env('DB_PERTENANT_DRIVER', 'mysql'),
+    'name' => env('DB_NAME_PERTENANT', 'Main DB Server'),
+    'driver' => env('DB_DRIVER_PERTENANT', 'mysql'),
     'url' => env('DATABASE_URL'),
     'host' => env('DB_HOST_PERTENANT', '127.0.0.1'),
     'port' => env('DB_PORT_PERTENANT', '3306'),
@@ -45,8 +46,8 @@ $multiDatabaseServer = [
     'servers'=>[
         // server 0 adalah server database yg juga digunakan di default connection
         [
-            'name' => env('DB_MULTISERVER_MAIN_NAME', 'Main DB Server'),
-            'driver' => env('DB_MULTISERVER_MAIN_DRIVER', 'mysql'),
+            'name' => env('DB_NAME', 'Main DB Server'),
+            'driver' => env('DB_DRIVER', 'mysql'),
             'url' => env('DATABASE_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),

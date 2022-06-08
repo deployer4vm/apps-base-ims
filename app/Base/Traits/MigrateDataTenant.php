@@ -6,10 +6,15 @@ use Illuminate\Support\Facades\Schema;
 use App\Facades\Tenant;
 
 /**
- * use trait ini di model yang datanya ada pemisahan antar tenantnya 
+ * use trait ini di migration yang datanya ada pemisahan antar tenantnya 
  */
 trait MigrateDataTenant
 {
+    /**
+     * Mode migrasi dijalan dari mana :
+     *      true jika migrasi dijalan dari Tenant service
+     *      false jika migrasi dijalan kan dari fitur artisan migrate
+     */
     public $_tenantMigrateMode = false;
 
     public function setTenantId($tenantId)
@@ -17,14 +22,20 @@ trait MigrateDataTenant
         $this->tenantId = $tenantId;
     }
 
+    /**
+     * Set mode migrasi tenant
+     */
     public function setTenantMigrateMode($tenantMigrateMode)
     {
         $this->_tenantMigrateMode = $tenantMigrateMode;
     }
 
     /**
-     * true jika migrasi dijalan dari Tenant service
-     * false jika migrasi dijalan kan dari fitur artisan migrate
+     * Mode migrasi dijalan dari mana
+     * 
+     * @return Boolean
+     *      true jika migrasi dijalan dari Tenant service
+     *      false jika migrasi dijalan kan dari fitur artisan migrate
      */
     public function tenantMigrateMode()
     {

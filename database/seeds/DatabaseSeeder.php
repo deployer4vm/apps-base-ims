@@ -4,6 +4,7 @@ use Illuminate\Database\Seeder;
 use App\Services\Utilities;
 
 use App\Models\Seed;
+use App\Facades\Tenant;
 // use Exception;
 
 class DatabaseSeeder extends Seeder
@@ -42,17 +43,82 @@ class DatabaseSeeder extends Seeder
         $projectSeeds = include(app_path('MainApp/database/SeedList.php'));
         $projectSeeds = array_merge($moduleSeeds,$projectSeeds);
 
+        /**
+         * Eksekusi semua seeds yang terdetek dan belum dieksekusi sebelumnya
+         */
+        $runAbleSeeds = [];
         foreach($projectSeeds as $class){
             if(!Seed::where('seed',$class)->exists()){
+                $runAbleSeeds[] = $class;                
+                // try {
+                //     $this->call($class);
+                //     Seed::create(['seed'=>$class]);
+                // } catch (Exception $th) {
+                //     throw $th;
+                // }
+                
+            }
+        }
+        //jika mode nya 1 tenant 1 database
+        if(config('AppConfig.system.multitenant.data_mode',1)==3){  
+            $this->callPerTenant($runAbleSeeds); 
+
+        // jika dalam 1 database utama
+        }else{
+            foreach($runAbleSeeds as $class){
                 try {
                     $this->call($class);
                     Seed::create(['seed'=>$class]);
                 } catch (Exception $th) {
                     throw $th;
                 }
-                
             }
         }
 
+    }
+
+    public function callPerTenant($runAbleSeeds)
+    {            
+        ini_set('memory_limit','5524M');
+
+        $filter = isset($this->tenantId)?[['id',$this->tenantId]]:[];
+        $tenantList = Tenant::listTenant($filter);  
+
+        foreach($runAbleSeeds as $class){
+            $tmpClass = new $class;
+            
+            if(isset($this->command)) {
+                $this->command->getOutput()->writeln("<comment>Seeding:</comment> {$class}");
+            }
+
+            foreach ($tenantList['data'] as $tenant) {                 
+                
+                if(Tenant::dbExists($tenant['id'])){ 
+                    
+                    $startTime = microtime(true);              
+
+                    Tenant::setDb($tenant['id']);
+
+                    if(method_exists($tmpClass,'setTenantId'))
+                        $tmpClass->setTenantId($tenant['id']);
+
+                    try {
+                        $tmpClass->run();
+                    } catch (Exception $th) {
+                        throw $th;
+                    }
+
+                    $runTime = round(microtime(true) - $startTime, 2);
+                    if(isset($this->command)) {
+                        $this->command->getOutput()->writeln("<info>Seeded in tenant ".$tenant['id'].":</info>  {$class} ({$runTime} seconds)");
+                    }
+                    
+                    usleep(100);
+                }
+            }
+            
+            // tambahkan class seed yg sudah dieksekusi
+            Seed::create(['seed'=>$class]);
+        }   
     }
 }

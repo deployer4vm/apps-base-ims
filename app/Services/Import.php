@@ -554,7 +554,7 @@ class Import extends BaseRepository
         $log .= '<hr>';
         $log .= str_replace("\n",'<br>', $exception->getTraceAsString());
 
-        $this->appendImportLog($log);
+        $this->appendImportLog($cacheKey,$log);
         // report($exception); //lanjutkan error ke login (meureun)
     }
 
@@ -697,6 +697,9 @@ class Import extends BaseRepository
                     usleep(100);
                 }
             }
+
+            // hanya baca worksheet pertamanya saja
+            break;
         }
 
         $reader->close();
@@ -721,8 +724,8 @@ class Import extends BaseRepository
         $importData = $this->getImport($cacheKey);
         $return = false;
         $notOnJobs = true;
-        // proses approve hanya boleh dilakukan jika berstatus 3 (Import Berhasil)
-        if($importData && $importData['status']==3){
+        // proses approve hanya boleh dilakukan jika berstatus 3 (Import Berhasil) atau 4 (gagal)
+        if($importData && ($importData['status']==3 || $importData['status']==4)){
             $this->setImportApproveStart($cacheKey); 
             if(!empty($importData['format']['coreApproveJob'])){
                 $importData['format']['coreApproveJob']::withChain(function() use($cacheKey){
@@ -749,6 +752,7 @@ class Import extends BaseRepository
                     
                     if($dontHaveTransactionLevel)
                         Tenant::dbCommit();
+                        
                     $return = true;
 
                 } catch (\Exception  $e) {
@@ -756,9 +760,16 @@ class Import extends BaseRepository
                     if($dontHaveTransactionLevel)
                         Tenant::dbRollback();
 
+                    Log::info('Import::approveImport() ERROR');
+                    Log::error($e);
+
                     $return = false;
                 }
             }
+        }else{
+            
+            Log::info('Import::approveImport() ERROR : No import data');
+            Log::info($importData);
         }
                 
         if($return){
@@ -808,7 +819,7 @@ class Import extends BaseRepository
     public function cancelImport($cacheKey)
     {        
         $importData = $this->getImport($cacheKey);
-        // proses approve hanya boleh dilakukan jika berstatus 3 (Import Berhasil) atau 4 (import gagal)
+        // proses cancel hanya boleh dilakukan jika berstatus 3 (Import Berhasil) atau 4 (import gagal)
         if($importData && ($importData['status']==3 || $importData['status']==4)){
             
             $this->setImportCancelStart($cacheKey); 

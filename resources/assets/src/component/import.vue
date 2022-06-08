@@ -114,8 +114,8 @@
 
         </div>
 
-        <!-- jika import selesai dan ada process approval amak tampilkan tombol approve / cancel nya -->
-        <div class="m-2 text-right" v-if="importStatus.status==3 && isImportApproval==1">
+        <!-- jika import selesai atau gagal dan ada process approval maka tampilkan tombol approve / cancel nya -->
+        <div class="m-2 text-right" v-if="(importStatus.status==3 || importStatus.status==4) && isImportApproval==1">
             <hr>
             <b-btn variant="success" class="m-1" @click="approveImport()">
                 <span class="ion ion-ios-checkmark-circle"></span>&nbsp; Approve
@@ -163,14 +163,14 @@
             "file-format",// apakah ada fitur download format file import (1/0), default 1 (ada download format file nya)
 
             //list event callback
-            "on-start",
-            "on-get-status",
-            "on-finish",
-            "on-fail",
-            "on-approve",
-            "on-cancel",
-            "on-approve-finish",
-            "on-cancel-finish"
+            // "on-start",
+            // "on-get-status",
+            // "on-finish",
+            // "on-fail",
+            // "on-approve",
+            // "on-cancel",
+            // "on-approve-finish",
+            // "on-cancel-finish"
         ],
         $_veeValidate: {
             validator: "new"
@@ -204,10 +204,9 @@
             canUpload() {
                 return this.importStatus.status == undefined || 
                     this.importStatus.status==0 || 
-                    this.importStatus.status==4 || 
                     this.importStatus.status==6 || 
                     this.importStatus.status==8 || 
-                    (this.isImportApproval==0 && this.importStatus.status==3);
+                    (this.isImportApproval==0 && (this.importStatus.status==3 || this.importStatus.status==4));
             }
         },
         created() {
@@ -263,8 +262,9 @@
                     this.isImportOnProcess = false;
                     // var lastStatus = this.importStatus.status;
                     this.importStatus = res.data.data;
-                    if(this.onStart!=undefined)
-                        this.onStart(this.importStatus);
+                    
+                    this.$emit('on-start',this.importStatus);
+
                     this.Web.showAlert({text: "File import berhasil diupload dan sedang diproses, silahkan tunggu hingga proses import selesai",type: "success"});
                     setTimeout(function() {
                         that.getImportStatus();
@@ -282,9 +282,7 @@
                         var oldStatus = JSON.parse(JSON.stringify(this.importStatus));
                         this.importStatus = res.data.data;
 
-                        // if (typeof this.onGetStatus === "function")
-                        if(this.onGetStatus!=undefined)
-                            this.onGetStatus(this.importStatus);
+                        this.$emit('on-get-status',this.importStatus);
                         
                         //jika belum selesai atau baru mulai upload, maka request status lagi nanti
                         if(this.importStatus.status==1||this.importStatus.status==2||this.importStatus.status==5||this.importStatus.status==7){
@@ -293,26 +291,30 @@
                             },1000); 
                         //jika import selesai dan berhasil                          
                         }else if(this.importStatus.status==3 && !firstLoad){
-                            if(this.onFinish!=undefined)
-                                this.onFinish(this.importStatus);
+                            
+                            this.$emit('on-finish',this.importStatus);
+                            
                             this.Web.showAlert({text: "Proses import selesai.",type: "success"});
                         //jika import selesai dan gagal
                         }else if(this.importStatus.status==4 && !firstLoad){
-                            if(this.onFail!=undefined)
-                                this.onFail(this.importStatus);
+
+                            this.$emit('on-fail',this.importStatus);
+
                             this.Web.showAlert({text: "Proses import gagal.",type: "danger"});
-                        //jika approve import selesai dan berhasil                          
-                        }else if(this.importStatus.status==0 && oldStatus.status == 6 && !firstLoad){
-                            if(this.onApproveFinish!=undefined)
-                                this.onApproveFinish(this.importStatus);
-                            this.importStatus = oldStatus;
-                            this.Web.showAlert({text: "Proses Approve selesai.",type: "success"});
-                        //jika pembatalan import selesai dan berhasil                          
-                        }else if(this.importStatus.status==0 && oldStatus.status == 8 && !firstLoad){
-                            if(this.onCancelFinish!=undefined)
-                                this.onCancelFinish(this.importStatus);
-                            this.importStatus = oldStatus;
-                            this.Web.showAlert({text: "Proses pembatalan selesai.",type: "success"});
+                        // //jika approve import selesai dan berhasil                          
+                        // }else if(this.importStatus.status==0 && oldStatus.status == 6 && !firstLoad){
+                            
+                        //     this.$emit('on-approve-finish',this.importStatus);
+
+                        //     this.importStatus = oldStatus;
+                        //     this.Web.showAlert({text: "Proses Approve selesai.",type: "success"});
+                        // //jika pembatalan import selesai dan berhasil                          
+                        // }else if(this.importStatus.status==0 && oldStatus.status == 8 && !firstLoad){
+                            
+                        //     this.$emit('on-cancel-finish',this.importStatus);
+
+                        //     this.importStatus = oldStatus;
+                        //     this.Web.showAlert({text: "Proses pembatalan selesai.",type: "success"});
                         //jika status 0 berarti sudah tidak ada proses
                         }else{
                             this.importFile = null;
@@ -322,12 +324,15 @@
                     });
             },
             approveImport(){
+                this.$emit('on-approve',this.importStatus);
+
                 var that = this;
                 this.LocalApi.post(this.apiUrl.approve)
                     .then((res)=>{
                         this.importStatus = res.data.data;
-                        if(this.onApprove!=undefined)
-                            this.onApprove(this.importStatus);
+
+                        this.$emit('on-approve-finish',this.importStatus);
+
                         this.Web.showAlert({text: "Data import diapprove.",type: "success"});
                         setTimeout(function() {
                             that.getImportStatus();
@@ -340,12 +345,14 @@
                     });
             },
             cancelImport(){
+                this.$emit('on-cancel',this.importStatus);
                 var that = this;
                 this.LocalApi.delete(this.apiUrl.cancel)
                     .then((res)=>{
                         this.importStatus = res.data.data;
-                        if(this.onCancel!=undefined)
-                            this.onCancel(this.importStatus);
+
+                        this.$emit('on-cancel-finish',this.importStatus);
+
                         this.Web.showAlert({text: "Data import dibatalkan.",type: "success"});
                         setTimeout(function() {
                             that.getImportStatus();

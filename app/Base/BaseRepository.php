@@ -769,6 +769,46 @@ abstract class BaseRepository {
 
         return true;
     }
+ 
+    /**
+     * inisiasi filter import
+     * 
+     * @param Array $filter standard synapse filter ditambah : 
+     *      view_import     *Optional, untuk mode tampil data
+     *                      - 0 atau jika tidak disertakan maka hanya menampilkan data aktif saja
+     *                      - 1 menampilkan import yang on progress saja
+     *                      - 2 menampilkan semua
+     *      import_id       *Wajib diisi jika view_import = 1, berisi id importId
+     */
+    public function initImportFilter($filter)
+    {
+        if(!isset($filter['view_import'])){
+            // jika tidak menyertakan view_import maka tampilkan hanya data publish
+            $filter[] = [
+                ['is_import',0],
+                ['OR import_status',1]
+            ];
+        }else {
+            // jika menampilkan hanya data yg sedang import
+            if($filter['view_import']==1){
+                $filter[] = [
+                    ['is_import',1],
+                    ['import_status',0],
+                    ['import_id',$filter['import_id']]
+                ];
+                unset($filter['import_id']);
+            // jika bukan dua maka hanya tampilkan data publish saja (samakan dengan tidak menyertakan)
+            }else if($filter['view_import']!=2){
+                $filter[] = [
+                    ['is_import',0],
+                    ['OR import_status',1]
+                ];
+            }
+            unset($filter['view_import']);
+        }
+
+        return $filter;
+    }
 
     final protected function _filter($model,array $filter=[])
     {
