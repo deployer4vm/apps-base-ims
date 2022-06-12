@@ -97,7 +97,7 @@ class DatabaseSeeder extends Seeder
                     
                     $startTime = microtime(true);              
 
-                    Tenant::setDb($tenant['id']);
+                    Tenant::setActiveTenantById($tenant['id']);
 
                     if(method_exists($tmpClass,'setTenantId'))
                         $tmpClass->setTenantId($tenant['id']);

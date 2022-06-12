@@ -11,6 +11,7 @@ let AppConfig = {
     // listener: require("../../../app/MainApp/config/listener.json"),
     endpoint: require("../../../app/MainApp/config/_endpoint.json"),
     sidenav: require("../../../app/MainApp/config/_sidenav.json"),
+    sidenavOri: require("../../../app/MainApp/config/_sidenav.json"),
     acl: require("../../../app/MainApp/config/_acl.json")
 };
 
@@ -18,7 +19,7 @@ AppConfig.isModuleEnable = function(module) {
     return AppConfig.packageLocal[module] && AppConfig.packageLocal[module].enable;
 };
 
-AppConfig['sidenavOri'] = JSON.parse(JSON.stringify(AppConfig.sidenav));
+// AppConfig['sidenavOri'] = JSON.parse(JSON.stringify(AppConfig.sidenav));
 
 // jika multi tenant aktif maka replace packageLocal utama dengan packageLocalPerTenant
 if(AppConfig.system.multitenant.active && typeof tenantId !== 'undefined' && AppConfig.packageLocalPerTenant[tenantId]){
