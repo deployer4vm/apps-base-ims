@@ -90,6 +90,29 @@
                             <?php
                         }else{
                             echo $var;
+                            if($k=='status'){
+                                echo ' (';
+                                if($var==0){
+                                    echo 'New Process';
+                                }else if($var==1){
+                                    echo 'Dispatch';
+                                }else if($var==2){
+                                    echo 'Import Sedang Berjalan';
+                                }else if($var==3){
+                                    echo 'Import Selesai [Berhasil atau menunggu approve/cancle jika ada approve/cancle]';
+                                }else if($var==4){
+                                    echo 'Import Gagal';
+                                }else if($var==5){
+                                    echo 'Approve on Process';
+                                }else if($var==6){
+                                    echo 'Approve Berhasil [Jobs Selesai]';
+                                }else if($var==7){
+                                    echo 'Cancle approve on Process';
+                                }else if($var==8){
+                                    echo 'Cancle approve Berhasil [Jobs Selesai]';
+                                }
+                                echo ')';
+                            }
                         }
                         ?>
                         </td>

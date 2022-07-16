@@ -37,9 +37,11 @@
                 <thead>
                     <tr>
                         <th>No</th>
+                        <th>Job Start Time</th>
                         <th>Tenant ID</th>
                         <th>User</th>
                         <th>Export Key</th>
+                        <th>Status</th>
                         <th style="width: 100px;">Aksi</th>
                     </tr>
                 </thead>
@@ -49,9 +51,25 @@
                     <?php $i++; ?>
                     <tr>
                         <td>{{$i}}</td>
+                        <td>{{$v['job_start_time']}}</td>
                         <td>{{$v['tenant_id']}}</td>
                         <td>{!!$v['user']?('['.$v['user']['id'].'] <b>'.$v['user']['username'].'</b> <i>('.$v['user']['name'].')</i>'):'-'!!}</td>
                         <td>{{$v['cache_key']}}</td>
+                        <td>
+                            {{$v['status']}} (
+                            @if($v['status']==0)
+                                New Process
+                            @elseif($v['status']==1)
+                                Dispatch
+                            @elseif($v['status']==2)
+                                Jobs Sedang Berjalan
+                            @elseif($v['status']==3)
+                                Jobs Selesai
+                            @elseif($v['status']==4)
+                                Jobs Gagal
+                            @endif
+                            )
+                        </td>
                         <td>  
                             <a href="{{route('system.queue.export.detail',['cacheKey'=>$v['cache_key'],'isHistory'=>true])}}" class="btn btn-info btn-xs">
                                 <i class="ion ion-md-create"></i> Detail

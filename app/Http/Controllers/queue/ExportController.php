@@ -75,9 +75,12 @@ class ExportController extends BaseController
         $this->output['data']['list'] = Export::listExport();
         foreach($this->output['data']['list'] as $k =>  $v){
             $userId = $v['user_id'];
-            if(!isset($tmpUser[$userId]))
-                $tmpUser[$userId] = User::where('id',$userId)->first();
-            $this->output['data']['list'][$k]['user'] = $tmpUser[$userId];
+            if(!isset($tmpUser[$v['tenant_id']][$userId])){
+                $user = (new User);
+                $user->setTenantId($v['tenant_id']);      
+                $tmpUser[$v['tenant_id']][$userId] = $user->where('id',$userId)->first();
+            }
+            $this->output['data']['list'][$k]['user'] = $tmpUser[$v['tenant_id']][$userId];
         }
 
         // set data2 khusus jika bukan API

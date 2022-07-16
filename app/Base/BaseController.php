@@ -157,12 +157,17 @@ class BaseController extends LaravelBaseController
      *          *q --> optional jika menyertakan parameter q
      *          *with --> optional jika menyertakan parameter with
      *          *append --> optional jika menyertakan parameter append
+     *          *view_import,
+     *          *import_id,
+     * 
      *          ... paramater2 input lainnya jika ada dan $mergeParam == true
      *      ],
      *      filter => [
-     *          q,
-     *          append,
-     *          with,
+     *          *q,
+     *          *append,
+     *          *with,
+     *          *view_import,
+     *          *import_id,
      *          [..] ... paramater2 input lainnya jika ada dan $mergeParam == true
      *      ],
      *      orderBy => []

@@ -104,7 +104,7 @@ class RouteServiceProvider extends ServiceProvider
     {        
         $controllerPaths = array_merge(
             config('hpsynapse.controller_path.pertenant.'.config('tenant.id',0),[]),
-            config('hpsynapse.controller_path.general',[]),
+            config('hpsynapse.controller_path.general',[])
         );
 
         foreach ($controllerPaths as $namespace => $pathToModule) {

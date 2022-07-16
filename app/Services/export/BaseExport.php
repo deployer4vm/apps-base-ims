@@ -121,10 +121,10 @@ class BaseExport extends BaseRepository
     public function listExport()
     {
         $list = $this->_list(new Export);
-        $newData = [];
-        foreach($list['data'] as $v){
-            $newData[] = $this->convertDbToCache($v);
-        }
+        // $newData = [];
+        // foreach($list['data'] as $v){
+        //     $newData[] = $this->convertDbToCache($v);
+        // }
         return $list['data'];
     }
 

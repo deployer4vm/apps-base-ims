@@ -128,10 +128,10 @@ class Import extends BaseRepository
     public function listImport()
     {
         $list = $this->_list(new MImport);
-        $newData = [];
-        foreach($list['data'] as $v){
-            $newData[] = $this->convertDbToCache($v);
-        }
+        // $newData = [];
+        // foreach($list['data'] as $v){
+        //     $newData[] = $this->convertDbToCache($v);
+        // }
         return $list['data'];
     }
     

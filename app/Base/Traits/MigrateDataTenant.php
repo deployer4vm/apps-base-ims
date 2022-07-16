@@ -3,6 +3,8 @@
 namespace App\Base\Traits;
 
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
+
 use App\Facades\Tenant;
 
 /**
@@ -102,11 +104,50 @@ trait MigrateDataTenant
             }    
         // jika di 1 table
         }else{
-            Schema::table($table,$bluePrint);
+            if(Schema::hasTable($table))
+                Schema::table($table,$bluePrint);
         }
     }
 
     
+    /**
+     * eksekusi statement
+     * 
+     * @param String            $statement
+     * @param String|False      $table  isi false jika tidak detek table ada atau tidak, isi dengan nama table jika mendetek table ada ataut tidak
+     */
+    public function statementPerTenant($statement,$table=false,$ifTableExist=true)
+    { 
+        //jika mode nya tidak share dalam 1 table
+        if(config('AppConfig.system.multitenant.data_mode',1)!=1){        
+            $filter = isset($this->tenantId)?[['id',$this->tenantId]]:[];
+            $tenantList = Tenant::listTenant($filter);  
+            foreach ($tenantList['data'] as $tenant) {    
+                //jika per database
+                if(config('AppConfig.system.multitenant.data_mode',1)==3){                    
+                    Tenant::setDb($tenant['id']);
+                    if (
+                        Tenant::dbExists($tenant['id']) && 
+                        ($table == false || Schema::connection(config('database.perTenant').$tenant['id'])->hasTable($table)==$ifTableExist)
+                    ) {
+                        DB::connection(config('database.perTenant').$tenant['id'])->statement($statement);
+                    }
+                // jika per table
+                }else{  
+                    $tmpTable = $table?Tenant::getTableName($table,$tenant['id']):false;
+                    if ($tmpTable == false || Schema::hasTable($tmpTable)==$ifTableExist) {
+                        DB::statement($statement);
+                    }
+                }
+            }    
+        // jika di 1 table
+        }else{
+            if ($table == false || Schema::hasTable($table)==$ifTableExist) {
+                DB::statement($statement);
+            }
+        }
+    }
+
     public function dropTablePerTenant($table,$ifTableExist=true)
     {
         //jika mode nya tidak share dalam 1 table
