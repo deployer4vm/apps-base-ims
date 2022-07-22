@@ -157,12 +157,17 @@ class BaseController extends LaravelBaseController
      *          *q --> optional jika menyertakan parameter q
      *          *with --> optional jika menyertakan parameter with
      *          *append --> optional jika menyertakan parameter append
+     *          *view_import,
+     *          *import_id,
+     * 
      *          ... paramater2 input lainnya jika ada dan $mergeParam == true
      *      ],
      *      filter => [
-     *          q,
-     *          append,
-     *          with,
+     *          *q,
+     *          *append,
+     *          *with,
+     *          *view_import,
+     *          *import_id,
      *          [..] ... paramater2 input lainnya jika ada dan $mergeParam == true
      *      ],
      *      orderBy => []
@@ -171,7 +176,17 @@ class BaseController extends LaravelBaseController
     final protected function getListParam(bool $mergeParam = true, array $mergeExcept = [])
     {
         $params = [
-            'all' => request()->except(['limit', 'offset', 'orderBy', 'orderType', 'q', 'with', 'append']),
+            'all' => request()->except([
+                'limit',
+                'offset',
+                'orderBy',
+                'orderType',
+                'q',
+                'append',
+                'with',
+                'view_import',
+                'import_id'
+            ]),
             'query' => [ //parameter yang dipassing di URL, termasuk juga parameter filter, untuk di passing ke pagination juga
                 'limit' => request()->input('limit', 10),
                 'offset' => request()->input('offset', 0)
@@ -214,6 +229,14 @@ class BaseController extends LaravelBaseController
                     }
                 }
             }
+        }
+        
+        //detek import
+        if(request()->input('view_import',0) != 0){
+            $params['filter']['view_import'] = request()->input('view_import');
+            $params['query']['view_import'] = request()->input('view_import');
+            $params['filter']['import_id'] = request()->input('import_id',0);
+            $params['query']['import_id'] = request()->input('import_id',0);
         }
 
         return $params;

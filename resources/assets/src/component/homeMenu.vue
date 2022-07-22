@@ -11,8 +11,8 @@
                             <div class="card-body media align-items-left text-body">
                                 <i :class="data.icon + ' display-4 d-block text-primary'"></i>
                                 <span class="media-body d-block ml-3">
-                                    <span class="text-big">{{ data.title }}</span><br>
-                                    <small class="text-muted">{{ data.description }}</small>
+                                    <span class="text-big" v-html="data.title"></span><br>
+                                    <small class="text-muted" v-html="data.description"></small>
                                 </span>
                                 <router-link 
                                     :to="{name: data.route.name}" v-if="data.route.name"

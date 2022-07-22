@@ -52,10 +52,10 @@ export default {
         "adds-jobs-params", // parameter array tambahan        
         
         //list event callback
-        "on-start",// callback saat export start
-        "on-get-status",// callback setelah get status export berhasil
-        "on-success",// callback setelah proses export selesai dan berhasil
-        "on-fail",// callback setelah proses export gagal
+        // "on-start",// callback saat export start
+        // "on-get-status",// callback setelah get status export berhasil
+        // "on-success",// callback setelah proses export selesai dan berhasil
+        // "on-fail",// callback setelah proses export gagal
     ],
     data() {
         return {            
@@ -105,8 +105,7 @@ export default {
                 .then((res)=>{
                     this.downloadStatus = res.data.data;
                     
-                    if(typeof this.onStart != 'undefined')
-                        this.onStart(this.downloadStatus);
+                    this.$emit('on-start',this.importStatus);
 
                     this.Web.showAlert({text: "File export sedang disiapkan untuk didownload, tunggu hingga proses selesai.",type: "info"});
                     this.getDownloadStatus();
@@ -122,9 +121,7 @@ export default {
                     var lastStatus = this.downloadStatus.status;
                     this.downloadStatus = res.data.data;
 
-                    // console.log(typeof this.onGetStatus);
-                    if(typeof this.onGetStatus != 'undefined')
-                        this.onGetStatus(this.downloadStatus);
+                    this.$emit('on-get-status',this.importStatus);
 
                     //jika belum selesai atau tidak sedang maka request status lagi nanti
                     if(this.downloadStatus.status == 1 || this.downloadStatus.status == 2){
@@ -134,15 +131,15 @@ export default {
                     //jika berhasil                        
                     }else if(this.downloadStatus.status == 3 && lastStatus == 2){
                         
-                        if(typeof this.onSuccess != 'undefined')
-                            this.onSuccess(this.downloadStatus);
+                        this.$emit('on-success',this.importStatus);
+
                         this.Web.showAlert({text: "File export telah selesai dipersiapkan, silahkan didownload.",type: "success"});
                         
                     //jika gagal
                     }else if(this.downloadStatus.status == 4 && lastStatus == 2){
                         
-                        if(typeof this.onFail != 'undefined')
-                            this.onFail(this.downloadStatus);
+                        this.$emit('on-fail',this.importStatus);
+
                         this.Web.showAlert({text: "Generate download gagal, silahkan coba kembali.",type: "warning"});
                     }
                     

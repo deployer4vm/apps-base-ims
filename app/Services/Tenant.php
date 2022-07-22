@@ -135,6 +135,8 @@ class Tenant extends BaseRepository
 
     private function _getTenantByDomain($domain)
     {
+        // sementara, khusus di local, jangan di PUSH
+        $domain = str_replace('smartcoopv2.localhost','smartcoop.localhost',$domain);
         if(!isset($this->_tmpTenantListByDomain[$domain])){
             $this->_tmpTenantListByDomain[$domain] = $this->getTenantModel()->where('domain',$domain)->first();
             $this->_tmpTenantListByGroupApp[$this->_tmpTenantListByDomain[$domain]['group_app']] = $this->_tmpTenantListByDomain[$domain];
@@ -237,6 +239,37 @@ class Tenant extends BaseRepository
         
         return true;
     }
+
+    /**
+     * men-seed seluruh seed per tenant di 1 tenant baru
+     */
+    public function seed($tenantId)
+    {
+        //jika database belum ada maka tolak
+        if (!$this->dbExists($tenantId)) {
+            return false;
+        }
+
+        $seeds = config('hpsynapse.seed_path');
+        foreach ($seeds as $seedpath) {
+            $seedFileList = glob($seedpath.DIRECTORY_SEPARATOR.'*.php');
+            foreach ($seedFileList as $seed) {  
+                include_once $seed;
+                $seedClass = ucfirst(Str::camel(substr(str_replace('.php','',basename($seed)),18)));                
+                $tmpClass = new $seedClass;
+                // hanya meng-seed yang seed pertenant saja
+                if(method_exists($tmpClass,'tenantSeedMode')){
+                    if(!property_exists($tmpClass,'tenantId') || $tmpClass->tenantId==$tenantId){
+                        $tmpClass->setTenantSeedMode(true);
+                        $tmpClass->setTenantId($tenantId);
+                        $tmpClass->run();
+                    }
+                }
+            }
+        }
+        
+        return true;
+    }
     
     /**
      * create database per Koperasi, saat ini hanya support MariaDB/MySQL
@@ -332,7 +365,12 @@ class Tenant extends BaseRepository
      */
     public function getTableName($tableName,$tenantId)
     {
-        return config('AppConfig.system.multitenant.table_prefix','_').$tenantId.'_'.$tableName;
+        // jika multi tenant dalam 1 database beda table
+        if(config('AppConfig.system.multitenant.data_mode')==2){
+            return config('AppConfig.system.multitenant.table_prefix','_').$tenantId.'_'.$tableName;
+        }else{            
+            return $tableName;
+        }
     }
 
     /**

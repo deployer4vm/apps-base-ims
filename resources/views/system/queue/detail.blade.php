@@ -90,6 +90,21 @@
                             <?php
                         }else{
                             echo $var;
+                            if($k=='status'){
+                                echo ' (';
+                                if($var==0){
+                                    echo 'New Process';
+                                }else if($var==1){
+                                    echo 'Dispatch';
+                                }else if($var==2){
+                                    echo 'Jobs Sedang Berjalan';
+                                }else if($var==3){
+                                    echo 'Jobs Selesai';
+                                }else if($var==4){
+                                    echo 'Jobs Gagal';
+                                }
+                                echo ')';
+                            }
                         }
                         ?>
                         </td>
