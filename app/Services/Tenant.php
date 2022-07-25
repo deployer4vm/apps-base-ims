@@ -531,12 +531,13 @@ class Tenant extends BaseRepository
     public function setActiveTenantByDomain($domain=false)
     {
         $domain = $domain?$domain:request()->getHttpHost();
+        $domain = explode(':',$domain);
         
         // jika mengakses domain owner maka tandai sebagai koneksi domain owner
-        if($domain==config('AppConfig.system.multitenant.owner_domain')){
+        if($domain[0]==config('AppConfig.system.multitenant.owner_domain')){
             $this->setTenantManagementIsActive();
         }else{
-            $tenant = $this->_getTenantByDomain($domain);//$this->getTenantModel()->where('domain',$domain)->first();
+            $tenant = $this->_getTenantByDomain($domain[0]);//$this->getTenantModel()->where('domain',$domain)->first();
             if($tenant)
                 $this->setActiveTenant($tenant->toArray());
         }
