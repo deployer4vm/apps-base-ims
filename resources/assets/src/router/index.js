@@ -53,9 +53,9 @@ router.afterEach((to, from) => {
     if(globals().AppConfig.system.multitenant.active){
         
         if(tenantData==undefined){
-            _groupApp = to.params.group_app;
+            _groupApp = to.params.group_app?to.params.group_app:'';
         }else{
-            _groupApp = tenantData.group_app;
+            _groupApp = isTenantManagementActive?'':tenantData.group_app;
         }
 
         if(globals().LocalApi.defaults.headers.common["Group-App"] != _groupApp)
@@ -68,7 +68,8 @@ router.afterEach((to, from) => {
             // jika sedang di owner apps
             if(isOnTenantManager){
                 console.log('tenant management active');
-                globals().Web.setTenantManagementIsActive(globals().AppConfig.system.multitenant.owner_subfolder?globals().AppConfig.system.multitenant.owner_subfolder:'');
+                _groupApp = globals().AppConfig.system.multitenant.owner_subfolder?globals().AppConfig.system.multitenant.owner_subfolder:'';
+                globals().Web.setTenantManagementIsActive(_groupApp);
                 
             //jika pertama kali akses dan tidak mengakses tenant maka redirect ke default tenant
             }else if(_groupApp==undefined && globals().Web.getTenantGroupApp()==''){

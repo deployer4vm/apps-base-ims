@@ -3,6 +3,7 @@
 namespace App\Base\Traits;
 
 use App\Facades\Tenant;
+use Illuminate\Support\Facades\Log;
 
 /**
  * use trait ini di model yang datanya ada pemisahan antar tenantnya 
@@ -10,6 +11,7 @@ use App\Facades\Tenant;
 trait ModelDataTenant
 {
     protected $tenantId = 0;
+    protected $_tableNameSetted = false;
     
     /**
      * Overide data model jika diperlukan
@@ -73,15 +75,29 @@ trait ModelDataTenant
         
         return parent::getConnectionName(); 
     }
-    
+
+    public function setTable($table)
+    {
+        // jika sebelumnya nama table dengan prefix tenant telah diset,
+        // maka tolak set nama table baru
+        if($this->_tableNameSetted && $this->table)
+            $table=$this->table;
+
+        $this->table = $table;
+
+        return $this;
+    }
+
     public function getTable()
     {
         if (empty($this->tenantId))
             $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
 
         $table = $this->table;
-        if(config('AppConfig.system.multitenant.data_mode',1)==2)
+        if(config('AppConfig.system.multitenant.data_mode',1)==2){
             $table = config('AppConfig.system.multitenant.table_prefix','_').$this->tenantId.'_'.$this->table;
+            $this->_tableNameSetted = true;
+        }
         
         return $table;
     }
