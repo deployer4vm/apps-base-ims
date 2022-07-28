@@ -515,7 +515,7 @@ class Tenant extends BaseRepository
             (!$appGroup && config('AppConfig.system.multitenant.owner_subfolder','')=='') || 
             ($appGroup && $appGroup == config('AppConfig.system.multitenant.owner_subfolder'))
         ){
-            $this->setTenantManagementIsActive();
+            $this->setOnTenantManager();
         }else{
 
             $tenant = $this->_getTenantByGroupApp($appGroup);//$this->getTenantModel()->where('group_app',$appGroup)->first();
@@ -534,7 +534,7 @@ class Tenant extends BaseRepository
         
         // jika mengakses domain owner maka tandai sebagai koneksi domain owner
         if($domain==config('AppConfig.system.multitenant.owner_domain')){
-            $this->setTenantManagementIsActive();
+            $this->setOnTenantManager();
         }else{
             $tenant = $this->_getTenantByDomain($domain);//$this->getTenantModel()->where('domain',$domain)->first();
             if($tenant)
@@ -565,10 +565,10 @@ class Tenant extends BaseRepository
     /**
      * set aplikasi yang sedang aktif adalah tenant management (owner) bukan aplikasi per tenantnya
      */
-    public function setTenantManagementIsActive()
+    public function setOnTenantManager()
     {
         $config = app('config');
-        $config->set('tenant',['isTenantManagementActive'=>true]);
+        $config->set('tenant',['isOnTenantManager'=>true]);
     }
 
     /**
@@ -576,11 +576,10 @@ class Tenant extends BaseRepository
      * 
      * @return Boolean true jika yang aktif adalah aplikasi tenant management, false jika bukan
      */
-    public function isTenantManagementActive() 
+    public function isOnTenantManager() 
     {
-        return config('tenant.isTenantManagementActive',false);
-    }
-    
+        return config('tenant.isOnTenantManager',false);
+    }    
     
     /**
      * END - GROUP MANAGE ACTIAVE TENANT

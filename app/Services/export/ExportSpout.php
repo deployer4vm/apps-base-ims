@@ -232,17 +232,18 @@ class ExportSpout extends BaseExport
                 $GLOBALS['synapse_export_indexData']++;         
             }
             
-            //break proses setiap kurang dari setengah jam 
-            if((microtime(true)-$startTime)>=1800){
-            // if((microtime(true)-$startTime)>=5){
+            // DI SPOUT TIDAK SUPPORT BREAK PROCESS
+            // //break proses setiap kurang dari setengah jam 
+            // if((microtime(true)-$startTime)>=1800){
+            // // if((microtime(true)-$startTime)>=5){
                 
-                // $this->appendExportLog($cacheKey,'<br><span class="text-info">Break on last id </span>'.$lastId.' ('.$GLOBALS['synapse_export_indexData'].')<br>');
-                $chunkedData = null;
-                unset($chunkedData);
-                $this->breakToNextExport($cacheKey, $tmpFilename, $reader, $writer, $GLOBALS['synapse_export_indexExcelRow'],$GLOBALS['synapse_export_indexData']);
-                $GLOBALS['synapse_export_isBreaking'] = true;
-                return false;
-            }
+            //     // $this->appendExportLog($cacheKey,'<br><span class="text-info">Break on last id </span>'.$lastId.' ('.$GLOBALS['synapse_export_indexData'].')<br>');
+            //     $chunkedData = null;
+            //     unset($chunkedData);
+            //     $this->breakToNextExport($cacheKey, $tmpFilename, $reader, $writer, $GLOBALS['synapse_export_indexExcelRow'],$GLOBALS['synapse_export_indexData']);
+            //     $GLOBALS['synapse_export_isBreaking'] = true;
+            //     return false;
+            // }
         });
 
         if($GLOBALS['FORCE_CANCEL'])return false;

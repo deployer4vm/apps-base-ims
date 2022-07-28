@@ -66,7 +66,7 @@ router.afterEach((to, from) => {
             console.log('tenant berubah : old=',globals().Web.getTenantGroupApp(),' , new=',_groupApp);
 
             // jika sedang di owner apps
-            if(isTenantManagementActive){
+            if(isOnTenantManager){
                 console.log('tenant management active');
                 globals().Web.setTenantManagementIsActive(globals().AppConfig.system.multitenant.owner_subfolder?globals().AppConfig.system.multitenant.owner_subfolder:'');
                 

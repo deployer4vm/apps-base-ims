@@ -49,7 +49,7 @@ Route::group($group,function(){
  */
 
 $group = [
-    'prefix' => 'sys/tenant',
+    'prefix' => config('AppConfig.system.multitenant.api_endpoint.tenant','sys/tenant'),
     // 'middleware' => 'auth:api'
 ];
 Route::group($group,function(){  

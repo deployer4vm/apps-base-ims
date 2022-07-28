@@ -91,30 +91,34 @@ class DatabaseSeeder extends Seeder
                 $this->command->getOutput()->writeln("<comment>Seeding:</comment> {$class}");
             }
 
-            foreach ($tenantList['data'] as $tenant) {                 
-                
-                if(Tenant::dbExists($tenant['id'])){ 
+            if(method_exists($tmpClass,'setTenantId')){
+                foreach ($tenantList['data'] as $tenant) {                 
                     
-                    $startTime = microtime(true);              
+                    if(Tenant::dbExists($tenant['id'])){ 
+                        
+                        $startTime = microtime(true);              
 
-                    Tenant::setActiveTenantById($tenant['id']);
+                        Tenant::setActiveTenantById($tenant['id']);
 
-                    if(method_exists($tmpClass,'setTenantId'))
-                        $tmpClass->setTenantId($tenant['id']);
+                        if(method_exists($tmpClass,'setTenantId'))
+                            $tmpClass->setTenantId($tenant['id']);
 
-                    try {
-                        $tmpClass->run();
-                    } catch (Exception $th) {
-                        throw $th;
+                        try {
+                            $tmpClass->run();
+                        } catch (Exception $th) {
+                            throw $th;
+                        }
+
+                        $runTime = round(microtime(true) - $startTime, 2);
+                        if(isset($this->command)) {
+                            $this->command->getOutput()->writeln("<info>Seeded in tenant ".$tenant['id'].":</info>  {$class} ({$runTime} seconds)");
+                        }
+                        
+                        usleep(100);
                     }
-
-                    $runTime = round(microtime(true) - $startTime, 2);
-                    if(isset($this->command)) {
-                        $this->command->getOutput()->writeln("<info>Seeded in tenant ".$tenant['id'].":</info>  {$class} ({$runTime} seconds)");
-                    }
-                    
-                    usleep(100);
                 }
+            }else{                
+                $tmpClass->run();
             }
             
             // tambahkan class seed yg sudah dieksekusi

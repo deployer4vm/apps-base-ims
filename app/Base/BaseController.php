@@ -157,6 +157,7 @@ class BaseController extends LaravelBaseController
      *          *q --> optional jika menyertakan parameter q
      *          *with --> optional jika menyertakan parameter with
      *          *append --> optional jika menyertakan parameter append
+     *          *has --> optional jika menyertakan parameter has
      *          *view_import,
      *          *import_id,
      * 
@@ -166,6 +167,7 @@ class BaseController extends LaravelBaseController
      *          *q,
      *          *append,
      *          *with,
+     *          *has,
      *          *view_import,
      *          *import_id,
      *          [..] ... paramater2 input lainnya jika ada dan $mergeParam == true
@@ -184,6 +186,7 @@ class BaseController extends LaravelBaseController
                 'q',
                 'append',
                 'with',
+                'has',
                 'view_import',
                 'import_id'
             ]),
@@ -210,6 +213,11 @@ class BaseController extends LaravelBaseController
         //jika menyertakan with
         if (request()->input('with', null)) {
             $params['filter']['with'] = $params['query']['with'] = request()->input('with',[]);
+        }
+
+        //jika menyertakan with
+        if (request()->input('has', null)) {
+            $params['filter']['has'] = $params['query']['has'] = request()->input('has',[]);
         }
 
         //jika menyertakan append

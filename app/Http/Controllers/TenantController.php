@@ -29,8 +29,8 @@ class TenantController extends BaseController
      *      group_app : apps id / path nya
      * @return array
      *      tenant_list array
-     *      active_tenant array
-     *      active_tenant_group array
+     *      active_tenant record array tenant
+     *      active_tenant_group array berisi tenant group id dari tenant yg aktif
      */
     public function activeTenant(Request $request)
     {

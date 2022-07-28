@@ -38,7 +38,7 @@
                     <tr>
                         <th>No</th>
                         <th>Job Start Time</th>
-                        <th>Tenant ID</th>
+                        <th>Tenant</th>
                         <th>User</th>
                         <th>Export Key</th>
                         <th>Status</th>
@@ -52,7 +52,12 @@
                     <tr>
                         <td>{{$i}}</td>
                         <td>{{$v['job_start_time']}}</td>
-                        <td>{{$v['tenant_id']}}</td>
+                        <td>
+                            @if($v['tenant_id'])
+                            {{$v['tenant_id']}} - {{$v['tenant']['name']}}<br>
+                            <a href="https://{{$v['tenant']['domain']}}">{{$v['tenant']['domain']}}</a>
+                            @endif
+                        </td>
                         <td>{!!$v['user']?('['.$v['user']['id'].'] <b>'.$v['user']['username'].'</b> <i>('.$v['user']['name'].')</i>'):'-'!!}</td>
                         <td>{{$v['cache_key']}}</td>
                         <td>

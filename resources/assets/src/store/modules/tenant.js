@@ -9,7 +9,7 @@ const state = {
         group_app: '',
         is_main: 0,
     },
-    activeGroup: null,
+    activeGroup: null,//jika ada akan berisi list id group tenant yang aktif
     //tenant group
     listTenantGroup:[]
 };

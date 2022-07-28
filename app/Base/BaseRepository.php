@@ -612,6 +612,7 @@ abstract class BaseRepository {
      *      hiddenColumn            array               list field/column yg di hidde * -- HINDARI PENGGUNAAN HIDDEN COLUMN UNTUK DATA BESAR
      *      append                  array|string        list custom attribute yg akan ditampilkan
      *      with                    array|string        list custom relation yg akan ditampilkan
+     *      has                     array|string        list custom has yg akan ditampilkan
      *      idAsKey                 boolean             true jika key data menggunakan ID, false jika urutan array default (default false)
      *     
      *      ADDITIONAL_PARAM        array               where untuk default filter
@@ -822,6 +823,11 @@ abstract class BaseRepository {
             unset($filter['with']);
         }
 
+        if (isset($filter['has'])) {                
+            $model = $model->has($filter['has']);
+            unset($filter['has']);
+        }
+        
         if(empty($filter['q']))
             unset($filter['q']);
 

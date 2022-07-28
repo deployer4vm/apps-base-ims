@@ -243,11 +243,11 @@ export default {
         },
     },
     methods: {
-        /*
-    cek apakah curGroup tenant group ada di active group
-    param :
-      curGroup : array
-    */
+        /**
+         * cek apakah curGroup tenant group ada di active group
+         * param :
+         *      curGroup : array berisi list id group tenant menu yg dicek
+         */
         isInGroup(curGroup) {
             //jika tidak ada group maka tolak (berarti tidak punya akses)
             if (!this.tenantGroup) return false;

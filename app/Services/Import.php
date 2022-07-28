@@ -125,9 +125,9 @@ class Import extends BaseRepository
     /**
      * list seluruh import
      */
-    public function listImport()
+    public function listImport($filter,$orderBy)
     {
-        $list = $this->_list(new MImport);
+        $list = $this->_list(new MImport,$filter,0,0,$orderBy);
         // $newData = [];
         // foreach($list['data'] as $v){
         //     $newData[] = $this->convertDbToCache($v);

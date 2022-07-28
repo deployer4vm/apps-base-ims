@@ -3,18 +3,16 @@
 namespace App\Http\Controllers\queue;
 
 use Illuminate\Http\Request;
-
-use App\Models\Job;
+use Illuminate\Support\Facades\DB;
 
 use App\Base\BaseController;
 use App\Facades\Web;
 use App\Facades\Trans;
-
-
 use App\Facades\Export;
-use hpsynapse\moduser\Models\User;
-use Illuminate\Support\Facades\DB;
+use App\Facades\Tenant;
 
+use App\Models\Job;
+use hpsynapse\moduser\Models\User;
 class ExportController extends BaseController
 {
     /**
@@ -70,9 +68,12 @@ class ExportController extends BaseController
 
     public function historyQueue(Request $request)
     {        
+        $this->output['params'] = $this->getListParam();
+        $this->output['data']['list'] = Export::listExport(
+            $this->output['params']['filter'],$this->output['params']['orderBy']
+        );
+        
         $tmpUser = [];
-
-        $this->output['data']['list'] = Export::listExport();
         foreach($this->output['data']['list'] as $k =>  $v){
             $userId = $v['user_id'];
             if(!isset($tmpUser[$v['tenant_id']][$userId])){
@@ -81,6 +82,7 @@ class ExportController extends BaseController
                 $tmpUser[$v['tenant_id']][$userId] = $user->where('id',$userId)->first();
             }
             $this->output['data']['list'][$k]['user'] = $tmpUser[$v['tenant_id']][$userId];
+            $this->output['data']['list'][$k]['tenant'] = Tenant::getTenant($v['tenant_id']);
         }
 
         // set data2 khusus jika bukan API

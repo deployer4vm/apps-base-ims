@@ -118,9 +118,9 @@ class BaseExport extends BaseRepository
     /**
      * list seluruh export
      */
-    public function listExport()
+    public function listExport($filter,$orderBy)
     {
-        $list = $this->_list(new Export);
+        $list = $this->_list(new Export,$filter,0,0,$orderBy);
         // $newData = [];
         // foreach($list['data'] as $v){
         //     $newData[] = $this->convertDbToCache($v);
@@ -992,17 +992,18 @@ class BaseExport extends BaseRepository
                 }        
             }
             
-            //break proses setiap kurang dari setengah jam 
-            if((microtime(true)-$startTime)>=1800){
-            // if((microtime(true)-$startTime)>=5){
+            // DI SPOUT TIDAK SUPPORT BREAK PROCESS
+            // //break proses setiap kurang dari setengah jam 
+            // if((microtime(true)-$startTime)>=1800){
+            // // if((microtime(true)-$startTime)>=5){
                 
-                // $this->appendExportLog($cacheKey,'<br><span class="text-info">Break on last id </span>'.$lastId.' ('.$GLOBALS['synapse_export_indexData'].')<br>');
-                $chunkedData = null;
-                unset($chunkedData);
-                $this->breakToNextExport($cacheKey, $tmpFilename, $reader, $writer, $GLOBALS['synapse_export_indexExcelRow'],$GLOBALS['synapse_export_indexData']);
-                $GLOBALS['synapse_export_isBreaking'] = true;
-                return false;
-            }
+            //     // $this->appendExportLog($cacheKey,'<br><span class="text-info">Break on last id </span>'.$lastId.' ('.$GLOBALS['synapse_export_indexData'].')<br>');
+            //     $chunkedData = null;
+            //     unset($chunkedData);
+            //     $this->breakToNextExport($cacheKey, $tmpFilename, $reader, $writer, $GLOBALS['synapse_export_indexExcelRow'],$GLOBALS['synapse_export_indexData']);
+            //     $GLOBALS['synapse_export_isBreaking'] = true;
+            //     return false;
+            // }
         });
 
         if($GLOBALS['FORCE_CANCEL'])return false;
@@ -1014,8 +1015,10 @@ class BaseExport extends BaseRepository
         $this->updateExport($cacheKey,$exportData); 
 
         $this->appendExportLog($cacheKey,'<br>Save file to : '.$exportData['filename'].'<br>');
+
         if($reader)
             $reader->close();
+            
         $writer->close();
 
         // unlink($exportData['filepath']);
@@ -1224,7 +1227,9 @@ class BaseExport extends BaseRepository
             '<br><span class="text-info">Break process to the next job, please wait</span>...<br>'
         );
         
-        $reader->close();
+        if($reader)
+            $reader->close();
+
         $writer->close();
 
         // unlink($exportData['filepath']);
