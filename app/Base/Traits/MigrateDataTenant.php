@@ -33,7 +33,8 @@ trait MigrateDataTenant
     }
 
     /**
-     * Mode migrasi dijalan dari mana
+     * apakah mode migrasi yang dijalan adalah dari Tenant class service,
+     * jika ya berarti ini adalah untuk generate migration per tenant saja
      * 
      * @return Boolean
      *      true jika migrasi dijalan dari Tenant service
@@ -47,7 +48,7 @@ trait MigrateDataTenant
     public function createPerTenant($table,$bluePrint)
     {
         //jika mode nya tidak share dalam 1 table
-        if(config('AppConfig.system.multitenant.data_mode',1)!=1){        
+        if(config('AppConfig.system.multitenant.active',false) && config('AppConfig.system.multitenant.data_mode',1)!=1){        
             $filter = isset($this->tenantId)?[['id',$this->tenantId]]:[];
             $tenantList = Tenant::listTenant($filter);  
             foreach ($tenantList['data'] as $tenant) {     
@@ -67,14 +68,20 @@ trait MigrateDataTenant
             }    
         // jika di 1 table
         }else{
-            Schema::create($table,$bluePrint);
+            if (!Schema::hasTable($table))
+                Schema::create($table,$bluePrint);
         }
     }
 
+    /**
+     * @param Boolean $ifColumnExist    
+     *      jika TRUE maka si blueprint akan dieksekusi jika kolom $column ada
+     *      jika FALSE maka si blueprint akan dieksekusi jika kolom $column tidak ada
+     */
     public function tablePerTenant($table,$bluePrint,$column=false,$ifColumnExist=false)
     { 
         //jika mode nya tidak share dalam 1 table
-        if(config('AppConfig.system.multitenant.data_mode',1)!=1){        
+        if(config('AppConfig.system.multitenant.active',false) && config('AppConfig.system.multitenant.data_mode',1)!=1){        
             $filter = isset($this->tenantId)?[['id',$this->tenantId]]:[];
             $tenantList = Tenant::listTenant($filter);  
             foreach ($tenantList['data'] as $tenant) {    
@@ -89,7 +96,8 @@ trait MigrateDataTenant
                         )
                             Schema::connection(config('database.perTenant').$tenant['id'])->table($table,$bluePrint);
                     }
-                // jika per table
+
+                // jika per table pake prefix nama table
                 }else{                
                     $tmpTable = Tenant::getTableName($table,$tenant['id']);
                     if (Schema::hasTable($tmpTable)) {
@@ -104,8 +112,49 @@ trait MigrateDataTenant
             }    
         // jika di 1 table
         }else{
-            if(Schema::hasTable($table))
-                Schema::table($table,$bluePrint);
+            if (Schema::hasTable($table)) {
+                if(
+                    $column==false ||
+                    (!$ifColumnExist && !Schema::hasColumn($table,$column)) || 
+                    ($ifColumnExist && Schema::hasColumn($table,$column))
+                )
+                    Schema::table($table,$bluePrint);
+            }
+        }
+    }
+
+    /**
+     * rename nama table di mode multi tenanat
+     */
+    public function renameTablePerTenant($oldTable,$newTable)
+    {
+        //jika mode nya tidak share dalam 1 table
+        if(config('AppConfig.system.multitenant.active',false) && config('AppConfig.system.multitenant.data_mode',1)!=1){       
+            $filter = isset($this->tenantId)?[['id',$this->tenantId]]:[];
+            $tenantList = Tenant::listTenant($filter);  
+            foreach ($tenantList['data'] as $tenant) {   
+
+                //jika per database
+                if(config('AppConfig.system.multitenant.data_mode',1)==3){                
+
+                    Tenant::setDb($tenant['id']);
+                    if (Tenant::dbExists($tenant['id']) && Schema::connection(config('database.perTenant').$tenant['id'])->hasTable($oldTable))
+                        Schema::connection(config('database.perTenant').$tenant['id'])->rename($oldTable,$newTable);
+
+                // jika per table pake prefix nama table
+                }else{            
+
+                    $tmpOldTable = Tenant::getTableName($oldTable,$tenant['id']);
+                    $tmpNewTable = Tenant::getTableName($newTable,$tenant['id']);
+                    if (Schema::hasTable($tmpOldTable))
+                        Schema::rename($tmpOldTable,$tmpNewTable);
+                }
+            }    
+
+        // jika di 1 table
+        }else{       
+            if(Schema::hasTable($oldTable))     
+                Schema::rename($oldTable,$newTable);
         }
     }
 
@@ -119,7 +168,7 @@ trait MigrateDataTenant
     public function statementPerTenant($statement,$table=false,$ifTableExist=true)
     { 
         //jika mode nya tidak share dalam 1 table
-        if(config('AppConfig.system.multitenant.data_mode',1)!=1){        
+        if(config('AppConfig.system.multitenant.active',false) && config('AppConfig.system.multitenant.data_mode',1)!=1){        
             $filter = isset($this->tenantId)?[['id',$this->tenantId]]:[];
             $tenantList = Tenant::listTenant($filter);  
             foreach ($tenantList['data'] as $tenant) {    
@@ -132,7 +181,8 @@ trait MigrateDataTenant
                     ) {
                         DB::connection(config('database.perTenant').$tenant['id'])->statement($statement);
                     }
-                // jika per table
+
+                // jika per table pake prefix nama table
                 }else{  
                     $tmpTable = $table?Tenant::getTableName($table,$tenant['id']):false;
                     if ($tmpTable == false || Schema::hasTable($tmpTable)==$ifTableExist) {
@@ -148,10 +198,13 @@ trait MigrateDataTenant
         }
     }
 
+    /**
+     * delete table per tenant
+     */
     public function dropTablePerTenant($table,$ifTableExist=true)
     {
         //jika mode nya tidak share dalam 1 table
-        if(config('AppConfig.system.multitenant.data_mode',1)!=1){        
+        if(config('AppConfig.system.multitenant.active',false) && config('AppConfig.system.multitenant.data_mode',1)!=1){        
             $filter = isset($this->tenantId)?[['id',$this->tenantId]]:[];
             $tenantList = Tenant::listTenant($filter);  
             foreach ($tenantList['data'] as $tenant) {     
@@ -165,7 +218,8 @@ trait MigrateDataTenant
                             Schema::connection(config('database.perTenant').$tenant['id'])->drop($table);
                         }  
                     }
-                // jika per table
+                    
+                // jika per table pake prefix nama table
                 }else{                
                     $tmpTable = Tenant::getTableName($table,$tenant['id']);
                     

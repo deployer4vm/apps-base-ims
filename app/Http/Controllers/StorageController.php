@@ -23,7 +23,8 @@ class StorageController extends BaseController
     }
 
     /**
-     * serve uplaod file di storage/app/upload/*
+     * serve uplaod file di /storage/app/upload/*
+     * path nya /storage/*
      * 
      * @param Request $request *semua optional
      *      lang : lang id nya
@@ -41,6 +42,7 @@ class StorageController extends BaseController
             case 'editor': // handle file yang diupload dari kind editor
                 return $this->editor($request,$segment, $fullFilePath);
                 break;         
+            case 'image': // handle file image
             case 'images': // handle file image
                 $fileName = end($segment);
                 return $this->serveImage($fullFilePath,$fileName, $request->input('size',false));
@@ -61,7 +63,7 @@ class StorageController extends BaseController
     {        
         $fileName = end($segment);
         if(Storage::exists($fullFilePath)){
-            if($segment[1]=='image'){
+            if($segment[1]=='image' || $segment[1]=='images'){
                 return $this->serveImage($fullFilePath,$fileName,$request->input('size',false));
             }else{
                 return Storage::download($fullFilePath);

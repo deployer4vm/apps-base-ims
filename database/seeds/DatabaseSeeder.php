@@ -60,7 +60,8 @@ class DatabaseSeeder extends Seeder
             }
         }
         //jika mode nya 1 tenant 1 database
-        if(config('AppConfig.system.multitenant.data_mode',1)==3){  
+        if(config('AppConfig.system.multitenant.active',false) && config('AppConfig.system.multitenant.data_mode',1)!=1){  
+
             $this->callPerTenant($runAbleSeeds); 
 
         // jika dalam 1 database utama
@@ -91,30 +92,38 @@ class DatabaseSeeder extends Seeder
                 $this->command->getOutput()->writeln("<comment>Seeding:</comment> {$class}");
             }
 
+            // jika seed per tenant maka jalankan per tenant
             if(method_exists($tmpClass,'setTenantId')){
-                foreach ($tenantList['data'] as $tenant) {                 
+                foreach ($tenantList['data'] as $tenant) {                
                     
-                    if(Tenant::dbExists($tenant['id'])){ 
-                        
-                        $startTime = microtime(true);              
+                    //jika per database
+                    if(config('AppConfig.system.multitenant.data_mode',1)==3){   
+                        if(Tenant::dbExists($tenant['id'])){ 
+                            
+                            $startTime = microtime(true);              
 
-                        Tenant::setActiveTenantById($tenant['id']);
+                            Tenant::setActiveTenantById($tenant['id']);
 
-                        if(method_exists($tmpClass,'setTenantId'))
-                            $tmpClass->setTenantId($tenant['id']);
+                            if(method_exists($tmpClass,'setTenantId'))
+                                $tmpClass->setTenantId($tenant['id']);
 
-                        try {
-                            $tmpClass->run();
-                        } catch (Exception $th) {
-                            throw $th;
+                            try {
+                                $tmpClass->run();
+                            } catch (Exception $th) {
+                                throw $th;
+                            }
+
+                            $runTime = round(microtime(true) - $startTime, 2);
+                            if(isset($this->command)) {
+                                $this->command->getOutput()->writeln("<info>Seeded in tenant ".$tenant['id'].":</info>  {$class} ({$runTime} seconds)");
+                            }
+                            
+                            usleep(100);
                         }
-
-                        $runTime = round(microtime(true) - $startTime, 2);
-                        if(isset($this->command)) {
-                            $this->command->getOutput()->writeln("<info>Seeded in tenant ".$tenant['id'].":</info>  {$class} ({$runTime} seconds)");
-                        }
                         
-                        usleep(100);
+                    // jika per table pake prefix nama table
+                    }else{
+                        
                     }
                 }
             }else{                

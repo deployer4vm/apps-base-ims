@@ -40,7 +40,7 @@
             <!--looping level 1-->      
             <template v-for="(menus, packageNamespace) in sidebarMenu">
 
-                <template v-if="menus.has_acl == 0 || (menus.has_access==1 && (menus.tenant_group_id==0 || isInGroup(menus.tenant_group_id)))">
+                <template v-if="menus.has_acl == 0 || (menus.has_access==1 && isInGroup(menus.tenant_group_id))">
 
                     <sidenav-router-link
                         v-if="menus.route"
@@ -67,7 +67,7 @@
                         <!-- looping level 2 -->
                         <template v-for="(menu, aclIdLv1) in menus.children">
 
-                        <template v-if="menu.enable && (menus.has_acl == 0 || (menu.is_navbar && menu.active_acl.has_access==1 && (menu.tenant_group_id==0 || isInGroup(menu.tenant_group_id))))">
+                        <template v-if="menu.enable && (menus.has_acl == 0 || (menu.is_navbar && menu.active_acl.has_access==1 && isInGroup(menu.tenant_group_id)))">
 
                             <template v-if="menu.children == undefined">
 
@@ -99,7 +99,7 @@
 
                                 <template v-for="(submenu,aclIdLv2) in menu.children">
 
-                                <template v-if="submenu.enable && (menus.has_acl == 0 || (submenu.is_navbar && submenu.active_acl.has_access==1 && (submenu.tenant_group_id==0 || isInGroup(submenu.tenant_group_id))))">
+                                <template v-if="submenu.enable && (menus.has_acl == 0 || (submenu.is_navbar && submenu.active_acl.has_access==1 && isInGroup(submenu.tenant_group_id)))">
 
                                     <template v-if="submenu.children == undefined">
 
@@ -126,7 +126,7 @@
 
                                         <template v-for="(subsubmenu,aclIdLv3) in submenu.children">
 
-                                        <template v-if="subsubmenu.enable && (menus.has_acl == 0 || (subsubmenu.is_navbar && subsubmenu.active_acl.has_access==1 && (subsubmenu.tenant_group_id==0 || isInGroup(subsubmenu.tenant_group_id))))">
+                                        <template v-if="subsubmenu.enable && (menus.has_acl == 0 || (subsubmenu.is_navbar && subsubmenu.active_acl.has_access==1 && isInGroup(subsubmenu.tenant_group_id)))">
 
                                             <sidenav-router-link
                                             :to="subsubmenu.route"
@@ -244,15 +244,29 @@ export default {
     },
     methods: {
         /**
-         * cek apakah curGroup tenant group ada di active group
+         * cek apakah curTenantGroup (tenant_group_id dari menu) menampilkan menu atau tidak
          * param :
-         *      curGroup : array berisi list id group tenant menu yg dicek
+         *      curTenantGroup : array berisi list id group tenant menu yg dicek (dari tenant_group_id di item access nya)
+         * 
+         * return 
          */
-        isInGroup(curGroup) {
-            //jika tidak ada group maka tolak (berarti tidak punya akses)
-            if (!this.tenantGroup) return false;
-            var arr = this.tenantGroup;
-            return curGroup.some(r => arr.indexOf(r) >= 0);
+        isInGroup(curTenantGroup) {
+            // jika multi tenant aktif
+            if(this.AppConfig.system.multitenant.active){
+                // jika tenant_group_id menu yg dicek berbentuk array, maka detek bandingkan dengan activeGroup nya
+                if(curTenantGroup.length && curTenantGroup.length > 0){
+                    var arr = this.tenantGroup;// list id tenant group tenant aktif                    
+                    //jika tidak ada group berarti sedang di tenant manager
+                    if (arr.length == undefined)                        
+                        arr = [0];
+                    
+                    return curTenantGroup.some(r => arr.indexOf(r) >= 0);
+                }else{
+                    return curTenantGroup == 0 || (curTenantGroup == 1 && !isOnTenantManager) || (curTenantGroup == 2 && isOnTenantManager);
+                }          
+            }else{
+                return curTenantGroup == 0 || curTenantGroup == 1;
+            }            
         },
         isMenuActive(route,viewLog=false) {
             let routePath = "";

@@ -55,7 +55,7 @@ router.afterEach((to, from) => {
         if(tenantData==undefined){
             _groupApp = to.params.group_app?to.params.group_app:'';
         }else{
-            _groupApp = isTenantManagementActive?'':tenantData.group_app;
+            _groupApp = isOnTenantManager?'':tenantData.group_app;
         }
 
         if(globals().LocalApi.defaults.headers.common["Group-App"] != _groupApp)

@@ -55,7 +55,7 @@ localapi.errAlertText = {
 };
 localapi.showAllert = true;
 localapi.defaults.baseURL = "/";//AppConfig.client.endpoint[AppConfig.system.mode]["domain"];
-localapi.defaults.headers.get["Accepts"] = "application/json";
+localapi.defaults.headers.get["Accept"] = "application/json";
 localapi.defaults.headers.common['Content-Type'] = 'multipart/form-data';
 localapi.interceptors.response.use((response) => response, (error) => {    
     if(
@@ -265,6 +265,23 @@ formater.resetNumber = function(number) {
         number = number.replace(/,/g, "");
     }
     return parseFloat(number);
+};
+
+// untuk detek apakah sudah diisi atau belum masked input saat get fokus 
+// untuk mengosongkan inputan agar mudah input
+formater.maskedInputOnFocus = function(ev,emptyFormat){
+    if(ev.target.value == emptyFormat){
+        ev.target.value = '';       
+    }else{
+        ev.target.select();
+    }     
+}
+
+// untuk detek apakah sudah diisi atau belum masked input saat lost fokus 
+// untuk diisi kembali dengan default format value kosong
+formater.maskedInputOnBlur = function(ev,emptyFormat) {
+    if(ev.target.value == '')
+        ev.target.value = emptyFormat;    
 };
 
 export default function () {

@@ -71,6 +71,8 @@ trait ModelDataTenant
         ){
             $this->setDbPerTenant();
             $this->connection = Tenant::getDbConnectionName($this->tenantId);
+        }else{
+            $this->connection = config('database.perTenant');
         }
         
         return parent::getConnectionName(); 
@@ -94,7 +96,7 @@ trait ModelDataTenant
             $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
 
         $table = $this->table;
-        if(config('AppConfig.system.multitenant.data_mode',1)==2){
+        if(config('AppConfig.system.multitenant.data_mode',1)==2 && !$this->_tableNameSetted){
             $table = config('AppConfig.system.multitenant.table_prefix','_').$this->tenantId.'_'.$this->table;
             $this->_tableNameSetted = true;
         }
