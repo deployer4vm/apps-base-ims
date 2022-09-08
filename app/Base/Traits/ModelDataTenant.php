@@ -64,13 +64,12 @@ trait ModelDataTenant
         //get tenant id yang terset di model ini
         if (empty($this->tenantId))
             $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
-
-        if(
-            config('AppConfig.system.multitenant.data_mode',1)==3 &&
-            $this->connection != Tenant::getDbConnectionName($this->tenantId)
-        ){
-            $this->setDbPerTenant();
-            $this->connection = Tenant::getDbConnectionName($this->tenantId);
+            
+        if(config('AppConfig.system.multitenant.data_mode',1)==3){
+            if($this->connection != Tenant::getDbConnectionName($this->tenantId)){
+                $this->setDbPerTenant();
+                $this->connection = Tenant::getDbConnectionName($this->tenantId);
+            }
         }else{
             $this->connection = config('database.perTenant');
         }

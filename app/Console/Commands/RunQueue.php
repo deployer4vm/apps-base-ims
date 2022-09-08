@@ -56,7 +56,9 @@ class RunQueue extends Command
                 
                 if($job->attempts!=1 && !isset($runningJobs[$job->queue])){
                     $runningJobs[$job->queue] = $job->queue;
-                    shell_exec('cd '.base_path('').' && php artisan queue:work --queue='.$job->queue.' --once >> /dev/null 2>&1');
+                    // shell_exec('cd '.base_path('').' && php artisan queue:work --queue='.$job->queue.' --once >> /dev/null 2>&1 &');
+                    // shell_exec('cd '.base_path('').' && php artisan queue:work --queue='.$job->queue.' --once > /dev/null 2>/dev/null &');
+                    shell_exec('cd '.base_path('').' && ./runqueue.sh '.$job->queue);
                 }
             }
 
