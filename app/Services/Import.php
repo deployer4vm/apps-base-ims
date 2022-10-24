@@ -211,7 +211,8 @@ class Import extends BaseRepository
         $request = request();
 
         if(empty($filepath)){
-            $filepath = $request->file('importFile')->store('system_import/'.config('tenant.id').'/'.$cacheKey.'/');
+            $tenantPath = config('AppConfig.system.multitenant.active',false)?('/tenant_'.config('tenant.id',0)):'';
+            $filepath = $request->file('importFile')->store($tenantPath.'/system_import/'.$cacheKey.'/');
             $filepath = Storage::path($filepath); 
         }
 

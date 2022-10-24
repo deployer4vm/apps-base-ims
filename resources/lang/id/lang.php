@@ -35,7 +35,8 @@ return [
     //-- general caption
     'loading_data' => 'Loading',
     'data_not_found' => 'Data tidak ditemukan',
-    'data_attribute_not_found' => 'Data :attribute tidak ditemukan',
+    'data_attribute_not_found' => 'Data :attribute tidak ditemukan',    
+    'data_attribute_cannot_be_empty' => 'Data :attribute tidak boleh kosong',
     'no_data' => 'Belum ada data',
     //-- home template    
     'system_app_loading_text' => 'Loading application data...',

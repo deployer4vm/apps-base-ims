@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 // use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\ViewServiceProvider as BaseViewServiceProvider;
 
@@ -11,9 +12,13 @@ class ViewServiceProvider extends BaseViewServiceProvider
 
     public function register()
     {
-        
         $tenantId = 0;
-        if(config('AppConfig.system.multitenant.active',false) && !config('tenant',false))
+        // get tenant id jika dijalan di http bukan console
+        if(
+            !$this->app->runningInConsole() && // jika dijalan di http
+            config('AppConfig.system.multitenant.active',false) && // jika multi tenant aktif
+            !config('tenant',false) // jika tenant belum terset
+        )
             $tenantId = $this->getTenantId();
         
         // $this->app['config']['view.paths'] = array_merge(config('hpsynapse.view_path',[]),$this->app['config']['view.paths']);
@@ -21,7 +26,7 @@ class ViewServiceProvider extends BaseViewServiceProvider
             config('hpsynapse.view_path.pertenant.'.$tenantId,[]),            
             config('hpsynapse.view_path.general',[])
         );
-
+        
         parent::register();
     }
 
@@ -37,12 +42,13 @@ class ViewServiceProvider extends BaseViewServiceProvider
                 }
             }
             
-            // jika mengakses aplikasi tenant
+            // jika mengakses aplikasi tenant manager
             if(
                 (!$appGroup && config('AppConfig.system.multitenant.owner_subfolder','')=='') || 
                 ($appGroup && $appGroup == config('AppConfig.system.multitenant.owner_subfolder'))
             ){
-                
+                // ... do nothing
+            // jika mengakses aplikasi per tenant
             }else{                
                 $tenant = DB::table('tenants')->where('group_app',$appGroup)->first();
             }
@@ -55,6 +61,5 @@ class ViewServiceProvider extends BaseViewServiceProvider
         return $tenant?$tenant->id:0;
 
     }
-
 
 }

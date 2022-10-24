@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Route;
  */
 
 $group = [
-    'prefix' => config('AppConfig.system.config_endpoint'),// default : /sys/config
+    'prefix' => config('AppConfig.system.config_endpoint','sys/config'),// default : /sys/config
 ];
 
 Route::group($group,function(){
@@ -67,8 +67,7 @@ Route::group($group,function(){
  * -------------------------------------------------
  */
 // /api/sys/lang
-Route::get(config('AppConfig.system.lang_endpoint'),'LangController@readList');
-Route::get('sys/lang','LangController@readList');
+Route::get(config('AppConfig.system.lang_endpoint','sys/lang'),'LangController@readList');
 
 /**
  * kindeditor

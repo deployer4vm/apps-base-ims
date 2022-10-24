@@ -36,6 +36,7 @@ return [
     'loading_data' => 'Loading',
     'data_not_found' => 'Data not found',
     'data_attribute_not_found' => 'Data :attribute not found',
+    'data_attribute_cannot_be_empty' => 'Data :attribute tidak boleh kosong',
     'no_data' => 'No Data',
     //-- home template    
     'system_app_loading_text' => 'Loading application data...',

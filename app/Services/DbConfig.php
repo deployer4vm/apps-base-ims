@@ -84,36 +84,39 @@ class DbConfig extends BaseRepository
     /**
      * amblis list config per group
      * 
-     * @param string    $group      grup config
+     * @param string|array          $group      grup config
+     * @param boolean               $returnValue        jika true maka return nya hanya field value saja, jika false maka full record
      * 
      * @return array                array list config, dengan format [['key'=>record config]]
      */
-    public function listConfig(string $group)  
+    public function listConfig($group,$returnValue=false)  
     {        
-        return $this->_listConfig($group,config('tenant.id',$this->tenantId)) ;
+        return $this->_listConfig($group,config('tenant.id',$this->tenantId),$returnValue) ;
     }
 
     /**
      * amblis list config per group
      * 
-     * @param string    $group      grup config
+     * @param string|array          $group              grup config
+     * @param boolean               $returnValue        jika true maka return nya hanya field value saja, jika false maka full record
      * 
      * @return array                array list config, dengan format [['key'=>record config]]
      */
-    public function listGlobalConfig(string $group)  
+    public function listGlobalConfig($group,$returnValue=false)  
     {   
-        return $this->_listConfig($group,0) ;
+        return $this->_listConfig($group,0,$returnValue) ;
     }
 
     /**
      * main list config per group function
      * 
-     * @param string    $group      grup config
-     * @param integer   $tenantId       tenant id, 0 jika global (all tenant)
+     * @param string|array          $group      grup config
+     * @param integer               $tenantId       tenant id, 0 jika global (all tenant)
+     * @param boolean               $returnValue        jika true maka return nya hanya field value saja, jika false maka full record
      * 
      * @return array                array list config, dengan format [['key'=>record config]]
      */
-    private function _listConfig(string $group,$tenantId = 0)  
+    private function _listConfig($group,$tenantId = 0,$returnValue=false)  
     {        
         $list = $this->_list(new Mconfig, [
             ['tenant_id',$tenantId],
@@ -124,7 +127,7 @@ class DbConfig extends BaseRepository
 
         if($list['count']){
             foreach ($list['data'] as $key => $value) {
-                $data[$value['key']] = $value;
+                $data[$value['key']] = $returnValue?$value['value']:$value;
             }
         }
 

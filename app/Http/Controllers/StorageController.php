@@ -24,12 +24,10 @@ class StorageController extends BaseController
 
     /**
      * serve uplaod file di /storage/app/upload/*
-     * path nya /storage/*
+     * urlnya nya /storage/*
      * 
      * @param Request $request *semua optional
-     *      lang : lang id nya
-     *      item : item nya jika diperlukan
-     *
+     *      size : id/key size nya
      */
     public function index(Request $request)
     {
@@ -37,7 +35,7 @@ class StorageController extends BaseController
         array_shift($segment);// buang segment "upload"
         
         $fullFilePath = implode('/',$segment);
-        //isi segement di /upload/*
+        //isi segement di url /upload/*
         switch ($segment[0]) {            
             case 'editor': // handle file yang diupload dari kind editor
                 return $this->editor($request,$segment, $fullFilePath);
@@ -47,9 +45,7 @@ class StorageController extends BaseController
                 $fileName = end($segment);
                 return $this->serveImage($fullFilePath,$fileName, $request->input('size',false));
                 break;         
-            case '': //
-                break;   
-            
+            case '': //            
             default: // jika tidak dihandle khusus maka langsung didownload saja
                 if(Storage::exists($fullFilePath)){
                     return Storage::download($fullFilePath);

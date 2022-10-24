@@ -119,7 +119,7 @@ abstract class BaseResponse implements Responsable
         $this->viewdata = false;
         
         $dataTmp = $this->output['data'];
-        $dataTmp['params'] = $this->output['params'];
+        $dataTmp['params'] = isset($this->output['params'])?$this->output['params']:[];
         
         if(isset($this->output['message']) && $this->output['message']){            
             $this->alert = [

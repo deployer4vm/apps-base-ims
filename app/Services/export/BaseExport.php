@@ -574,7 +574,7 @@ class BaseExport extends BaseRepository
          */
         $exportData['storage'] = 'local';//tipe storage, saat ini hanya bisa 2, "local" dan "s3"b 
 
-        $exportData['filename'] = '';//nama file export nya
+        $exportData['filename'] = '';//nama file export nya beserta extention file nya
         $exportData['directory'] = '';// additional path, path tambahan untuk pengelompokan jenis export
         // directory ini ditambahkan diakhir relativePath, jadi relativePath adalah default relativePath + directory
 
