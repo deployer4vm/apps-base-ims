@@ -230,7 +230,7 @@ class BaseController extends LaravelBaseController
             foreach ($params['all'] as $key => $param) {
                 if (!in_array($key, $mergeExcept)) {
                     $params['query'][$key] = $param;
-                    if (isset($param) && in_array(strtoupper($param[0]), ['LIKE', '!=', '<', '<=', '>', '>='])) {
+                    if (isset($param[0]) && in_array(strtoupper($param[0]), ['LIKE', '!=', '<', '<=', '>', '>='])) {
                         $params['filter'][] = [$key, $param[0], $param[1]];
                     } else {
                         $params['filter'][] = [$key, $param];
@@ -253,9 +253,9 @@ class BaseController extends LaravelBaseController
     /**
      * Otomatisasi `$this->output['params'] = $this->getListParam();`
      */
-    public function buildParams()
+    public function buildParams(bool $mergeParam = true, array $mergeExcept = [])
     {
-        $this->setParams($this->getListParam());
+        $this->setParams($this->getListParam($mergeParam, $mergeExcept));
     }
 
     /**

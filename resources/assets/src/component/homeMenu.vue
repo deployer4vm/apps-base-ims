@@ -6,24 +6,26 @@
                 <h5 class="text-nowrap font-weight-normal" v-if="item.title">{{ item.title }}</h5>
 
                 <div class="row">
-                    <div class="col-md-4" v-for="(data, j) in item.list" :key="j">
+                    <div class="col-md-4 mb-4" v-for="(data, j) in item.list" :key="j">
                         <div class="d-flex card align-items-left">
                             <div class="card-body media align-items-left text-body">
                                 <i :class="data.icon + ' display-4 d-block text-primary'"></i>
-                                <span class="media-body d-block ml-3">
+                                <span class="media-body d-block m-1 ml-3">
                                     <span class="text-big" v-html="data.title"></span><br>
-                                    <small class="text-muted" v-html="data.description"></small>
+                                    <small class="text-muted" v-if="data.description" v-html="data.description"></small>
                                 </span>
                                 <router-link 
                                     :to="{name: data.route.name}" v-if="data.route.name"
-                                    class="btn btn-sm btn-info">
+                                    class="btn btn-sm btn-info"
+                                >
                                     Go <span class="ion ion-ios-arrow-forward" />
                                 </router-link>
                                 <b-btn 
                                     v-else
                                     @click="topWindowHref(data.route)" 
                                     size="sm" 
-                                    variant="info">
+                                    variant="info"
+                                >
                                     Go <span class="ion ion-ios-arrow-forward" />
                                 </b-btn>
                             </div>

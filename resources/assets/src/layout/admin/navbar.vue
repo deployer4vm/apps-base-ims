@@ -34,8 +34,30 @@
                         <notif-navbar />
                         <div class="nav-item d-none d-lg-block text-big font-weight-light line-height-1 opacity-25 mr-3 ml-1">|</div>
                     </template>
+                    
+                    <template v-if="AppConfig.system.multilang==1">
+                        <b-nav-item-dropdown :right="!isRTL">
+                            <template slot="button-content">
+                                <span class="d-inline-flex flex-lg-row-reverse align-items-center align-middle">
+                                    <div class="avatar-header-block d-block rounded-circle text-center">
+                                        <i class="ion ion-ios-globe"></i>
+                                    </div>
+                                    <span class="px-1 mr-lg-2 ml-2 ml-lg-0">{{ Trans.getLocale().toUpperCase() }}</span>
+                                </span>
+                            </template>
+                            <template v-for="(lang,langId) in AppConfig.system.locale">
+                                <b-dd-item v-if="Trans.getLocale()==langId" :key="'lang-item-' + langId">
+                                    <i class="ion ion-md-radio-button-on text-danger"></i> &nbsp; <span class="text-danger"> {{lang}}</span>
+                                </b-dd-item>
+                                <b-dd-item v-else @click="Trans.reLoadLang(langId)" :key="'lang-item-' + langId">
+                                    <i class="ion ion-md-radio-button-off text-muted"></i> &nbsp; {{lang}}
+                                </b-dd-item>
+                            </template>
+                        </b-nav-item-dropdown>
+                        <div class="nav-item d-none d-lg-block text-big font-weight-light line-height-1 opacity-25 mr-3 ml-1">|</div>
+                    </template>
 
-                    <b-nav-item-dropdown :right="!isRTL" class="demo-navbar-user">
+                    <b-nav-item-dropdown :right="!isRTL">
                         <template slot="button-content">
                             <span class="d-inline-flex flex-lg-row-reverse align-items-center align-middle">
                                 <div class="avatar-header-block d-block rounded-circle text-center">
@@ -58,11 +80,12 @@
                             <b-dd-divider />
                         </template>
                         
-
                         <b-dd-item v-if="AppConfig.isModuleEnable('moduser') && showNotif" :to="{name: 'notification'}">
                             <i class="ion ion-md-notifications-outline text-info"></i>
                             &nbsp; {{ Trans.get('notif.notification_title') }}
                         </b-dd-item>
+                        
+                        <b-dd-divider />
 
                         <b-dd-item v-if="AppConfig.isModuleEnable('moduser')" @click="UserAuth.logout()">
                             <i class="ion ion-ios-log-out text-danger"></i>

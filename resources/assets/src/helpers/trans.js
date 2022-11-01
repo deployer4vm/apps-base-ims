@@ -9,14 +9,18 @@ export default {
     lang: null,
     //load language file from cache if exist, reload from server if not exist
     loadLang(onLoadComplete=null) {
+        // jika lang belum diset mak load ulang
         if(!this.store.getters.isLangSet){
             this.store.dispatch('reloadLang').then((val)=>{
                 this.allLang = this.store.getters.getLang;
                 // EventBus.$emit('onLangLoaded');
                 if(onLoadComplete)onLoadComplete();
             });
+        // jika sudah diload maka
         }else{
-            this.allLang = this.store.getters.getLang;
+            this.reLoadLang(this.getLocale());
+            // this.allLang = this.store.getters.getLang;
+            if(onLoadComplete)onLoadComplete();
         }
     },
     //force reload languange from server

@@ -5,6 +5,7 @@ import templateStore from "./modules/template";
 import transStore from "./modules/trans";
 import configStore from "./modules/config";
 import tenantStore from "./modules/tenant";
+import storeRepo from "./storeRepo";
 import globals from "@/globals";
 
 window.Vue.use(Vuex);
@@ -15,6 +16,7 @@ let vuexConfig = {
         tenant: tenantStore,
         trans: transStore,
         template: templateStore,
+        storeRepo: storeRepo,
         ...projectStore
     }
 };
@@ -24,7 +26,7 @@ const vuexPersist = new VuexPersist({
     reducer: (state) => {
         let newState = {
             'auth':state.auth
-            // ,'trans':state.trans
+            ,'trans':state.trans
         };
         if (globals().AppConfig.system.multitenant.active) {
             newState.tenant = state.tenant;

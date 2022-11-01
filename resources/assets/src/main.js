@@ -107,6 +107,9 @@ var VM = new Vue({
     router,
     store,
     created() {
+        //init autorsource
+        this.RepoInit.store = this.$store;
+
         //init helper app web
         this.Web.store = this.$store;
         this.Web.router = this.$router;

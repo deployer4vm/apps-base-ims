@@ -4,6 +4,7 @@ import Web from '@/helpers/web.js';
 import Trans from '@/helpers/trans.js';
 import AppConfig from '@/appconfig.js';
 import Helper from '@/helpers/helper.js';
+import Repo from '@/helpers/repo.js';
 
 // import _default from 'vuex';
 
@@ -181,15 +182,15 @@ formater.format = {
     numberMask: textMaskAddons.createNumberMask(formater.config.numberMask),//mask without decimal 
     decimalMask: textMaskAddons.createNumberMask(formater.config.decimalMask),//mask with decimal 
     // -- set mask dengan config tambahan/update an
-    currencyMaskWithConfig: function(addsConfig){
+    currencyMaskWithConfig: function(addsConfig={}){
         let config = _.merge(JSON.parse(JSON.stringify(formater.config.currencyMask)),addsConfig);
         return textMaskAddons.createNumberMask(config);
     },    
-    numberMaskWithConfig: function(addsConfig){
+    numberMaskWithConfig: function(addsConfig={}){
         let config = _.merge(JSON.parse(JSON.stringify(formater.config.numberMask)),addsConfig);
         return textMaskAddons.createNumberMask(config);
     },    
-    decimalMaskWithConfig: function(addsConfig){
+    decimalMaskWithConfig: function(addsConfig={}){
         let config = _.merge(JSON.parse(JSON.stringify(formater.config.decimalMask)),addsConfig);
         return textMaskAddons.createNumberMask(config);
     },     
@@ -252,6 +253,20 @@ formater.formatDate = function(dateString) {
     return moment(dateString).format(formater.config.formatDate);
 };
 
+formater.roundNumber = function(num, scale=2) {
+    return parseFloat(num).toFixed(scale);
+    // if(!("" + num).includes("e")) {
+    //   return +(Math.round(num + "e+" + scale)  + "e-" + scale);
+    // } else {
+    //   var arr = ("" + num).split("e");
+    //   var sig = ""
+    //   if(+arr[1] + scale > 0) {
+    //     sig = "+";
+    //   }
+    //   return +(Math.round(+arr[0] + "e" + sig + (+arr[1] + scale)) + "e-" + scale);
+    // }
+};
+
 formater.resetNumber = function(number) {
     if(number == 0)return 0;
     if(!(typeof number === 'string'))return number;
@@ -297,6 +312,16 @@ export default function () {
 
         //config app
         AppConfig,
+
+        get RepoInit() {
+            return Repo;
+        },
+
+        //auto vuex internal resource
+        Repo: function(module){
+            return Repo.setModule(module);
+        },
+        
 
         //translation / locale
         Trans,
