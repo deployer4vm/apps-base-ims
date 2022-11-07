@@ -13,6 +13,9 @@ export default {
     get listData(){
         return this.store.state.storeRepo.data[this.module].listData;
     },
+    get listDataParams(){
+        return this.store.state.storeRepo.data[this.module].listDataParams;
+    },
     get oneData(){
         return this.store.state.storeRepo.data[this.module].oneData;
     },
@@ -37,4 +40,6 @@ export default {
         params.module = this.module;
         return this.store.dispatch("storeRepo/delete", params);
     },
+    //
+
 }

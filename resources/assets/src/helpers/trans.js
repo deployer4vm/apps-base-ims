@@ -18,8 +18,8 @@ export default {
             });
         // jika sudah diload maka
         }else{
+            this.allLang = this.store.getters.getLang;
             this.reLoadLang(this.getLocale());
-            // this.allLang = this.store.getters.getLang;
             if(onLoadComplete)onLoadComplete();
         }
     },

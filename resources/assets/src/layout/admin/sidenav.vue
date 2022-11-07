@@ -7,7 +7,7 @@
             </span>-->
             
             <span class="app-brand-logo demo bg-transparent layout-sidenav-toggle disidenav">
-                <img style="max-height: 30px; max-widht: 60px;" :src="`${publicUrl}assets/images/logo.png`" />
+                <img style="max-height: 30px; max-widht: 60px;" :src="logoPath" />
             </span>
 
             <!-- burger menu saat sidebar menutup -->
@@ -241,6 +241,9 @@ export default {
                     : "layout-sidenav-horizontal container-p-x flex-grow-0")
             );
         },
+        logoPath() {
+            return this.publicUrl + (this.AppConfig.system.template.logo?this.AppConfig.system.template.logo:'assets/images/logo.png');
+        }
     },
     methods: {
         /**

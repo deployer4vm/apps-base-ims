@@ -25,8 +25,8 @@ const vuexPersist = new VuexPersist({
     //cache semua state kecuali template state
     reducer: (state) => {
         let newState = {
-            'auth':state.auth
-            ,'trans':state.trans
+            'auth':state.auth,
+            'trans':state.trans
         };
         if (globals().AppConfig.system.multitenant.active) {
             newState.tenant = state.tenant;

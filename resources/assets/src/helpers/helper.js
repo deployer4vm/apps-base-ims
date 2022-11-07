@@ -157,5 +157,22 @@ export default {
         // });     
         // return formData;    
         
+    },
+    isString(x) {
+        return Object.prototype.toString.call(x) === "[object String]"
+    },
+    /**
+     * 
+     * @param {*} stringVal 
+     * @param {*} replaceObj 
+     * @returns 
+     */
+    replaceAttribute(stringVal,replaceObj={}){
+        _.forEach(replaceObj, (v, k) => {
+            // if(this.isString(v)){
+                stringVal = stringVal.replace(":" + k, v);
+            // }
+        });
+        return stringVal;
     }
 }
