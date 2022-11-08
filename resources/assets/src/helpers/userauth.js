@@ -85,6 +85,10 @@ export default {
     getAuthRole() {
         return this.store.getters.getAuthRole;
     },
+    //get active role_code
+    getAuthRoleCode() {
+        return this.store.state.auth.role_code;
+    },
     //get list active role
     getAuthRoleList() {
         return this.store.getters.getAuthRoleList;
