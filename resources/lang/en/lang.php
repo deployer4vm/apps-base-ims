@@ -41,6 +41,8 @@ return [
     'manage_attribute' => 'Manage :attribute',
     'preview' => 'Preview',
     'print' => 'Print',
+    'approve' => 'Approve',
+    'reject' => 'Reject',
     //-- general caption
     'keyword' => 'Keyword...',
     'loading_data' => 'Loading',

@@ -3,10 +3,17 @@
  */
 export default {
     store: null,
+    tmpFunc:{},
     setModule(module) {
-        var tmpFunc = {
-            module:module,
-            store:this.store,
+        if(!this.tmpFunc[module])
+            this.initNewModule(module);
+
+        return this.tmpFunc[module];
+    },
+    initNewModule(module){
+        this.tmpFunc[module] = {
+            module: module,
+            store: this.store,
             //--------
             //getter
             get listData(){
@@ -41,6 +48,5 @@ export default {
             },
             //
         }
-        return tmpFunc;
     }
 }

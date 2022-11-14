@@ -34,6 +34,12 @@ abstract class BaseRepository {
         'pageCount' => 1
     ];//default data untuk $pagination
 
+    public function __construct()
+    {
+        if($this->_isSettedIn==false)
+            $this->_callInit();
+    }
+
     /**
      * BLOCK CLASS DEPENDENCY
      * -------------------------------------------------------------------------------------
@@ -72,6 +78,9 @@ abstract class BaseRepository {
      * 
      * auto fungsion
      */
+    protected $_isSettedIn = false;//untuk menandai apakah fungsi2 init awal sudah dieksekusi,
+    // agar tidak di over exekusi
+
     protected $autoResource = [
         // 'Workshop' => 'hpsynapse\modworkshop\Models\Ws' // 1 general model
         // 'Workshop' => [
@@ -90,6 +99,26 @@ abstract class BaseRepository {
     protected $autoResourceUpdateValidate = [
         // 'Workshop' => ['nama'=>'required']
     ];
+
+    public function _callInit()
+    {
+        $this->setAutoResourceCreateValidate();
+        $this->setAutoResourceUpdateValidate();
+        $this->_isSettedIn = true;
+    }
+
+    /**
+     * method untuk di override
+     */
+    public function setAutoResourceCreateValidate()
+    {
+
+    }
+
+    public function setAutoResourceUpdateValidate()
+    {
+
+    }
 
     public function __call($name, $arguments)
     {

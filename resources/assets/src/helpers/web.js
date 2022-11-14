@@ -244,6 +244,7 @@ export default {
         }else{
             this.setShowAll();
         }
+        return this;
     },
     /**
      * tampilkan semua element yg hide/show

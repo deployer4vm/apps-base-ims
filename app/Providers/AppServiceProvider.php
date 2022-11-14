@@ -6,6 +6,7 @@ use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -115,7 +116,10 @@ class AppServiceProvider extends ServiceProvider
     {
         Schema::defaultStringLength(191);
         Router::mixin(new RouterMixin());
-        
+
+        Validator::extend('cannot_empty', function ($attribute, $value, $parameters, $validator) {
+            return !empty($value);
+        });
         // DB::listen(function ($query) {
         //     // $query->sql
         //     // $query->bindings
