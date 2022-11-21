@@ -49,14 +49,14 @@ const actions = {
         
         return globals()
             .LocalApi.get(state.data[params.module].apiEndpoint + prefix, {
-                params: params.params
+                params: params.params?params.params:{}
             })
             .then(res => {
                 if(params.saveState==undefined||params.saveState)
                     commit("setListData", {
                         module: params.module,
                         data: res.data.data,
-                        params: params.params
+                        params: params.params?params.params:{}
                     });
                 return res.data.data;
             });

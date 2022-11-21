@@ -23,7 +23,7 @@ class StorageController extends BaseController
     }
 
     /**
-     * serve uplaod file di /storage/app/upload/*
+     * serve uplaod file di /storage/app/files/*
      * urlnya nya /storage/*
      * 
      * @param Request $request *semua optional
@@ -32,10 +32,10 @@ class StorageController extends BaseController
     public function index(Request $request)
     {
         $segment = $request->segments();
-        array_shift($segment);// buang segment "upload"
+        array_shift($segment);// buang segment "storage"
         
         $fullFilePath = implode('/',$segment);
-        //isi segement di url /upload/*
+        //isi segement di url /storage/*
         switch ($segment[0]) {            
             case 'editor': // handle file yang diupload dari kind editor
                 return $this->editor($request,$segment, $fullFilePath);
