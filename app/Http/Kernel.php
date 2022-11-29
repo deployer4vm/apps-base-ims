@@ -40,6 +40,7 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\IframeLoadCheck::class,
             // \App\Http\Middleware\AppGroupCheck::class,//dipindah ke routeserviceprovider
+            \App\Http\Middleware\TenantDomainRedirectCheck::class,
             \App\Http\Middleware\TokenExpireCheck::class,
             \App\Http\Middleware\AcceesConfigCheck::class,
         ],

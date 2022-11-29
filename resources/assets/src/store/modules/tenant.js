@@ -19,7 +19,7 @@ const getters = {
         return state.isTenantLoaded;
     },
     isOnTenantManager(state) {
-        return state.isTenantLoaded && state.activeTenant.id==0;
+        return isOnTenantManager;//state.isTenantLoaded && state.activeTenant.id==0;
     },
     getTenantList(state) {
         return state.tenantList;

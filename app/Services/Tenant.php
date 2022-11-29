@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Schema;
 use App\Base\BaseRepository;
 
 use App\Models\Tenant as MTenant;
+use App\Models\TenantDomain;
 use App\Models\TenantGroup;
 use App\Models\TenantGroupTenant;
 
@@ -21,7 +22,9 @@ class Tenant extends BaseRepository
     
     protected $autoResource = [
         'Tenant' => ['r'=>MTenant::class,'w'=>MTenant::class],
-        'Group' => ['r'=>TenantGroupTenant::class,'w'=>TenantGroupTenant::class],
+        'TenantDomain' => ['r'=>TenantDomain::class,'w'=>TenantDomain::class],
+        'TenantGroup' => ['r'=>TenantGroup::class,'w'=>TenantGroup::class],
+        'TenantGroupTenant' => ['r'=>TenantGroupTenant::class,'w'=>TenantGroupTenant::class],
     ];
     
     /**
@@ -92,9 +95,9 @@ class Tenant extends BaseRepository
         private function getDbConnection_getServer($tenantId)
         {
             if(config('tenant.id')!=$tenantId){
-                if(!($tenant = $this->_getTenantById($tenantId)))
+                if(!($tenant = $this->getTenantById($tenantId)))
                     return false;
-                $server = config('database.multi_database_server.servers.'.$tenant->db);
+                $server = config('database.multi_database_server.servers.'.$tenant['db']);
             }else{
                 $server = config('database.multi_database_server.servers.'.config('tenant.db'));
             }
@@ -106,7 +109,7 @@ class Tenant extends BaseRepository
     $_tmpTenantListByGroupApp=[],
     $_tmpTenantListByDomain=[];
     
-    private function _getTenantById($tenantId)
+    public function getTenantById($tenantId)
     {
         if(!isset($this->_tmpTenantList[$tenantId])){
             
@@ -115,6 +118,8 @@ class Tenant extends BaseRepository
                 return false;
             }
 
+            $this->_tmpTenantList[$tenantId] = $this->_tmpTenantList[$tenantId]->toArray();
+            
             $this->_tmpTenantListByGroupApp[$this->_tmpTenantList[$tenantId]['group_app']] = $this->_tmpTenantList[$tenantId];
             $this->_tmpTenantListByDomain[$this->_tmpTenantList[$tenantId]['domain']] = $this->_tmpTenantList[$tenantId];
         }
@@ -123,7 +128,7 @@ class Tenant extends BaseRepository
     }
 
     
-    private function _getTenantByGroupApp($groupApp)
+    public function getTenantByGroupApp($groupApp)
     {
         if(!isset($this->_tmpTenantListByGroupApp[$groupApp])){
             $this->_tmpTenantListByGroupApp[$groupApp] = $this->getTenantModel()->where('group_app',$groupApp)->first();
@@ -134,12 +139,26 @@ class Tenant extends BaseRepository
         return $this->_tmpTenantListByGroupApp[$groupApp];
     }
 
-    private function _getTenantByDomain($domain)
+    public function getTenantByDomain($domain=false)
     {
         // sementara, khusus di local, jangan di PUSH
-        $domain = str_replace('smartcoopv2.localhost','smartcoop.localhost',$domain);
+        // $domain = str_replace('smartcoopv2.localhost','smartcoop.localhost',$domain);
+        $domain = $domain?$domain:request()->getHttpHost();
         if(!isset($this->_tmpTenantListByDomain[$domain])){
-            $this->_tmpTenantListByDomain[$domain] = $this->getTenantModel()->where('domain',$domain)->first();
+
+            $domainData = TenantDomain::where('domain',$domain)->where('status','!=',0)->first();
+            $this->_tmpTenantListByDomain[$domain] = $domainData?$this->getTenantModel()->where('id',$domainData['tenant_id'])->first():false;
+
+            // $this->_tmpTenantListByDomain[$domain] = $this->getTenantModel()->whereHas('domain',function($m) use($domain){
+            //     $m->where('domain',$domain)->where('status',1);
+            // })->first();
+
+            if($this->_tmpTenantListByDomain[$domain]){
+                $this->_tmpTenantListByDomain[$domain] = $this->_tmpTenantListByDomain[$domain]->toArray();
+                $this->_tmpTenantListByDomain[$domain]['domain'] = $domainData->toArray();
+            }
+
+
             $this->_tmpTenantListByGroupApp[$this->_tmpTenantListByDomain[$domain]['group_app']] = $this->_tmpTenantListByDomain[$domain];
             $this->_tmpTenantList[$this->_tmpTenantListByDomain[$domain]['id']] = $this->_tmpTenantListByDomain[$domain];
         }
@@ -497,9 +516,9 @@ class Tenant extends BaseRepository
     
     public function setActiveTenantById($tenantId)
     {
-        $tenant = $this->_getTenantById($tenantId);//$this->getTenantModel()->where('id',$tenantId)->first();
+        $tenant = $this->getTenantById($tenantId);//$this->getTenantModel()->where('id',$tenantId)->first();
         if($tenant)
-            $this->setActiveTenant($tenant->toArray());
+            $this->setActiveTenant($tenant);
     }
     
     public function setActiveTenantByGroup($appGroup=false)
@@ -519,7 +538,7 @@ class Tenant extends BaseRepository
             $this->setOnTenantManager();
         }else{
 
-            $tenant = $this->_getTenantByGroupApp($appGroup);//$this->getTenantModel()->where('group_app',$appGroup)->first();
+            $tenant = $this->getTenantByGroupApp($appGroup);//$this->getTenantModel()->where('group_app',$appGroup)->first();
             if($tenant)
                 $this->setActiveTenant($tenant->toArray());
         }
@@ -538,9 +557,9 @@ class Tenant extends BaseRepository
         if($domain[0]==config('AppConfig.system.multitenant.owner_domain')){
             $this->setOnTenantManager();
         }else{
-            $tenant = $this->_getTenantByDomain($domain[0]);//$this->getTenantModel()->where('domain',$domain)->first();
+            $tenant = $this->getTenantByDomain($domain[0]);//$this->getTenantModel()->where('domain',$domain)->first();
             if($tenant)
-                $this->setActiveTenant($tenant->toArray());
+                $this->setActiveTenant($tenant);
         }
     }
 
@@ -592,10 +611,50 @@ class Tenant extends BaseRepository
      */
     public function createTenant($input)
     {
+        if(!isset($input['group_app'])){
+            return false;
+        }
+        
+        $input['domain'] = $input['group_app'] . '.' . config('AppConfig.system.multitenant.main_domain');
+
         $return = $this->_autoResourceCreate('createTenant',[$input]);
+        if($return){
+            $this->_autoResourceCreate('createTenantDomain',[[
+                'tenant_id'=>$return['id'],
+                'domain'=>$input['domain'],
+                'status'=>1
+            ]]);
+        }
         // setelah proses create pastikan _tenant.json diupdate
         \App\Services\Utilities::artisan('synapse:updateTenantList');
         return $return;
+    }
+
+    public function updateTenant($where,$data=array())
+    {
+        $oldTenant = $this->getTenant($where);
+        if(!$oldTenant){
+            $this->error = __('lang.data_attribute_not_found',['attribute'=>'Tenant']);
+            return false;
+        }
+
+        if(isset($data['group_app']) && $oldTenant['group_app'] != $data['group_app']){
+            $data['domain'] = $data['group_app'] . '.' . config('AppConfig.system.multitenant.main_domain');
+            $this->_autoResourceUpdate('updateTenantDomain',[
+                [
+                    ['domain',$oldTenant['domain']],
+                    ['tenant_id',$oldTenant['id']],
+                ],
+                [                    
+                    'domain'=>$data['domain']
+                ]
+            ]);
+        }
+
+        return $this->_autoResourceUpdate('updateTenant',[
+            $where,
+            $data
+        ]);
     }
 
     public function deleteTenant($where)
@@ -603,7 +662,8 @@ class Tenant extends BaseRepository
         $oldTenant = $this->_autoResourceGet('getTenant',[$where]);
         if($oldTenant){
             $return = $this->_autoResourceDelete('deleteTenant',[$where]);
-            $this->_autoResourceDelete('deleteGroup',[['tenant_id',$oldTenant['id']]]);
+            $this->_autoResourceDelete('deleteTenantGroupTenant',[['tenant_id',$oldTenant['id']]]);
+            $this->_autoResourceDelete('deleteTenantDomain',[['tenant_id',$oldTenant['id']]]);
             // setelah proses delete pastikan _tenant.json diupdate
             \App\Services\Utilities::artisan('synapse:updateTenantList');
             return $return;

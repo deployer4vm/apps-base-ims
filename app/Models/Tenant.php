@@ -20,11 +20,20 @@ class Tenant extends BaseModel
      */
     protected $guarded = ['id','created_at'];
 
+    protected $casts  = [
+        'config' => 'array',
+    ];
+
     /**
      * relasi data ke instansi terkait
      */
     public function instanceData()
     {
         return $this->hasOne(config('AppConfig.system.multitenant.table_instance'),'tenant_id', 'id');
+    }
+    
+    public function domain()
+    {
+        return $this->hasMany(TenantDomain::class,'tenant_id','id');
     }
 }

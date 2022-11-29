@@ -64,11 +64,11 @@ const actions = {
     readOne({ commit, state }, params) {
         let prefix = '';
         if(state.data[params.module].pathPrefix)
-            prefix = '/' + globals().Helper.replaceAttribute(state.data[params.module].pathPrefix,params);
+            prefix = globals().Helper.replaceAttribute(state.data[params.module].pathPrefix,params) + '/';
 
         return globals()
             .LocalApi.get(
-                state.data[params.module].apiEndpoint + params.id + prefix,
+                state.data[params.module].apiEndpoint + prefix + params.id,
                 {
                     params: params.params?params.params:{}
                 }
@@ -99,11 +99,11 @@ const actions = {
     update({ dispatch, state }, params) {        
         let prefix = '';
         if(state.data[params.module].pathPrefix)
-            prefix = '/' + globals().Helper.replaceAttribute(state.data[params.module].pathPrefix,params);
+            prefix = globals().Helper.replaceAttribute(state.data[params.module].pathPrefix,params) + '/';
 
         return globals()
             .LocalApi.put(
-                state.data[params.module].apiEndpoint + params.id + prefix, 
+                state.data[params.module].apiEndpoint + prefix + params.id, 
                 params.data
             )
             .then(res => {
@@ -113,10 +113,10 @@ const actions = {
     delete({ dispatch, state }, params) {
         let prefix = '';
         if(state.data[params.module].pathPrefix)
-            prefix = '/' + globals().Helper.replaceAttribute(state.data[params.module].pathPrefix,params);
+            prefix = globals().Helper.replaceAttribute(state.data[params.module].pathPrefix,params) + '/';
 
         return globals()
-            .LocalApi.delete(state.data[params.module].apiEndpoint + params.id + prefix)
+            .LocalApi.delete(state.data[params.module].apiEndpoint + prefix + params.id)
             .then(res => {
                 return params.reload==undefined||!params.reload?res.data.data:dispatch("readList",{module: params.module});
             });
