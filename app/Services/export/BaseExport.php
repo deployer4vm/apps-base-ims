@@ -215,11 +215,11 @@ class BaseExport extends BaseRepository
                 return false;
             // delete file sebelumnya
             }else{
-                if($exportData['storage']=='s3'){
+                // if($exportData['storage']=='s3'){
                     Tenant::storage($tenantId)->delete($exportData['relativeFilepath']);
-                }else{
-                    Storage::disk('local')->delete($exportData['relativeFilepath']);
-                }                
+                // }else{
+                //     Storage::disk('local')->delete($exportData['relativeFilepath']);
+                // }                
             }
         }
 
@@ -314,11 +314,11 @@ class BaseExport extends BaseRepository
         $exportData = $this->getExport($cacheKey); 
         if($exportData==false)return false;
 
-        if($exportData['storage']=='s3'){
+        // if($exportData['storage']=='s3'){
             Tenant::storage($exportData['tenantId'])->delete($exportData['relativeFilepath']);
-        }else{
-            Storage::disk('local')->delete($exportData['relativeFilepath']);
-        }   
+        // }else{
+        //     Storage::disk('local')->delete($exportData['relativeFilepath']);
+        // }   
 
         Export::where('cache_key',$cacheKey)->delete();
 
@@ -353,14 +353,14 @@ class BaseExport extends BaseRepository
         // (dan jika tipe S3 storage maka tetap disimpan di local dulu, 
         // setelah selesai export baru diupload ke S3 dan dihapus di yg local nya)
         if(config('AppConfig.system.multitenant.active')){
-            $tenantPath = 'tenant_'.$exportData['tenantId'].'/';
+            // $tenantPath = 'tenant_'.$exportData['tenantId'].'/';
             $exportData['storage'] = Tenant::storageIsS3($exportData['tenantId'])?'s3':'local';
         }else{
             $exportData['storage'] = config('filesystems.disk.'.config('filesystems.default').'.driver','local')=='s3'?'s3':'local';
         }
                 
         $exportData['relativePath'] = $tenantPath.$this->_exportUploadPath.$exportData['directory'].$exportData['userId'].'/';
-        $exportData['path'] = Storage::disk('local')->path($exportData['relativePath']);
+        $exportData['path'] = Storage::disk(Tenant::storageGetDiskLocal($exportData['tenantId']))->path($exportData['relativePath']);
 
         // pastikan folder tujuan ada
         if(!file_exists($exportData['path'])){
@@ -374,9 +374,9 @@ class BaseExport extends BaseRepository
         $exportData['filepath'] = $exportData['path'].$exportData['filename'];   
 
         if($exportData['storage']=='s3'){
-            $exportData['fileurl'] = Tenant::storage()->url($exportData['relativeFilepath']);
+            $exportData['fileurl'] = Tenant::storage($exportData['tenantId'])->url($exportData['relativeFilepath']);
         }else{
-            $exportData['fileurl'] = url(Storage::disk('local')->url($exportData['relativeFilepath']));
+            $exportData['fileurl'] = url(Storage::disk(Tenant::storageGetDiskLocal($exportData['tenantId']))->url($exportData['relativeFilepath']));
         }        
         
         // jika sudah ada maka rename
@@ -652,7 +652,7 @@ class BaseExport extends BaseRepository
                 'public'
             )){
                 // delete file di local
-                Storage::disk('local')->delete($exportData['relativeFilepath']);
+                Storage::disk(Tenant::storageGetDiskLocal($exportData['tenantId']))->delete($exportData['relativeFilepath']);
                 // set url nya
                 $exportData['relativePath'] = $newPath;
                 $exportData['relativeFilepath'] = $newPath.$exportData['filename'];
@@ -790,13 +790,18 @@ class BaseExport extends BaseRepository
         $exportData = $this->_initExportData($exportData,$curQueue);     
         
         $tenantPath = '';
-        if(config('AppConfig.system.multitenant.active'))
-            $tenantPath = 'tenant_'.$exportData['tenantId'].'/';
+        // if(config('AppConfig.system.multitenant.active'))
+        //     $tenantPath = 'tenant_'.$exportData['tenantId'].'/';
 
-        $tmpFilename = Storage::disk('local')->path(
+        $tmpFilename = Storage::disk(Tenant::storageGetDiskLocal($exportData['tenantId']))->path(
             $tenantPath.'synapse_cache'.DIRECTORY_SEPARATOR.'export_tmp'.DIRECTORY_SEPARATOR.$exportData['cacheKey'].'_'.$exportData['jobsId'].'_'.now()->format('YmdHis').'.xlsx'
         );
 
+        $newDir = dirname($tmpFilename);
+        if(!file_exists($newDir)){
+            mkdir($newDir, 0755, true); 
+        }    
+        
         // $tmpFilename = storage_path('app'.DIRECTORY_SEPARATOR.'synapse_cache'.DIRECTORY_SEPARATOR.'export_tmp'.DIRECTORY_SEPARATOR.$exportData['cacheKey'].'_'.$exportData['jobsId'].'_'.now()->format('YmdHis').'.xlsx');        
         $file = fopen($tmpFilename, 'w');  
         fclose($file);

@@ -45,13 +45,18 @@ class ExportSpout extends BaseExport
         $exportData = $this->_initExportData($exportData,$curQueue);    
         
         $tenantPath = '';
-        if(config('AppConfig.system.multitenant.active'))
-            $tenantPath = 'tenant_'.$exportData['tenantId'].'/';
+        // if(config('AppConfig.system.multitenant.active'))
+        //     $tenantPath = 'tenant_'.$exportData['tenantId'].'/';
 
-        $tmpFilename = Storage::disk('local')->path(
+        $tmpFilename = Storage::disk(Tenant::storageGetDiskLocal($exportData['tenantId']))->path(
             $tenantPath.'synapse_cache'.DIRECTORY_SEPARATOR.'export_tmp'.DIRECTORY_SEPARATOR.$exportData['cacheKey'].'_'.$exportData['jobsId'].'_'.now()->format('YmdHis').'.xlsx'
         );   
 
+        $newDir = dirname($tmpFilename);
+        if(!file_exists($newDir)){
+            mkdir($newDir, 0755, true); 
+        }    
+        
         // $tmpFilename = storage_path('app'.DIRECTORY_SEPARATOR.'synapse_cache'.DIRECTORY_SEPARATOR.'export_tmp'.DIRECTORY_SEPARATOR.$exportData['cacheKey'].'_'.$exportData['jobsId'].'_'.now()->format('YmdHis').'.xlsx');
         $file = fopen($tmpFilename, 'w');  
         fclose($file);

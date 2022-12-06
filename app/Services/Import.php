@@ -211,7 +211,7 @@ class Import extends BaseRepository
         $request = request();
 
         if(empty($filepath)){
-            $tenantPath = config('AppConfig.system.multitenant.active',false)?('/tenant_'.config('tenant.id',0)):'';
+            $tenantPath = '';// config('AppConfig.system.multitenant.active',false)?('/tenant_'.config('tenant.id',0)):'';
             $filepath = $request->file('importFile')->store($tenantPath.'/system_import/'.$cacheKey.'/');
             $filepath = Storage::path($filepath); 
         }
@@ -313,7 +313,7 @@ class Import extends BaseRepository
         $importData = $this->getImport($cacheKey); 
         if($importData==false)return false;
         
-        Storage::delete($importData['filepath']);
+        Storage::disk(Tenant::storageGetDiskLocal($importData['tenantId']))->delete($importData['filepath']);
         
         MImport::where('cache_key',$cacheKey)->delete();
         return true;

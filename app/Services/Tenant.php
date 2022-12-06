@@ -761,6 +761,39 @@ class Tenant extends BaseRepository
     }
 
     /**
+     * get disk local yang digunakan tenant yang disertakan, jika tidak ada maka akan
+     * return disk default.
+     * 
+     * @param Integer $tenantId         Id tenant, jika 0 berarti akan ambil tenant yang aktif
+     * @param Boolean $isPublic         
+     * 
+     * @return String nama disknya
+     */
+    public function storageGetDiskLocal($tenantId=0,$isPublic=false)
+    {
+        // jika mendefinisikan tenant ID
+        if(config('AppConfig.system.multitenant.active') && $tenantId){// && config('tenant.id',0) != $tenantId){            
+            
+            // set storage baru
+            if($isPublic){
+                $disk = config(
+                    'filesystems.disks.public_tenant_'.$tenantId.'.name',
+                    $this->setStorageLocalPublicDisk($tenantId)
+                );
+            }else{
+                $disk = config(
+                    'filesystems.disks.local_tenant_'.$tenantId.'.name',
+                    $this->setStorageLocalDisk($tenantId)
+                );                
+            }
+    
+            return $disk;
+        }
+
+        return config('filesystems.default');
+    }
+
+    /**
      * set config storage local per tenant
      * 
      * @param Integer $tenantId Id tenant
