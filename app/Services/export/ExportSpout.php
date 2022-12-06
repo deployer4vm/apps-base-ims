@@ -42,9 +42,17 @@ class ExportSpout extends BaseExport
          */
         $exportData = $this->getExport($cacheKey);
         $exportData['status'] = self::$EXPORT_STATUS_ON_PROGRESS;
-        $exportData = $this->_initExportData($exportData,$curQueue);       
+        $exportData = $this->_initExportData($exportData,$curQueue);    
+        
+        $tenantPath = '';
+        if(config('AppConfig.system.multitenant.active'))
+            $tenantPath = 'tenant_'.$exportData['tenantId'].'/';
 
-        $tmpFilename = storage_path('logs'.DIRECTORY_SEPARATOR.'export_tmp'.DIRECTORY_SEPARATOR.$exportData['cacheKey'].'_'.$exportData['jobsId'].'_'.now()->format('YmdHis').'.xlsx');
+        $tmpFilename = Storage::disk('local')->path(
+            $tenantPath.'synapse_cache'.DIRECTORY_SEPARATOR.'export_tmp'.DIRECTORY_SEPARATOR.$exportData['cacheKey'].'_'.$exportData['jobsId'].'_'.now()->format('YmdHis').'.xlsx'
+        );   
+
+        // $tmpFilename = storage_path('app'.DIRECTORY_SEPARATOR.'synapse_cache'.DIRECTORY_SEPARATOR.'export_tmp'.DIRECTORY_SEPARATOR.$exportData['cacheKey'].'_'.$exportData['jobsId'].'_'.now()->format('YmdHis').'.xlsx');
         $file = fopen($tmpFilename, 'w');  
         fclose($file);
 
@@ -260,6 +268,7 @@ class ExportSpout extends BaseExport
         $writer->close();
 
         // unlink($exportData['filepath']);
+        // move dari cache ke file export nya
         rename($tmpFilename, $exportData['filepath']);
         
         if(!empty($exportData['template']['coreLastFormaterMethod'])){

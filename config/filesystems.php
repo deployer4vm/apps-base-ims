@@ -1,17 +1,34 @@
 <?php
 $disk = [
 
+    // di sistem multi tenant, disk local akan dibypass menjadi setingan default storage tenant aktif, bisa s3 bisa local
     'local' => [
         'driver' => 'local',
         'root' => storage_path('app/files'),//base_path('public/upload'),
         'url' => '/storage',
     ],
-
+    
+    // di sistem multi tenant, disk public akan dibypass menjadi setingan public storage tenant aktif, bisa s3 bisa local
     'public' => [
         'driver' => 'local',
         'root' => storage_path('app/public'),
         // 'url' => env('APP_URL').'/storage',
-        'url' => '/public_storage',
+        'url' => '/storage/public',
+        'visibility' => 'public',
+    ],
+    
+    // disk local khusus multi tenant, untuk file yg general lintas tenant (diakses berbarangan)
+    'alltenant' => [ 
+        'driver' => 'local',
+        'root' => storage_path('app/files/tenant_0'),//base_path('public/upload'),
+        'url' => '/storage',
+    ],
+
+    // disk local public khusus multi tenant, untuk file yg general lintas tenant (diakses berbarangan)
+    'public_alltenant' => [ 
+        'driver' => 'local',
+        'root' => storage_path('app/public/tenant_0'),
+        'url' => '/storage/public',
         'visibility' => 'public',
     ],
 

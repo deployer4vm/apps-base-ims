@@ -19,4 +19,9 @@ class TenantGroupTenant extends BaseModel
      * @var array
      */
     protected $guarded = ['id','created_at'];
+
+    public function group()
+    {
+        return $this->hasOne(TenantGroup::class,'id', 'tenant_group_id');
+    }
 }

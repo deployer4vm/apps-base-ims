@@ -30,6 +30,7 @@ class Kernel extends ConsoleKernel
         // * * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
                 
         // $schedule->command('synapse:syshealthcheck')->everyMinute();
+        $schedule->command('synapse:calculateTenantResource')->everySixHours();
 
         // jalankan queue worker jika mode nya menggunakan scheduler
         if(config('AppConfig.system.jobs.worker_mode',1)==1)

@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use App\Base\BaseController;
 
 /**
- * handle serving file yang sudah diupload
+ * handle serving file di storage
  */
 class StorageController extends BaseController
 {
@@ -34,24 +34,40 @@ class StorageController extends BaseController
         $segment = $request->segments();
         array_shift($segment);// buang segment "storage"
         
-        $fullFilePath = implode('/',$segment);
-        //isi segement di url /storage/*
+        $fullFilePath = implode('/',$segment);             
+        // dd(Storage::path($fullFilePath));
+        //isi segement di /storage/*
         switch ($segment[0]) {            
             case 'editor': // handle file yang diupload dari kind editor
                 return $this->editor($request,$segment, $fullFilePath);
                 break;         
+            case 'private': //jika akses file yang perlu akses token [SOON]
+                if(Storage::exists($fullFilePath)){
+                    $fileName = end($segment);
+                    if($request->input('download',false)){
+                        return $this->serverDownload($fullFilePath,$fileName,$request->input('size',false));
+                    }else{
+                        return $this->serverFile($fullFilePath,$fileName,$request->input('size',false));
+                    }
+                    
+                }
+                break;      
+            case '': // lainnya
             case 'image': // handle file image
             case 'images': // handle file image
-                $fileName = end($segment);
-                return $this->serveImage($fullFilePath,$fileName, $request->input('size',false));
-                break;         
-            case '': //            
             default: // jika tidak dihandle khusus maka langsung didownload saja
                 if(Storage::exists($fullFilePath)){
-                    return Storage::download($fullFilePath);
+                    $fileName = end($segment);
+                    if($request->input('download',false)){
+                        return $this->serverDownload($fullFilePath,$fileName,$request->input('size',false));
+                    }else{
+                        return $this->serverFile($fullFilePath,$fileName,$request->input('size',false));
+                    }
+                    
                 }
             break;
         }
+        
         return 'file not found';
     }
 
@@ -60,9 +76,9 @@ class StorageController extends BaseController
         $fileName = end($segment);
         if(Storage::exists($fullFilePath)){
             if($segment[1]=='image' || $segment[1]=='images'){
-                return $this->serveImage($fullFilePath,$fileName,$request->input('size',false));
+                return $this->serverFile($fullFilePath,$fileName,$request->input('size',false));
             }else{
-                return Storage::download($fullFilePath);
+                return $this->serverDownload($fullFilePath,$fileName,$request->input('size',false));
             }
         }
         return 'file not found';
@@ -106,38 +122,6 @@ class StorageController extends BaseController
 		//header("Content-Transfer-Encoding: binary");
 		header("Pragma: public");
     }
-
-    private function serveImage($fullFilePath,$fileName,$size=false)
-    {
-        $fullFilePathTmp = Storage::path($fullFilePath);
-		$mime = $this->getMime($fileName);
-		$hash = sha1($fullFilePathTmp);
-		$this->filemtime = filemtime($fullFilePathTmp);
-		$gmtMtime = gmdate('D, d M Y H:i:s', $this->filemtime). ' GMT';
-
-		$this->setHeader($hash,$gmtMtime);
-		
-		header("Expires: ".gmdate('D, d M Y H:i:s \G\M\T', time()+31536000));
-		header("Content-disposition: inline; filename=".($size?($size.'_'):'').$fileName);
-		header("Content-type: ".$mime);
-
-		if($size){
-            $this->resizeImage($fullFilePath,$size);
-		}else{
-			exit(Storage::get($fullFilePath));
-		}
-    }
-
-    /**
-     * NEXT - image dengan fungsi resize 
-     */
-    private function resizeImage($fullFilePath,$size)
-    {
-        if(config('AppConfig.system.upload.size.'.$size)){
-
-        }
-        exit(Storage::get($fullFilePath));
-    }
 	
     private function serverFile($fullFilePath,$fileName,$size=false)
     {
@@ -150,11 +134,51 @@ class StorageController extends BaseController
 		$this->setHeader($hash,$gmtMtime);
 		
 		header("Expires: ".gmdate('D, d M Y H:i:s \G\M\T', time()+31536000));
-		header("Content-disposition: inline; filename=".($size?($size.'_'):'').$fileName);
+		header("Content-disposition: inline; filename=".$fileName);
 		header("Content-type: ".$mime);
 
-        exit(Storage::get($fullFilePath));
+		if($size){
+            $this->resizeImage($fullFilePath,$size);
+		}else{
+			exit(Storage::get($fullFilePath));
+		}
 		
+    }
+
+    private function serverDownload($fullFilePath,$fileName,$size=false)
+    {
+        $fullFilePathTmp = Storage::path($fullFilePath);
+		$mime = $this->getMime($fileName);
+        $size   = filesize($fullFilePathTmp);
+		$hash = sha1($fullFilePathTmp);
+		$this->filemtime = filemtime($fullFilePathTmp);
+		$gmtMtime = gmdate('D, d M Y H:i:s', $this->filemtime). ' GMT';
+
+		$this->setHeader($hash,$gmtMtime);
+		
+		header("Expires: ".gmdate('D, d M Y H:i:s \G\M\T', time()+31536000));
+		header("Content-disposition: attachment; filename=".$fileName);
+		header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Transfer-Encoding: binary');
+        header('Content-Length: ' . $size);
+
+		if($size){
+            $this->resizeImage($fullFilePath,$size);
+		}else{
+			exit(Storage::get($fullFilePath));
+		}
+		
+    }
+    /**
+     * SOON - image dengan fungsi resize 
+     */
+    private function resizeImage($fullFilePath,$size)
+    {
+        if(config('AppConfig.system.upload.size.'.$size)){
+
+        }
+        exit(Storage::get($fullFilePath));
     }
     
     /**

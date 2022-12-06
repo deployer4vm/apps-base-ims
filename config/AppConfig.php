@@ -751,7 +751,8 @@ $moduleMultitenant = [
 ];
 $moduleMultitenantItem = [];
 if(isset($system['multitenant']['active']) && $system['multitenant']['active'])
-    foreach ($tenantList as $tenantId) {
+    foreach ($tenantList as $tenant) {
+        $tenantId = isset($tenant['id'])?$tenant['id']:$tenant;
         //untuk loader multitenant component registration
         if (file_exists('app/MainApp/Projects/'.$client['project_code'].'/Tenants/ID'.$tenantId.'/resources/js/multitenant.js')) {
             $moduleMultitenant[] = 'import ID'.$tenantId.' from "@/../../../app/MainApp/Projects/'.$client['project_code'].'/Tenants/ID'.$tenantId.'/resources/js/multitenant";' . "\n";

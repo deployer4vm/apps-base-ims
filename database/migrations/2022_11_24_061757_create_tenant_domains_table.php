@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class CreateTenantDomainsTable extends Migration
@@ -25,6 +26,17 @@ class CreateTenantDomainsTable extends Migration
 
             $table->timestamps();
         });
+        
+        // migrate existing DB Domain
+        $tenantList = DB::table('tenants')->get();
+        foreach ($tenantList as $value) {
+            DB::table('tenant_domains')->insert([
+                'created_at'=>now(),
+                'tenant_id'=>$value->id,
+                'domain'=>$value->domain,
+                'status'=>1,
+            ]);
+        }
     }
 
     /**

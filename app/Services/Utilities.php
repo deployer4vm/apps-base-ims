@@ -208,17 +208,18 @@ class Utilities
         if($group=='tenant' || $group==false){
             // load queue tambahan per tenant jika aktif
             if(config('AppConfig.system.jobs.multitenant_add',false)){
-                $queueAdds = config('AppConfig.tenant',[]);
-                foreach($queueAdds as $queue){
+                $tenantList = config('AppConfig.tenant',[]);
+                foreach($tenantList as $tenant){
+                    $tenantId = isset($tenant['id'])?$tenant['id']:$tenant;
 
                     // Worker per tenant
-                    $queueList[] = 'queue:work --tries=1 --queue=tenant'.$queue;
+                    $queueList[] = 'queue:work --tries=1 --queue=tenant'.$tenantId;
 
                     // aktifkan queue worker export per tenant jika export_handler = 3
                     if(config('AppConfig.system.jobs.export_handler',1) == 3){
                         // Export Worker per tenant
                         for ($i=1; $i <= $exportChildCount; $i++) { 
-                            $queueList[] = 'queue:work --tries=1 --queue=tenant'.$queue.'export'.$i;
+                            $queueList[] = 'queue:work --tries=1 --queue=tenant'.$tenantId.'export'.$i;
                         }
                     }
 
@@ -226,7 +227,7 @@ class Utilities
                     if(config('AppConfig.system.jobs.import_handler',1) == 3){
                         // Import Worker per tenant
                         for ($i=1; $i <= $importChildCount; $i++) { 
-                            $queueList[] = 'queue:work --tries=1 --queue=tenant'.$queue.'import'.$i;
+                            $queueList[] = 'queue:work --tries=1 --queue=tenant'.$tenantId.'import'.$i;
                         }
                     }
                 }

@@ -787,9 +787,17 @@ class BaseExport extends BaseRepository
             Tenant::setActiveTenantById($exportData['tenantId']);
 
         $exportData['status'] = self::$EXPORT_STATUS_ON_PROGRESS;
-        $exportData = $this->_initExportData($exportData,$curQueue);       
+        $exportData = $this->_initExportData($exportData,$curQueue);     
+        
+        $tenantPath = '';
+        if(config('AppConfig.system.multitenant.active'))
+            $tenantPath = 'tenant_'.$exportData['tenantId'].'/';
 
-        $tmpFilename = storage_path('logs'.DIRECTORY_SEPARATOR.'export_tmp'.DIRECTORY_SEPARATOR.$exportData['cacheKey'].'_'.$exportData['jobsId'].'_'.now()->format('YmdHis').'.xlsx');
+        $tmpFilename = Storage::disk('local')->path(
+            $tenantPath.'synapse_cache'.DIRECTORY_SEPARATOR.'export_tmp'.DIRECTORY_SEPARATOR.$exportData['cacheKey'].'_'.$exportData['jobsId'].'_'.now()->format('YmdHis').'.xlsx'
+        );
+
+        // $tmpFilename = storage_path('app'.DIRECTORY_SEPARATOR.'synapse_cache'.DIRECTORY_SEPARATOR.'export_tmp'.DIRECTORY_SEPARATOR.$exportData['cacheKey'].'_'.$exportData['jobsId'].'_'.now()->format('YmdHis').'.xlsx');        
         $file = fopen($tmpFilename, 'w');  
         fclose($file);
 

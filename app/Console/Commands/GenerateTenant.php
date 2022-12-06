@@ -36,7 +36,12 @@ class GenerateTenant extends Command
         $tenants = \Illuminate\Support\Facades\DB::table('tenants')->select('id')->get();
         $tenatIdList = [];
         foreach ($tenants as $tenant) {
-            $tenatIdList[] = $tenant->id;
+            $tenatIdList[$tenant->id] = [
+                'id'=>$tenant->id,
+                'db'=>$tenant->db,
+                's3storage'=>$tenant->s3storage,
+                'status'=>$tenant->status,
+            ];
         }
         
         if (file_put_contents(app_path('MainApp' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . '_tenant.json') , str_replace('\/','/',json_encode($tenatIdList,JSON_PRETTY_PRINT)) )) {

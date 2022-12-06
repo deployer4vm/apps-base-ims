@@ -39,7 +39,9 @@ if(!function_exists('initHPsynapseConfig')){
             // tenant list ini digunakan juga di process2 selanjutnya
             $tenantList = json_decode(file_get_contents($tenantConfigPath), true);
 
-            foreach ($tenantList as $tenantId) {
+            foreach ($tenantList as $tenant) {
+                $tenantId = isset($tenant['id'])?$tenant['id']:$tenant;
+
                 if(isset($system['multiproject']['active']) && $system['multiproject']['active'] == 1){
                     $config['namespaces']['pertenant'][$tenantId]['App\\MainApp\\Projects\\'.$client['project_code'].'\\Tenants\\ID'.$tenantId.'\\Modules'] = [
                         app_path('MainApp' . DIRECTORY_SEPARATOR . 'Projects' . DIRECTORY_SEPARATOR . $client['project_code'] . DIRECTORY_SEPARATOR  . 'Tenants' . DIRECTORY_SEPARATOR . 'ID' . $tenantId . DIRECTORY_SEPARATOR . 'Modules') . DIRECTORY_SEPARATOR, 
@@ -79,7 +81,9 @@ if(!function_exists('initHPsynapseConfig')){
         // load path pertenant
         if(isset($system['multitenant']['active']) && $system['multitenant']['active']==1){
             
-            foreach ($tenantList as $tenantId) {
+            foreach ($tenantList as $tenant) {
+                $tenantId = isset($tenant['id'])?$tenant['id']:$tenant;
+
                 $tmpControllerPath = Utilities::listModulePath($config['namespaces']['pertenant'][$tenantId], function($namespace,$pathToModule) {
                     return [$namespace,$pathToModule];
                 });
@@ -112,7 +116,9 @@ if(!function_exists('initHPsynapseConfig')){
 
         // load path pertenant
         if(isset($system['multitenant']['active']) && $system['multitenant']['active']==1){            
-            foreach ($tenantList as $tenantId) {
+            foreach ($tenantList as $tenant) {
+                $tenantId = isset($tenant['id'])?$tenant['id']:$tenant;
+
                 $langPath['pertenant'][$tenantId] = Utilities::findNamespaceResources(
                     $config['namespaces']['pertenant'][$tenantId] ,
                     $config['language_folder_name'],
@@ -141,7 +147,9 @@ if(!function_exists('initHPsynapseConfig')){
         
         // load path pertenant
         if(isset($system['multitenant']['active']) && $system['multitenant']['active']==1){            
-            foreach ($tenantList as $tenantId) {                
+            foreach ($tenantList as $tenant) {        
+                $tenantId = isset($tenant['id'])?$tenant['id']:$tenant; 
+
                 $viewPath['pertenant'][$tenantId] = Utilities::findNamespaceResources(
                     $config['namespaces']['pertenant'][$tenantId], $config['view_folder_name'], $config['resource_namespace']
                 );    
@@ -185,7 +193,9 @@ if(!function_exists('initHPsynapseConfig')){
 
         // jika multi tenant maka load path migration per tenant
         if(isset($system['multitenant']['active']) && $system['multitenant']['active']==1){
-            foreach ($tenantList as $tenantId) {
+            foreach ($tenantList as $tenant) {
+                $tenantId = isset($tenant['id'])?$tenant['id']:$tenant; 
+
                 if(isset($system['multiproject']['active']) && $system['multiproject']['active'] == 1){
                     $path = app_path('MainApp' . DIRECTORY_SEPARATOR . 'Projects' . DIRECTORY_SEPARATOR . $client['project_code'] . DIRECTORY_SEPARATOR  . 'Tenants' . DIRECTORY_SEPARATOR . 'ID' . $tenantId . DIRECTORY_SEPARATOR . 'database'.DIRECTORY_SEPARATOR.'migrations');
                     if(file_exists($path))
@@ -212,7 +222,9 @@ if(!function_exists('initHPsynapseConfig')){
 
         // jika multi tenant maka load path migration per tenant
         if(isset($system['multitenant']['active']) && $system['multitenant']['active']==1){
-            foreach ($tenantList as $tenantId) {
+            foreach ($tenantList as $tenant) {
+                $tenantId = isset($tenant['id'])?$tenant['id']:$tenant; 
+
                 if(isset($system['multiproject']['active']) && $system['multiproject']['active'] == 1){
                     $path = app_path('MainApp' . DIRECTORY_SEPARATOR . 'Projects' . DIRECTORY_SEPARATOR . $client['project_code'] . DIRECTORY_SEPARATOR  . 'Tenants' . DIRECTORY_SEPARATOR . 'ID' . $tenantId . DIRECTORY_SEPARATOR . 'database'.DIRECTORY_SEPARATOR.'seeds');
                     if(file_exists($path))
