@@ -27,6 +27,17 @@ class Tenant extends BaseRepository
         'TenantGroupTenant' => ['r'=>TenantGroupTenant::class,'w'=>TenantGroupTenant::class],
     ];
     
+    protected $autoResourceSearchField = [
+        'Tenant' => ['group_app','domain','name','note'],
+        'TenantDomain' => ['domain','redirect'],
+        'TenantGroup' => ['name'],
+    ];    
+    
+    // public function listTenant(array $filter = [], int $offset = 0, int $limit = 0, array $orderBy = [])
+    // {
+    //     return $this->_autoResourceList('listTenant',[$filter,$offset,$limit,$orderBy]);
+    // }
+
     /**
      * apakah yang sekarang aktif adalah project dan tenant id yg diinput
      */

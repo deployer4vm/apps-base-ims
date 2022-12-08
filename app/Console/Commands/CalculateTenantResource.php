@@ -37,9 +37,12 @@ class CalculateTenantResource extends Command
     {
         $tenants = DB::table('tenants')->select('id')->get();
         foreach ($tenants as $tenant) {
+            $tmpStorage = Tenant::storageSize($tenant->id);
+            $tmpDb = Tenant::getDbSize($tenant->id);
             DB::table('tenants')->where('id',$tenant->id)->update([
-                'res_storage_size'=>Tenant::storageSize($tenant->id),
-                'res_db_size'=>Tenant::getDbSize($tenant->id),
+                'res_storage_size'=>$tmpStorage,
+                'res_db_size'=>$tmpDb,
+                'res_total'=>$tmpDb+$tmpStorage,
                 'res_storage_size_last_update'=>now(),
                 'res_db_size_last_update'=>now(),
             ]);
