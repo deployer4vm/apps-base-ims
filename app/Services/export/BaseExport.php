@@ -30,7 +30,7 @@ Use App\Jobs\Export as JExport;
 
 
 class BaseExport extends BaseRepository
-{   
+{
     protected $cacheActive = true;
     private $_exportUploadPath = 'export/';//default path ke upload relative dari storage_path per tenant
     private $_defaultFilename = 'export_data';
@@ -51,7 +51,7 @@ class BaseExport extends BaseRepository
     protected $_mainCacheKeyGroup = 'synapse.export';//
     protected $_mainCacheKeyList = 'list';//
     protected $_mainCacheKeyDetailPrefix = 'detail.';//
-    
+
     // format output file
     protected $outputHeaderStartRow = 1;//poisi baris header
     protected $outputHeader = [];//judul2 header
@@ -65,7 +65,7 @@ class BaseExport extends BaseRepository
      * mengconvert data format record database, ke format cache lama (agar tidak banyak mengubah bisnis proses)
      */
     private function convertDbToCache($data)
-    {        
+    {
         $newData = [
             'tenantId'=>$data['tenant_id'],
             'userId'=>$data['user_id'],
@@ -86,7 +86,7 @@ class BaseExport extends BaseRepository
      * mengconvert data format cache lama, ke format record database (agar tidak banyak mengubah bisnis proses)
      */
     private function convertCacheToDb($data)
-    {        
+    {
         $newData = [
             'tenant_id'=>$data['tenantId'],
             'user_id'=>$data['userId'],
@@ -138,7 +138,7 @@ class BaseExport extends BaseRepository
         // jika queue worker dihandle oleh default atau default per tenant
         if(config('AppConfig.system.jobs.export_handler',1)==1){
             return $isPerTenant?('tenant'.$tenantId):'default';
-        
+
         // jika queue worker dihandle oleh worker export genaral
         }else if(config('AppConfig.system.jobs.export_handler',1)==2){
             $idxQueue=1;
@@ -170,45 +170,45 @@ class BaseExport extends BaseRepository
 
     /**
      * get data export
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      * @param Boolean $reload True jika load data cache nya langsung ke cache engine
      *                        False jika load data dari local var
      */
-    public function getExport($cacheKey,$reload=false) 
+    public function getExport($cacheKey,$reload=false)
     {
-        $tmp = Export::where('cache_key',$cacheKey)->first(); 
+        $tmp = Export::where('cache_key',$cacheKey)->first();
         return $tmp?$this->convertDbToCache($tmp->toArray()):false;
     }
 
     /**
      * STEP 1 - yang harus diset pertama kali di controllernya (atau di tempat export ini dicreate/diinisasi)
-     * 
+     *
      * membuat process export baru
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      * @param String $listingModel     full class namespace model
-     * @param Array $listingParams 
+     * @param Array $listingParams
      *      filter Array *optional
      *      orderBy
      * @param Integer $userId
      * @param Integer $tenantId
-     * @param String $driver 
+     * @param String $driver
      */
     public function createExport(
         $cacheKey,$listingModel,$listingParams=[],$userId=0,$tenantId=0,$driver='spout'
     ){
         $tenantId = $tenantId?$tenantId:config('tenant.id',0);
-        
+
         $exportData = $this->getExport($cacheKey);
         $createNew = true;
-        
+
         // jika data ada maka pastikan sedang tidak berjalan
         if($exportData){
             $createNew = false;
             // jika sedang dalam proses
             if(
-                $exportData['status']==self::$EXPORT_STATUS_DISPATCHED || 
+                $exportData['status']==self::$EXPORT_STATUS_DISPATCHED ||
                 $exportData['status']==self::$EXPORT_STATUS_ON_PROGRESS
             ){
                 $this->error = 'Jobs already exists';
@@ -219,7 +219,7 @@ class BaseExport extends BaseRepository
                     Tenant::storage($tenantId)->delete($exportData['relativeFilepath']);
                 // }else{
                 //     Storage::disk('local')->delete($exportData['relativeFilepath']);
-                // }                
+                // }
             }
         }
 
@@ -249,25 +249,25 @@ class BaseExport extends BaseRepository
     /**
      * set export driver - phpspreadsheet , spout
      * Driver bisa diset saat createExport juga
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      */
     public function setDriver($cacheKey,$driver='spout')
     {
-        $exportData = $this->getExport($cacheKey); 
+        $exportData = $this->getExport($cacheKey);
         if($exportData==false)return false;
         $exportData['driver'] = strtolower($driver)=='phpspreadsheet'?'phpspreadsheet':'spout';//tandai sebagai force cancle
         $this->_defaultDriver = $exportData['driver'];
         $this->updateExport($cacheKey,$exportData);
     }
 
-        
+
     /**
      * STEP TERAKHIR - step terakhir di controllernya
-     * 
+     *
      * dispatch export ke queue untuk pertama kali
      * dieksekusi setelah createExport dan set-set config
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      */
     public function dispatchExport($cacheKey)
@@ -283,7 +283,7 @@ class BaseExport extends BaseRepository
         $exportData['status'] = self::$EXPORT_STATUS_DISPATCHED;
         $exportData['queue'] = $this->nextExportQueue($exportData['tenantId']);
         $this->updateExport($cacheKey,$exportData);
-        
+
         JExport::dispatch($cacheKey,$exportData['queue'])->onQueue($exportData['queue']);
 
         return $exportData;
@@ -291,12 +291,12 @@ class BaseExport extends BaseRepository
 
     /**
      * cancel export yg sedang berjalan
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      */
     public function cancelExport($cacheKey)
     {
-        $exportData = $this->getExport($cacheKey); 
+        $exportData = $this->getExport($cacheKey);
         if($exportData==false)return false;
         $exportData['forceCancle'] = 1;//tandai sebagai force cancle
         $this->updateExport($cacheKey,$exportData);
@@ -306,19 +306,19 @@ class BaseExport extends BaseRepository
 
     /**
      * delete log export dan file hasil exportnya
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      */
     public function deleteExport($cacheKey)
     {
-        $exportData = $this->getExport($cacheKey); 
+        $exportData = $this->getExport($cacheKey);
         if($exportData==false)return false;
 
         // if($exportData['storage']=='s3'){
             Tenant::storage($exportData['tenantId'])->delete($exportData['relativeFilepath']);
         // }else{
         //     Storage::disk('local')->delete($exportData['relativeFilepath']);
-        // }   
+        // }
 
         Export::where('cache_key',$cacheKey)->delete();
 
@@ -333,7 +333,7 @@ class BaseExport extends BaseRepository
     /**
      * set config storage, jika tidak diset manual maka akan otomatis dieksekusi
      * saat jobs di dispatch (dispatchExport)
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      * @param Array $config yang akan diassign, berisi :
      *      filename String     nama file
@@ -349,8 +349,8 @@ class BaseExport extends BaseRepository
 
         $tenantPath = '';
 
-        // jika multitenant maka groupkan per tenant 
-        // (dan jika tipe S3 storage maka tetap disimpan di local dulu, 
+        // jika multitenant maka groupkan per tenant
+        // (dan jika tipe S3 storage maka tetap disimpan di local dulu,
         // setelah selesai export baru diupload ke S3 dan dihapus di yg local nya)
         if(config('AppConfig.system.multitenant.active')){
             // $tenantPath = 'tenant_'.$exportData['tenantId'].'/';
@@ -358,7 +358,7 @@ class BaseExport extends BaseRepository
         }else{
             $exportData['storage'] = config('filesystems.disk.'.config('filesystems.default').'.driver','local')=='s3'?'s3':'local';
         }
-                
+
         $exportData['relativePath'] = $tenantPath.$this->_exportUploadPath.$exportData['directory'].$exportData['userId'].'/';
         $exportData['path'] = Storage::disk(Tenant::storageGetDiskLocal($exportData['tenantId']))->path($exportData['relativePath']);
 
@@ -366,19 +366,19 @@ class BaseExport extends BaseRepository
         if(!file_exists($exportData['path'])){
             mkdir($exportData['path'],0777,true);
         }
-        
+
         if(empty($exportData['filename']))
             $exportData['filename'] = strtoupper(preg_replace('/[^a-zA-Z0-9]+/', '_',$this->_defaultFilename.'_'.$exportData['inputTime'])).'.xlsx';
 
-        $exportData['relativeFilepath'] = $exportData['relativePath'].$exportData['filename']; 
-        $exportData['filepath'] = $exportData['path'].$exportData['filename'];   
+        $exportData['relativeFilepath'] = $exportData['relativePath'].$exportData['filename'];
+        $exportData['filepath'] = $exportData['path'].$exportData['filename'];
 
         if($exportData['storage']=='s3'){
             $exportData['fileurl'] = Tenant::storage($exportData['tenantId'])->url($exportData['relativeFilepath']);
         }else{
             $exportData['fileurl'] = url(Storage::disk(Tenant::storageGetDiskLocal($exportData['tenantId']))->url($exportData['relativeFilepath']));
-        }        
-        
+        }
+
         // jika sudah ada maka rename
         $i=1;
         while (file_exists($exportData['filepath'])) {
@@ -395,7 +395,7 @@ class BaseExport extends BaseRepository
 
     /**
      * set judul kolomn
-     * 
+     *
      * @param String $cacheKey
      * @param Array $columnCaption isi kolom sesuai urutan dengan format :
      *      [
@@ -418,18 +418,18 @@ class BaseExport extends BaseRepository
 
         $exportData['template']['headerCaption'] = $columnCaption;
         $exportData['template']['headerCaptionRow'] = $headerRow;
-        
+
         $this->updateExport($cacheKey,$exportData);
         return true;
     }
 
     /**
      * set template excel yang digunnakan (jika ingin menggunakan custom template)
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      * @param String $templatePath full path ke file excel template nya
      * @param Integer $dataStartRow baris ke berapa data pertama kali diinsert di excel
-     * 
+     *
      */
     public function setTemplate($cacheKey,$templatePath, $dataStartRow = 2)
     {
@@ -438,14 +438,14 @@ class BaseExport extends BaseRepository
 
         $exportData['template']['filepath'] = $templatePath;
         $exportData['template']['dataStartRow'] = $dataStartRow;
-        
+
         $this->updateExport($cacheKey,$exportData);
         return true;
     }
 
     /**
      * set parameter tambahan yang bisa digunakan untuk custom formating nantinya
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      * @param Array $addsParam
      */
@@ -455,7 +455,7 @@ class BaseExport extends BaseRepository
         if($exportData==false)return false;
 
         $exportData['addsParam'] = $addsParam;
-        
+
         $this->updateExport($cacheKey,$exportData);
         return true;
     }
@@ -468,7 +468,7 @@ class BaseExport extends BaseRepository
 
     /**
      * fungsi untuk meng-OVERIDE looping data utama
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      */
     public function setCoreMainLooping($cacheKey, string $coreMainLoopingClass, string $coreMainLoopingMethod)
@@ -479,14 +479,14 @@ class BaseExport extends BaseRepository
         $exportData['template']['coreMainLoopingMethod'] = [
             $coreMainLoopingClass,$coreMainLoopingMethod
         ];
-        
+
         $this->updateExport($cacheKey,$exportData);
         return true;
     }
-    
+
     /**
      * set class dan method untuk memformat data per row
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      * @param String $coreRowFormaterClass      Namaspace class formaternya
      * @param String $coreRowFormaterMethod     Nama method di class formaternya,
@@ -499,14 +499,14 @@ class BaseExport extends BaseRepository
         if($exportData==false)return false;
 
         $exportData['template']['coreRowFormaterMethod'] = [$coreRowFormaterClass,$coreRowFormaterMethod];
-        
+
         $this->updateExport($cacheKey,$exportData);
         return true;
     }
-    
+
     /**
      * set class dan method untuk memformat excel $reader saat setelah beres semua
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      */
     public function setCoreLastFormater($cacheKey, string $coreLastFormaterClass, string $coreLastFormaterMethod)
@@ -515,7 +515,7 @@ class BaseExport extends BaseRepository
         if($exportData==false)return false;
 
         $exportData['template']['coreLastFormaterMethod'] = [$coreLastFormaterClass,$coreLastFormaterMethod];
-        
+
         $this->updateExport($cacheKey,$exportData);
         return true;
     }
@@ -527,11 +527,11 @@ class BaseExport extends BaseRepository
 
     /**
      * get default isi data export.
-     * 
+     *
      * @return Array berisi data export default
      */
     protected function initExportStatus()
-    {  
+    {
         $exportData = [];
 
         $exportData['cacheKey'] = '';//key unik per export, bisa dibilang ID Export nya
@@ -563,8 +563,8 @@ class BaseExport extends BaseRepository
 			// format data
             'dataStartRow'=>2,//baris pertama data diinsert
 
-            'coreMainLoopingMethod' => [],// [class,static method]			
-			'coreRowFormaterMethod'=>[],// [class,static method]			
+            'coreMainLoopingMethod' => [],// [class,static method]
+			'coreRowFormaterMethod'=>[],// [class,static method]
 			'coreLastFormaterMethod'=>[],// [class,static method]
         ];
 
@@ -572,7 +572,7 @@ class BaseExport extends BaseRepository
          * config Storage
          * ---------------------------------------------------------------------
          */
-        $exportData['storage'] = 'local';//tipe storage, saat ini hanya bisa 2, "local" dan "s3"b 
+        $exportData['storage'] = 'local';//tipe storage, saat ini hanya bisa 2, "local" dan "s3"b
 
         $exportData['filename'] = '';//nama file export nya beserta extention file nya
         $exportData['directory'] = '';// additional path, path tambahan untuk pengelompokan jenis export
@@ -580,10 +580,10 @@ class BaseExport extends BaseRepository
 
         $exportData['relativePath'] = '';// path relative format laravel (yg bisa digunakan ke storage ke folder ke tempat file export berada
         $exportData['relativeFilepath'] = '';// $exportData['relativePath'].'/'.$exportData['filename']
-				
+
         $exportData['path'] = '';// fullpath folder ke tempate file export berada, jika S3 Storage maka ini adalah TMP local nya
         $exportData['filepath'] = '';// $exportData['path'].'/'.$exportData['filename'], jika S3 Storage maka ini adalah TMP local nya
-		
+
         $exportData['fileurl'] = '';//full url exportnya, jika S3 Storage maka ini adalah TMP nya
         /**
          * ---------------------------------------------------------------------
@@ -595,7 +595,7 @@ class BaseExport extends BaseRepository
         $exportData['inputTime'] = now()->format('Y-m-d H:i:s');//waktu export dicreate pertama kali
         $exportData['jobDispatchTime'] = '';//waktu pertama kali jobs diproses (saat ke status 1)
         $exportData['jobStartTime'] = '';//waktu jobs pertama pertama kali diproses (saat ke status 2)
-        
+
         $exportData['isResumeJob'] = false;
         $exportData['resumeJobParam'] = [
             'jobDispatchTime' => '',
@@ -615,11 +615,11 @@ class BaseExport extends BaseRepository
 
     /**
      * update data export
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      */
-    protected function updateExport($cacheKey,$exportData) 
-    {   
+    protected function updateExport($cacheKey,$exportData)
+    {
         $exportData = $this->convertCacheToDb($exportData);
         Export::where('cache_key',$cacheKey)->update($exportData);
     }
@@ -630,7 +630,7 @@ class BaseExport extends BaseRepository
      */
     protected function setExportDone($cacheKey)
     {
-        $exportData = $this->getExport($cacheKey); 
+        $exportData = $this->getExport($cacheKey);
         if($exportData==false)return false;
 
         $exportData['log'] .= '<br><b class="text-success">Export Done !</b><br>';
@@ -643,12 +643,12 @@ class BaseExport extends BaseRepository
             $newPath = $exportData['relativePath'];
             if(config('AppConfig.system.multitenant.active')){
                 $newPath = $this->_exportUploadPath.$exportData['directory'].$exportData['userId'].'/';
-            }                    
-            
+            }
+
             // upload file ke S3 sebagai public
             if(Tenant::storage($exportData['tenantId'])->put(
                 $newPath.$exportData['filename'],
-                Storage::disk('local')->get($exportData['relativeFilepath']), 
+                Storage::disk('local')->get($exportData['relativeFilepath']),
                 'public'
             )){
                 // delete file di local
@@ -657,24 +657,24 @@ class BaseExport extends BaseRepository
                 $exportData['relativePath'] = $newPath;
                 $exportData['relativeFilepath'] = $newPath.$exportData['filename'];
                 $exportData['fileurl'] = Tenant::storage($exportData['tenantId'])->url($exportData['relativeFilepath']);
-                
+
             // jika gagal upload maka tandai storage sebagai local
             }else{
                 $exportData['storage']=='local';
             }
         }
-        
-        $this->updateExport($cacheKey,$exportData); 
+
+        $this->updateExport($cacheKey,$exportData);
     }
 
     /**
      * dieksekusi saat export gagal / ada error
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      */
     protected function setExportFailed($cacheKey)
     {
-        $exportData = $this->getExport($cacheKey); 
+        $exportData = $this->getExport($cacheKey);
         if($exportData==false)return false;
 
         $exportData['log'] .= '<br><b class="text-danger">Export Failed !</b><br>';
@@ -683,21 +683,21 @@ class BaseExport extends BaseRepository
         $exportData['fileurl'] = '';
         $exportData['status'] = self::$EXPORT_STATUS_FAILED;//4: failed
 
-        // jika gagal maka tandai storage nya masih di local        
+        // jika gagal maka tandai storage nya masih di local
         $exportData['storage'] = 'local';
 
-        $this->updateExport($cacheKey,$exportData); 
+        $this->updateExport($cacheKey,$exportData);
     }
-    
+
     /**
      * set dari cronjob, jika cronjob ada uncaught error
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      * @param Throwable $exception instance Exception dari job failed
      */
     public function setExportJobFailed($cacheKey, Throwable $exception)
     {
-        $this->setExportFailed($cacheKey); 
+        $this->setExportFailed($cacheKey);
 
         $log = "<br><b class='text-danger'>Jobs terminated !</b>\n<hr>\n\nError message :<br>\n";
         $log .= $exception->getMessage();
@@ -709,7 +709,7 @@ class BaseExport extends BaseRepository
     }
 
     public function appendExportLog($cacheKey,string $log='')
-    {       
+    {
         $exportData = $this->getExport($cacheKey);
         if($exportData==false)return false;
 
@@ -720,7 +720,7 @@ class BaseExport extends BaseRepository
     /**
      * -------------------------------------------------------------------------
      */
-    
+
     private function _initExportData($exportData,$curQueue)
     {
         // set teknikal
@@ -738,19 +738,19 @@ class BaseExport extends BaseRepository
 
 
     private function _checkAndCounter($cacheKey)
-    {       
+    {
         $exportData = $this->getExport($cacheKey);
         if($exportData==false)
             return false;
-            
-        if($exportData['forceCancle']==1 || $exportData['forceCancle']!=0 || $exportData['forceCancle']=='1'){            
+
+        if($exportData['forceCancle']==1 || $exportData['forceCancle']!=0 || $exportData['forceCancle']=='1'){
             $exportData['log'] .= '<br><b class="text-danger">Export Canceled !</b><br>';
             $exportData['log'] .= '<span class="text-info">Jobs ended at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>';
             $exportData['filename'] = '';
             $exportData['fileurl'] = '';
             $exportData['status'] = self::$EXPORT_STATUS_FAILED;//4: failed
-            
-            // jika gagal maka tandai storage nya masih di local        
+
+            // jika gagal maka tandai storage nya masih di local
             $exportData['storage'] = 'local';
 
             $this->updateExport($cacheKey,$exportData);
@@ -767,17 +767,17 @@ class BaseExport extends BaseRepository
     /**
      * proses utama yang dieksekusi dari jobs saat jobs nya dijalankan, di proses ini
      * juga si queue di set (saat createExport queue nya hanya default)
-     * 
+     *
      * SECARA DEFAULT MENGGUNAKAN DRIVER SPOUT
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      */
     public function processExport($cacheKey,$curQueue='export1')
-    {        
+    {
         ini_set('memory_limit','5524M');
         set_time_limit(0);
-        
-        $startTime = microtime(true);        
+
+        $startTime = microtime(true);
 
         /**
          * init status & var
@@ -787,8 +787,8 @@ class BaseExport extends BaseRepository
             Tenant::setActiveTenantById($exportData['tenantId']);
 
         $exportData['status'] = self::$EXPORT_STATUS_ON_PROGRESS;
-        $exportData = $this->_initExportData($exportData,$curQueue);     
-        
+        $exportData = $this->_initExportData($exportData,$curQueue);
+
         $tenantPath = '';
         // if(config('AppConfig.system.multitenant.active'))
         //     $tenantPath = 'tenant_'.$exportData['tenantId'].'/';
@@ -799,14 +799,14 @@ class BaseExport extends BaseRepository
 
         $newDir = dirname($tmpFilename);
         if(!file_exists($newDir)){
-            mkdir($newDir, 0755, true); 
-        }    
-        
-        // $tmpFilename = storage_path('app'.DIRECTORY_SEPARATOR.'synapse_cache'.DIRECTORY_SEPARATOR.'export_tmp'.DIRECTORY_SEPARATOR.$exportData['cacheKey'].'_'.$exportData['jobsId'].'_'.now()->format('YmdHis').'.xlsx');        
-        $file = fopen($tmpFilename, 'w');  
+            mkdir($newDir, 0755, true);
+        }
+
+        // $tmpFilename = storage_path('app'.DIRECTORY_SEPARATOR.'synapse_cache'.DIRECTORY_SEPARATOR.'export_tmp'.DIRECTORY_SEPARATOR.$exportData['cacheKey'].'_'.$exportData['jobsId'].'_'.now()->format('YmdHis').'.xlsx');
+        $file = fopen($tmpFilename, 'w');
         fclose($file);
 
-        // jika resume dari jobs sebelumnya yang di split 
+        // jika resume dari jobs sebelumnya yang di split
         if($exportData['isResumeJob']){
 
             $exportData['resumeJobParam']['jobStartTime'] = now()->format('Y-m-d H:i:s');
@@ -814,7 +814,7 @@ class BaseExport extends BaseRepository
 
             $this->appendExportLog($cacheKey,'<span class="text-info">Continueing process from previous jobs</span>...<br>');
             $this->appendExportLog($cacheKey,'<span class="text-info">Jobs started at : <b>'.now()->format('Y-m-d H:i:s').'</b></span><br>');
-            
+
             // we need a reader to read the existing file...
             $reader = ReaderEntityFactory::createReaderFromFile($exportData['filepath']);
             $reader->setShouldFormatDates(true); // this is to be able to copy dates
@@ -823,23 +823,23 @@ class BaseExport extends BaseRepository
             // ... and a writer to create the new file
             $writer = WriterEntityFactory::createWriterFromFile($tmpFilename);
             $writer->openToFile($tmpFilename);
-            
+
             if(is_array($exportData['listingModel'])){
                 $data = $exportData['listingModel'][0]::{$exportData['listingModel'][1]}(
                     $exportData, $exportData['listingParams']
                 );
             }else{
-                $data = new $exportData['listingModel'];            
+                $data = new $exportData['listingModel'];
                 $data = $this->_filter($data,$exportData['listingParams']['filter']);
             }
-                        
+
             $offset = $exportData['resumeJobParam']['lastTableRow'];
             $limit = $exportData['count']+1000;
-            
+
             $GLOBALS['synapse_export_indexExcelRow'] = $exportData['resumeJobParam']['lastExcelRow'];
             $isFirstRow = false;//flag untuk penanda baris pertama dari data
             $GLOBALS['synapse_export_indexData'] = $exportData['resumeJobParam']['lastTableRow'];
-            
+
         //jika jobs pertama maka
         }else{
             if(is_array($exportData['listingModel'])){
@@ -847,18 +847,18 @@ class BaseExport extends BaseRepository
                     $exportData, $exportData['listingParams']
                 );
             }else{
-                $data = new $exportData['listingModel'];            
+                $data = new $exportData['listingModel'];
                 $data = $this->_filter($data,$exportData['listingParams']['filter']);
-            }            
+            }
 
             $exportData['count'] = $data->count();
             $exportData['jobStartTime'] = now()->format('Y-m-d H:i:s');
-            
-            $this->updateExport($cacheKey,$exportData); 
+
+            $this->updateExport($cacheKey,$exportData);
 
             $this->appendExportLog($cacheKey,'<span class="text-info">Jobs started at : <b>'.now()->format('Y-m-d H:i:s').'</b></span><br>');
             $this->appendExportLog($cacheKey,'Url will be at : '.$exportData['fileurl'].'<br>');
-            
+
             if($exportData['template']['filepath']){
                 $tmpFileReader = $exportData['template']['filepath']?$exportData['template']['filepath']:resource_path('doc/generalExport.xlsx');
 
@@ -873,15 +873,15 @@ class BaseExport extends BaseRepository
             // ... and a writer to create the new file
             $writer = WriterEntityFactory::createWriterFromFile($tmpFilename);
             $writer->openToFile($tmpFilename);
-            
-            $GLOBALS['synapse_export_indexExcelRow']=$exportData['template']['dataStartRow'];//urutan baris excel    
+
+            $GLOBALS['synapse_export_indexExcelRow']=$exportData['template']['dataStartRow'];//urutan baris excel
             $GLOBALS['synapse_export_indexExcelRow']++;//start row ditambah satu agar style header tidak terbawa, karena nanti first row ini akan didelete juga
             $GLOBALS['synapse_export_indexData'] = 0;//nomor urut data dari 0 dst
             $isFirstRow = true;//flag untuk penanda baris pertama dari data
             $offset = 0;
             $limit = null;
-        }        
-        
+        }
+
         if($exportData['template']['filepath']){
             // let's read the entire spreadsheet...
             foreach ($reader->getSheetIterator() as $sheetIndex => $sheet) {
@@ -906,26 +906,26 @@ class BaseExport extends BaseRepository
                 $data = $data->orderBy($oBitem[0], $oBitem[1]);
             }
         }
-        
+
         $border = (new BorderBuilder())
             ->setBorderTop(Color::BLACK, Border::WIDTH_THIN, Border::STYLE_SOLID)
             ->setBorderRight(Color::BLACK, Border::WIDTH_THIN, Border::STYLE_SOLID)
             ->setBorderBottom(Color::BLACK, Border::WIDTH_THIN, Border::STYLE_SOLID)
             ->setBorderLeft(Color::BLACK, Border::WIDTH_THIN, Border::STYLE_SOLID)
             ->build();
-        
+
         $styleBorder = (new StyleBuilder())
             ->setBorder($border)
             ->build();
 
         /**
          * proses export
-         */        
+         */
         $GLOBALS['synapse_export_isBreaking'] = false;
         $GLOBALS['first_row'] = true;
         $GLOBALS['FORCE_CANCEL'] = false;
         $this->chunkWithLimit($data,100,$offset,$limit, function ($chunkedData) use(
-            $cacheKey, 
+            $cacheKey,
             &$isFirstRow,
             &$reader,
             &$writer,
@@ -939,7 +939,7 @@ class BaseExport extends BaseRepository
                 $chunkedData = $chunkedData->append($exportData['listingParams']['filter']['append']);
 
             $chunkedData = $chunkedData->toArray();
-            
+
             usleep(100);
 
             foreach ($chunkedData as $dataRow) {
@@ -952,10 +952,10 @@ class BaseExport extends BaseRepository
                         $dataRow
                     );
                     continue;
-                }    
+                }
 
                 //jika tanpa template dan row 1 maka simpan nama2 kolomnya, untuk dijadikan header caption
-                if($isFirstRow && empty($exportData['template']['filepath'])){                
+                if($isFirstRow && empty($exportData['template']['filepath'])){
                     $headerColumn = $this->formatExportExcelHeader($cacheKey,$dataRow);
 
                     //kolom terakhir header
@@ -969,7 +969,7 @@ class BaseExport extends BaseRepository
                     $writer->addRow(
                         WriterEntityFactory::createRowFromArray($headerColumn,$styleHeading)
                     );
-                    
+
                     $isFirstRow = false;//tandai flag first row agar tidak masuk ke sini lg di row selanjutnya
                 }
 
@@ -989,7 +989,7 @@ class BaseExport extends BaseRepository
                     // jika false berarti diskip
                     if($insertRow==false)
                         continue;
-                }               
+                }
                 // $reader = Excel::insertRow($reader, $GLOBALS['synapse_export_indexExcelRow'], $insertRow);
 
                 $writer->addRow(
@@ -997,19 +997,19 @@ class BaseExport extends BaseRepository
                 );
 
                 $GLOBALS['synapse_export_indexExcelRow']++;
-                $GLOBALS['synapse_export_indexData']++;                     
-                
+                $GLOBALS['synapse_export_indexData']++;
+
                 // jika false berarti di cancel
                 if($this->_checkAndCounter($cacheKey)==false){
                     return false;
-                }        
+                }
             }
-            
+
             // DI SPOUT TIDAK SUPPORT BREAK PROCESS
-            // //break proses setiap kurang dari setengah jam 
+            // //break proses setiap kurang dari setengah jam
             // if((microtime(true)-$startTime)>=1800){
             // // if((microtime(true)-$startTime)>=5){
-                
+
             //     // $this->appendExportLog($cacheKey,'<br><span class="text-info">Break on last id </span>'.$lastId.' ('.$GLOBALS['synapse_export_indexData'].')<br>');
             //     $chunkedData = null;
             //     unset($chunkedData);
@@ -1022,28 +1022,28 @@ class BaseExport extends BaseRepository
         if($GLOBALS['FORCE_CANCEL'])return false;
 
         if($GLOBALS['synapse_export_isBreaking'])return true;
-        
+
         $exportData = $this->getExport($cacheKey);
-        $exportData['count'] = $GLOBALS['synapse_export_indexData'];        
-        $this->updateExport($cacheKey,$exportData); 
+        $exportData['count'] = $GLOBALS['synapse_export_indexData'];
+        $this->updateExport($cacheKey,$exportData);
 
         $this->appendExportLog($cacheKey,'<br>Save file to : '.$exportData['filename'].'<br>');
 
         if($reader)
             $reader->close();
-            
+
         $writer->close();
 
         // unlink($exportData['filepath']);
         rename($tmpFilename, $exportData['filepath']);
-        
+
         if(!empty($exportData['template']['coreLastFormaterMethod'])){
             $exportData['template']['coreLastFormaterMethod'][0]::{$exportData['template']['coreLastFormaterMethod'][1]}(
                 $exportData,$exportData['filepath']
             );
         }
 
-        
+
         //pastikan semua selesai dan memory di-free-kan kembali
         $reader = null;
         $writer = null;
@@ -1053,14 +1053,14 @@ class BaseExport extends BaseRepository
         //ubah status jadi ok
         $this->setExportDone($cacheKey);
 
-        return true;        
+        return true;
     }
-    
+
     /**
-     * fungsi chunk hasil query dengan limit, default eloquent laravel tidak bisa 
+     * fungsi chunk hasil query dengan limit, default eloquent laravel tidak bisa
      * menggabungkan fitur chunk dan limit, jadi bibuat work arround nya
      */
-    private function chunkWithLimit ($model, $count,$offset=0,$remaining=null, callable $callback) 
+    private function chunkWithLimit ($model, $count,$offset=0,$remaining=null, callable $callback = null)
     {
         do {
             if (! is_null($remaining)) {
@@ -1068,7 +1068,7 @@ class BaseExport extends BaseRepository
             } else {
                 $limit = $count;
             }
-            
+
             $results = $model->skip($offset)->take($limit)->get();
 
             $countResults = $results->count();
@@ -1080,7 +1080,7 @@ class BaseExport extends BaseRepository
             // On each chunk result set, we will pass them to the callback and then let the
             // developer take care of everything within the callback, which allows us to
             // keep the memory low for spinning through large result sets for working.
-            if (call_user_func($callback, $results) === false) {
+            if (is_callable($callback) && call_user_func($callback, $results) === false) {
                 return false;
             }
 
@@ -1095,13 +1095,13 @@ class BaseExport extends BaseRepository
         } while ($countResults == $limit);
 
         return true;
-    }   
+    }
 
     /**
      * Dieksekusi otomatis saat export tidak menggunakan file template (jadi membutuhkan judul kolom).
      * Berfungsi untuk men-generate nama-nama kolom dari data yang ada (dari record pertama).
      * Nama2 kolom digenerate dari config headerCaption atau dari nama2 field databasenya.
-     * 
+     *
      * @param String $cacheKey
      * @param Array $row1 record data pertama yang akan diexport
      * @return Array list nama/judul column header, format :
@@ -1119,17 +1119,17 @@ class BaseExport extends BaseRepository
         //jika ada format column maka gunakan format column
         if(!empty($exportData['template']['headerCaption'])){
             $i=0;
-            foreach($exportData['template']['headerCaption'] as $key => $format){ 
-                $i++; 
-                $headerColumn[] = 
+            foreach($exportData['template']['headerCaption'] as $key => $format){
+                $i++;
+                $headerColumn[] =
                     empty($format['caption'])?
                     ('column '.$key):
                     $format['caption'];
             }
         }else{
             $i=0;
-            foreach($row1 as $fieldName => $fieldValue){ 
-                $i++; 
+            foreach($row1 as $fieldName => $fieldValue){
+                $i++;
                 $headerColumn[] = str_replace('_',' ',$fieldName);
             }
 
@@ -1139,13 +1139,13 @@ class BaseExport extends BaseRepository
 
     /**
      * untuk nambah pemformatan setelah formating default dieksekusi
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      * @param array $row array row database (dari model)
-     * 
+     *
      * @return array
      */
-    protected function formatExportExcelRow($cacheKey,array $row = [],int $indexExcelRow,int $indexData)
+    protected function formatExportExcelRow($cacheKey,array $row = [],int $indexExcelRow = 0,int $indexData = 0)
     {
         $exportData = $this->getExport($cacheKey);
         $insertRow=[];
@@ -1153,15 +1153,15 @@ class BaseExport extends BaseRepository
         //jika ada format column maka gunakan format column
         if(!empty($exportData['template']['headerCaption'])){
             foreach($exportData['template']['headerCaption'] as $key => $format){
-                $i++; 
-                $insertRow[] = 
+                $i++;
+                $insertRow[] =
                     empty($row[$key]) && isset($format['default'])?
                     $format['default']:
                     $this->exportFormatRowValue($row[$key],$format[1]);
             }
         }else{
-            foreach($row as $fieldValue){ 
-                $i++; 
+            foreach($row as $fieldValue){
+                $i++;
                 $insertRow[] = is_array($fieldValue)?'':$fieldValue;
             }
         }
@@ -1171,7 +1171,7 @@ class BaseExport extends BaseRepository
 
     /**
      * format value cell sesuai config format columnya
-     * 
+     *
      * @param mixed value per cell/field dari database
      * @param array format, format dari konfig column, format :
      *  [
@@ -1187,22 +1187,22 @@ class BaseExport extends BaseRepository
             switch ($format['type']) {
                 case 'string':
                     $value = (string) $value;
-                    break;    
+                    break;
                 case 'date':
                     $format['format'] = empty($format['format'])?'Y-m-d':$format['format'];
                     $value = (new Carbon($value))->format($format['format']);
-                    break; 
+                    break;
                 case 'datetime':
                     $format['format'] = empty($format['format'])?'Y-m-d h:m:s':$format['format'];
                     $value = (new Carbon($value))->format($format['format']);
-                    break;  
-                case 'integer': 
+                    break;
+                case 'integer':
                 case 'int':
                     $value = intval($value);
-                    break; 
+                    break;
                 case 'float':
                     $value = floatval($value);
-                    break;             
+                    break;
                 default:
                     # code...
                     break;
@@ -1214,7 +1214,7 @@ class BaseExport extends BaseRepository
     }
 
     /**
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      */
     public function exportIncrementProcessedCount($cacheKey)
@@ -1227,7 +1227,7 @@ class BaseExport extends BaseRepository
 
     /**
      * saat jobs dipecah ke jobs selanjurnya
-     * 
+     *
      * @param String $cacheKey key / kode unik per export
      */
     private function breakToNextExport($cacheKey,$tmpFilename,&$reader,&$writer,$lastExcelRow=1,$lastTableRow=1)
@@ -1239,7 +1239,7 @@ class BaseExport extends BaseRepository
             $cacheKey,
             '<br><span class="text-info">Break process to the next job, please wait</span>...<br>'
         );
-        
+
         if($reader)
             $reader->close();
 
@@ -1247,7 +1247,7 @@ class BaseExport extends BaseRepository
 
         // unlink($exportData['filepath']);
         rename($tmpFilename, $exportData['filepath']);
-        
+
         $reader = null;
         $writer = null;
         unset($writer, $reader);

@@ -12,17 +12,17 @@ use Illuminate\Support\Facades\Log;
 /**
  * Excel Export/download Trait - fungsi-fungsi untuk handling download
  */
-trait ResExportTrait { 
+trait ResExportTrait {
 
     // use ResCacheTrait;
-    
+
     static $EXPORT_STATUS_READY = 0;//sedang tidak ada proses export
     static $EXPORT_STATUS_ON_PROGRESS = 1;//export sedang dalam proses
     static $EXPORT_STATUS_SUCCESS = 2;//export berhasil
     static $EXPORT_STATUS_FAILED = 3;//export gagal
-    
+
     private $_exportFunctionInitialize = false;
-    
+
     private $_exportGroup = '';
     private $_exportTemplate = '';//file template sebagai base export nya, string kosong maka auto generate
     private $_exportTemplateMainAppDoc = true;//apakah file template yg diinput dari mainapp doc
@@ -44,14 +44,14 @@ trait ResExportTrait {
      */
     public function initExport(string $exportGroup = '', $model=null, array $addsJobsParam=[], string $template = '')
     {
-        $this->_exportGroup = $exportGroup; 
+        $this->_exportGroup = $exportGroup;
 
         $this->setExportModel($model);
         $this->setExportTemplate($template);
         $this->setExportJobsParam($addsJobsParam);
         $this->setExportHomeUrl(url(''));
 
-        $this->_exportFunctionInitialize = true; 
+        $this->_exportFunctionInitialize = true;
     }
 
     /**
@@ -112,7 +112,7 @@ trait ResExportTrait {
     }
 
     /**
-     * @param array $exportColumn format : 
+     * @param array $exportColumn format :
      *  [
      *      ['field_name'=>
      *          [
@@ -137,12 +137,12 @@ trait ResExportTrait {
     {
         return $this->_exportHomeUrl;
     }
-    
+
     public function setExportHomeUrl(string $homeUrl='')
     {
         $this->_exportHomeUrl = $homeUrl;
     }
-    
+
     /**
      * export upload path
      * -----
@@ -156,7 +156,7 @@ trait ResExportTrait {
     {
         $this->_exportUploadPath = $uploadPath;
     }
-    
+
     public final function setExportTenantId($tenantId=0)
     {
         $this->_tenantId = $tenantId;
@@ -166,11 +166,11 @@ trait ResExportTrait {
         //     Tenant::setActiveTenantById($tenantId);
         // }
     }
-    
+
     /**
      * OVERRIDEABLE
      * fungsi untuk di overide di parent repo yg menggunakan export trait ini (jika diperlukan)
-     * 
+     *
      * method ini di eksekusi di job
      */
     public function initExportOnJob(array $addsJobsParam=[])
@@ -179,8 +179,8 @@ trait ResExportTrait {
         //maka saat method ini dieksekusi di job, cek apakah initExport sudah diproses, jika belum maka eksekusi
         if(!$this->_exportFunctionInitialize){
             $this->initExport($this->_exportGroup,$this->_exportModel, $addsJobsParam, $this->_exportTemplate);
-            $this->_exportFunctionInitialize = true; 
-        }              
+            $this->_exportFunctionInitialize = true;
+        }
     }
 
     /**
@@ -201,8 +201,8 @@ trait ResExportTrait {
         $this->setExportTenantId(config('tenant.id'));
         if(!empty($addsJobsParam))$this->setExportJobsParam($addsJobsParam);
 
-        $this->setExportStartProcess();  
-        $config =  $this->getExportStatus();   
+        $this->setExportStartProcess();
+        $config =  $this->getExportStatus();
 
         if($this->isExportJobsPerTenant()){
             ResExport::dispatch(
@@ -253,16 +253,16 @@ trait ResExportTrait {
      * proses compute export excel, di eksekusi dari jobs
      */
     public function processExport()
-    {        
+    {
         ini_set('memory_limit','5524M');
         set_time_limit(0);
-        
+
         $startTime = microtime(true);
 
         if(!$this->_exportFunctionInitialize){
             return false;
         }
-        
+
         /**
          * init status & var
          */
@@ -274,8 +274,8 @@ trait ResExportTrait {
             $config['count'] = $data->count();
             $config['filename'] = strtoupper(preg_replace('/[^a-zA-Z0-9]+/', '_',$this->_exportGroup.'_'.$config['date'])).'.xlsx';
             $fileName = $this->_exportUploadPath.$config['filename'];
-            $config['urlFilename'] = $this->_exportHomeUrl.$fileName;        
-            $this->saveExportStatus($config); 
+            $config['urlFilename'] = $this->_exportHomeUrl.$fileName;
+            $this->saveExportStatus($config);
 
             $this->appendExportLog('<span class="text-info">Jobs started at : <b>'.now()->format('Y-m-d H:i:s').'</b></span><br>');
             $this->appendExportLog('Url will be at : '.$config['urlFilename'].'<br>');
@@ -288,8 +288,8 @@ trait ResExportTrait {
             $firstRow = true;//flag untuk penanda baris pertama dari data
             $offset = 0;
             $limit = null;
-            
-        // jika resume dari jobs sebelumnya yang di split 
+
+        // jika resume dari jobs sebelumnya yang di split
         }else{
             $this->appendExportLog('<span class="text-info">Continueing process from previous jobs</span>...<br>');
             $this->appendExportLog('<span class="text-info">Jobs started at : <b>'.now()->format('Y-m-d H:i:s').'</b></span><br>');
@@ -297,7 +297,7 @@ trait ResExportTrait {
             $fileName = $this->_exportUploadPath.$config['filename'];
             $reader = Excel::load(public_path($fileName), 'Xlsx', false);
             $data = $this->_exportModel;//->offset($this->_resumeParams['lastTableRow'])->limit($config['count']+1000);//->get();
-            
+
             $offset = $this->_resumeParams['lastTableRow'];
             $limit = $config['count']+1000;
 
@@ -305,17 +305,17 @@ trait ResExportTrait {
             $row = $this->_resumeParams['lastExcelRow'];
             $firstRow = false;//flag untuk penanda baris pertama dari data
             $noUrut = $this->_resumeParams['lastTableRow'];
-        }        
-         
+        }
+
         /**
          * proses export
          */
-        
+
         $reader->setActiveSheetIndex(0);
         $isBreaking = false;
         $this->chunkWithLimit($data,100,$offset,$limit, function ($chunkedData) use(&$firstRow,&$reader,&$row,&$noUrut,$startTime,$fileName,&$isBreaking) {
             $chunkedData = $this->formatExportMainData($chunkedData->toArray());
-            
+
             usleep(200);
 
             foreach ($chunkedData as $val) {
@@ -323,7 +323,7 @@ trait ResExportTrait {
                 $this->exportIncrementProcessedCount();
 
                 //jika tanpa template dan row 1 maka simpan nama2 kolomnya, untuk dijadikan header caption
-                if($firstRow && empty($this->_exportTemplate)){                
+                if($firstRow && empty($this->_exportTemplate)){
                     $headerColumn = $this->formatExportExcelHeaderAfter(
                         $this->formatExportExcelHeader($val),
                         $val
@@ -343,13 +343,13 @@ trait ResExportTrait {
                     $row
                 );
 
-                $reader = Excel::insertRow($reader, $row, $insertRow);            
+                $reader = Excel::insertRow($reader, $row, $insertRow);
                 $row++;
                 $noUrut++;
-                
+
             }
-            
-            //break proses setiap kurang dari setengah jam 
+
+            //break proses setiap kurang dari setengah jam
             if((microtime(true)-$startTime)>=1800){
                 $chunkedData = null;
                 unset($chunkedData);
@@ -364,7 +364,7 @@ trait ResExportTrait {
 
         if($isBreaking)return true;
 
-        if($deleteRow) $reader->getActiveSheet()->removeRow($deleteRow);        
+        if($deleteRow) $reader->getActiveSheet()->removeRow($deleteRow);
 
         $this->appendExportLog('<br>Save file to : '.$fileName.'<br>');
         if(!file_exists(public_path($this->_exportUploadPath))){
@@ -383,17 +383,17 @@ trait ResExportTrait {
         //ubah status jadi ok
         $this->setExportDone();
 
-        return true;        
+        return true;
     }
 
-    private function chunkWithLimit ($model, $count,$offset=0,$remaining=null, callable $callback) {
+    private function chunkWithLimit ($model, $count,$offset=0,$remaining=null, callable $callback = null) {
         do {
             if (! is_null($remaining)) {
                 $limit = min($count, $remaining);
             } else {
                 $limit = $count;
             }
-            
+
             $results = $model->skip($offset)->take($limit)->get();
 
             $countResults = $results->count();
@@ -405,7 +405,7 @@ trait ResExportTrait {
             // On each chunk result set, we will pass them to the callback and then let the
             // developer take care of everything within the callback, which allows us to
             // keep the memory low for spinning through large result sets for working.
-            if (call_user_func($callback, $results) === false) {
+            if (is_callable($callback) && call_user_func($callback, $results) === false) {
                 return false;
             }
 
@@ -473,7 +473,7 @@ trait ResExportTrait {
 
     private function breakExcelReader(&$reader,$fileName,$lastExcelRow=1,$lastTableRow=1)
     {
-        
+
         if(!file_exists(public_path($this->_exportUploadPath))){
             mkdir(public_path($this->_exportUploadPath),0777,true);
         }
@@ -487,7 +487,7 @@ trait ResExportTrait {
         unset($objWriter, $reader);
 
         usleep(200);
-        
+
         return  Excel::load(public_path($fileName), 'Xlsx', false);
     }
 
@@ -496,7 +496,7 @@ trait ResExportTrait {
     /**
      * OVERRIDEABLE
      * format list data utama sebelum looping
-     * 
+     *
      */
     public function formatExportMainData(array $data)
     {
@@ -509,14 +509,14 @@ trait ResExportTrait {
         //jika ada format column maka gunakan format column
         if(!empty($this->_exportColumn)){
             $i=0;
-            foreach($this->_exportColumn as $format){ 
-                $i++; 
+            foreach($this->_exportColumn as $format){
+                $i++;
                 $headerColumn[Excel::excol($i).'1'] = empty($format[1]['caption'])?str_replace('_',' ',$format[0]):$format[1]['caption'];
             }
         }else{
             $i=0;
-            foreach($row1 as $fieldName => $fieldValue){ 
-                $i++; 
+            foreach($row1 as $fieldName => $fieldValue){
+                $i++;
                 $headerColumn[Excel::excol($i).'1'] = str_replace('_',' ',$fieldName);
             }
 
@@ -526,10 +526,10 @@ trait ResExportTrait {
     /**
      * OVERRIDEABLE
      * method untuk di overide untuk nambah pemformatan setelah formating default dieksekusi
-     * 
+     *
      * @param array $headerColumn array row yang sudah diformat oleh formatExportExcelHeader
      * @param array $row1 array row pertama dari database (dari model) sebelum diformat formatExportExcelHeader
-     * 
+     *
      * @return array
      */
     public function formatExportExcelHeaderAfter(array $headerColumn = [],array $row1 = [])
@@ -540,9 +540,9 @@ trait ResExportTrait {
     /**
      * OVERRIDE hanya jika diperlukan, hindari sebisa mungkin.
      * untuk nambah pemformatan setelah formating default dieksekusi
-     * 
+     *
      * @param array $row array row database (dari model)
-     * 
+     *
      * @return array
      */
     public function formatExportExcelRow(array $row = [],int $rowNumber)
@@ -552,15 +552,15 @@ trait ResExportTrait {
         //jika ada format column maka gunakan format column
         if(!empty($this->_exportColumn)){
             foreach($this->_exportColumn as $format){
-                $i++; 
-                $insertRow[Excel::excol($i)] = 
+                $i++;
+                $insertRow[Excel::excol($i)] =
                     empty($row[$format[0]]) && isset($format[1]['default'])?
                     $format[1]['default']:
                     $this->exportFormatRowValue($row[$format[0]],$format[1]);
             }
         }else{
-            foreach($row as $fieldValue){ 
-                $i++; 
+            foreach($row as $fieldValue){
+                $i++;
                 $insertRow[Excel::excol($i)] = is_array($fieldValue)?'':$fieldValue;
             }
         }
@@ -570,7 +570,7 @@ trait ResExportTrait {
 
     /**
      * format value cell sesuai config format columnya
-     * 
+     *
      * @param mixed value per cell/field dari database
      * @param array format, format dari konfig column, format :
      *  [
@@ -586,22 +586,22 @@ trait ResExportTrait {
             switch ($format['type']) {
                 case 'string':
                     $value = (string) $value;
-                    break;    
+                    break;
                 case 'date':
                     $format['format'] = empty($format['format'])?'Y-m-d':$format['format'];
                     $value = (new Carbon($value))->format($format['format']);
-                    break; 
+                    break;
                 case 'datetime':
                     $format['format'] = empty($format['format'])?'Y-m-d h:m:s':$format['format'];
                     $value = (new Carbon($value))->format($format['format']);
-                    break;  
-                case 'integer': 
+                    break;
+                case 'integer':
                 case 'int':
                     $value = intval($value);
-                    break; 
+                    break;
                 case 'float':
                     $value = floatval($value);
-                    break;             
+                    break;
                 default:
                     # code...
                     break;
@@ -614,7 +614,7 @@ trait ResExportTrait {
 
     /**
      * convert nomor baris excel yang sedang di proses ke nomor urutan data yg sedang diproses
-     * 
+     *
      * @param int $rowNumber baris excel ke berapa
      */
     protected function exportNumbering(int $rowNumber)
@@ -624,10 +624,10 @@ trait ResExportTrait {
 
     /**
      * method untuk di overide untuk nambah pemformatan setelah formating default dieksekusi
-     * 
+     *
      * @param array $insertRow array row yang sudah diformat oleh formatExportExcelRow
      * @param array $row array row database (dari model) sebelum diformat formatExportExcelRow
-     * 
+     *
      * @return array
      */
     public function formatExportExcelRowAfter(array $insertRow = [],array $row = [],int $rowNumber)
@@ -646,7 +646,7 @@ trait ResExportTrait {
         $config['log'] = '<b class="text-success">Start - generate download !</b><br>';
         $config['status'] = self::$EXPORT_STATUS_ON_PROGRESS;//1: onprogress
 
-        $this->saveExportStatus($config); 
+        $this->saveExportStatus($config);
     }
 
     protected function setExportDone()
@@ -655,11 +655,11 @@ trait ResExportTrait {
             return false;
         }
 
-        $config = $this->getExportStatus(); 
+        $config = $this->getExportStatus();
         $config['log'] .= '<br><b class="text-success">Export Done !</b><br>';
         $config['log'] .= '<span class="text-info">Jobs ended at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>';
         $config['status'] = self::$EXPORT_STATUS_SUCCESS;//2: success
-        $this->saveExportStatus($config); 
+        $this->saveExportStatus($config);
     }
 
     protected function setExportFailed()
@@ -668,28 +668,28 @@ trait ResExportTrait {
             return false;
         }
 
-        $config = $this->getExportStatus(); 
+        $config = $this->getExportStatus();
         $config['log'] .= '<br><b class="text-danger">Export Failed !</b><br>';
         $config['log'] .= '<span class="text-info">Jobs ended at : <b>'.now()->format('Y-m-d H:i:s').'</b></span>';
         $config['filename'] = '';
         $config['urlFilename'] = '';
         // $config['processedCount'] = 0;
         $config['status'] = self::$EXPORT_STATUS_FAILED;//2: success
-        $this->saveExportStatus($config); 
+        $this->saveExportStatus($config);
     }
 
     /**
      * set dari cronjob, jika cronjob ada uncaught error
-     * 
+     *
      * @param Exception $exception instance Exception dari job failed
      */
     public function setExportJobFailed(Exception $exception)
-    {        
+    {
         if(!$this->_exportFunctionInitialize){
             return false;
         }
 
-        $this->setExportFailed(); 
+        $this->setExportFailed();
 
         $log = "<br><b class='text-danger'>Jobs terminated !</b>\n<hr>\n\nError message :<br>\n";
         $log .= $exception->getMessage();
@@ -702,7 +702,7 @@ trait ResExportTrait {
 
     /**
      * cek apakah bisa generate file export baru
-     * 
+     *
      * @return boolean true jika bisa diproses, false jika sedang tidak bisa diproses
      */
     public function isExportReady()
@@ -717,13 +717,13 @@ trait ResExportTrait {
     /**
      * get status export terakhir
      */
-    public function getExportStatus() 
-    {        
+    public function getExportStatus()
+    {
         if(!$this->_exportFunctionInitialize){
             return false;
         }
 
-        if(!($config = $this->_getCache('export',$this->_exportGroup))){  
+        if(!($config = $this->_getCache('export',$this->_exportGroup))){
             $config = $this->getInitExportStatus();
         }
 
@@ -732,7 +732,7 @@ trait ResExportTrait {
     }
 
     protected function getInitExportStatus()
-    {  
+    {
         $config = [];
         $config['log'] = '';
         $config['filename'] = '';
@@ -753,7 +753,7 @@ trait ResExportTrait {
     }
 
     protected function appendExportLog(string $log='')
-    {        
+    {
         if(!$this->_exportFunctionInitialize){
             return false;
         }
@@ -763,8 +763,8 @@ trait ResExportTrait {
         $this->saveExportStatus($config);
     }
 
-    protected function saveExportStatus($config) 
-    {        
+    protected function saveExportStatus($config)
+    {
         if(!$this->_exportFunctionInitialize){
             return false;
         }
