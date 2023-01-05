@@ -5,7 +5,7 @@ use Illuminate\Support\Str;
 $mysqlPerTenant = [
     'cpanel' => [
         'dbcreate_use_cpanel' => env('CPANEL_CREATEDB_PERTENANT', false),
-        'domain' => env('CPANEL_DOMAIN_PERTENANT'),    
+        'domain' => env('CPANEL_DOMAIN_PERTENANT'),
         'port' => env('CPANEL_PORT_PERTENANT',2083),
         'username' => env('CPANEL_USERNAME_PERTENANT'),
         'password' => env('CPANEL_PASSWORD_PERTENANT')
@@ -84,7 +84,7 @@ while (env('DB_MULTISERVER_'.$i.'_HOST',false)) {
         // config cpanel untuk server lain
         'cpanel' => [
             'dbcreate_use_cpanel' => env('DB_MULTISERVER_'.$i.'_CPANEL_CREATEDB', false),
-            'domain' => env('DB_MULTISERVER_'.$i.'_CPANEL_DOMAIN'),    
+            'domain' => env('DB_MULTISERVER_'.$i.'_CPANEL_DOMAIN'),
             'port' => env('DB_MULTISERVER_'.$i.'_CPANEL_PORT',2083),
             'username' => env('DB_MULTISERVER_'.$i.'_CPANEL_USERNAME'),
             'password' => env('DB_MULTISERVER_'.$i.'_CPANEL_PASSWORD')
@@ -121,6 +121,34 @@ while (env('DB_MULTISERVER_'.$i.'_HOST',false)) {
     $multiDatabaseServer['server_count']++;
     $i++;
 }
+
+$mysqlBaseConnection = [
+    'driver' => 'mysql',
+    'url' => env('DATABASE_URL'),
+    'host' => $multiDatabaseServer['servers'][0]['host'],
+    'port' => $multiDatabaseServer['servers'][0]['port'],
+    'database' => $multiDatabaseServer['servers'][0]['database'],
+    'username' => $multiDatabaseServer['servers'][0]['username'],
+    'password' => $multiDatabaseServer['servers'][0]['password'],
+    'unix_socket' => env('DB_SOCKET', ''),
+    'charset' => 'utf8mb4',
+    'collation' => 'utf8mb4_unicode_ci',
+    'prefix' => '',
+    'prefix_indexes' => true,
+    // 'strict' => true,
+    'modes' => [
+        // 'ONLY_FULL_GROUP_BY',
+        // 'STRICT_TRANS_TABLES',
+        // 'NO_ZERO_IN_DATE',
+        // 'NO_ZERO_DATE',
+        'ERROR_FOR_DIVISION_BY_ZERO',
+        // 'NO_ENGINE_SUBSTITUTION',
+    ],
+    'engine' => 'InnoDB',
+    'options' => extension_loaded('pdo_mysql') ? array_filter([
+        PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+    ]) : [],
+];
 
 return [
 
@@ -169,33 +197,8 @@ return [
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
         ],
 
-        'mysql' => [
-            'driver' => 'mysql',
-            'url' => env('DATABASE_URL'),
-            'host' => $multiDatabaseServer['servers'][0]['host'],
-            'port' => $multiDatabaseServer['servers'][0]['port'],
-            'database' => $multiDatabaseServer['servers'][0]['database'],
-            'username' => $multiDatabaseServer['servers'][0]['username'],
-            'password' => $multiDatabaseServer['servers'][0]['password'],
-            'unix_socket' => env('DB_SOCKET', ''),
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
-            'prefix_indexes' => true,
-            // 'strict' => true,
-            'modes' => [
-                // 'ONLY_FULL_GROUP_BY',
-                // 'STRICT_TRANS_TABLES',
-                // 'NO_ZERO_IN_DATE',
-                // 'NO_ZERO_DATE',
-                'ERROR_FOR_DIVISION_BY_ZERO',
-                // 'NO_ENGINE_SUBSTITUTION',
-            ],
-            'engine' => 'InnoDB',
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
-        ],
+        'mysql' => $mysqlBaseConnection,
+        'mysql0' => $mysqlBaseConnection,
 
         //config data per tenant
         'mysqlPerTenant' => $mysqlPerTenant,
