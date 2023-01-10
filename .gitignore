@@ -26,3 +26,4 @@ composer.json
 composer.lock
 package.json
 package-lock.json
+composer.lock.bak

@@ -57,7 +57,7 @@ if (count($newEnv) >= 1) {
  */
 if(isset($system['multiproject']['active']) && $system['multiproject']['active']==1 && file_exists(__DIR__ . '/../app/MainApp/Projects/'.$client['project_code'].'/config/system.json')){
     $perProjectSystem = json_decode(file_get_contents(__DIR__ . '/../app/MainApp/Projects/'.$client['project_code'].'/config/system.json'), true);
-    
+
     $newEnv = [];
     //hanya load systemEnv yang boleh dieditnya saja
     foreach ($keyConfig['allowed_systemEnv_key'] as $value) {
@@ -158,7 +158,7 @@ if(isset($system['multitenant']['active']) && $system['multitenant']['active']){
 $multiTenantVuePrefix = '';
 $multiTenantLaravelPrefix = '';
 
-if(isset($system['multitenant']['active'])&&$system['multitenant']['active'] && (!isset($system['multitenant']['detect_mode']) || $system['multitenant']['detect_mode'] == 1)){    
+if(isset($system['multitenant']['active'])&&$system['multitenant']['active'] && (!isset($system['multitenant']['detect_mode']) || $system['multitenant']['detect_mode'] == 1)){
     $multiTenantVuePrefix = '/:group_app';
     $multiTenantLaravelPrefix = '/{group_app}';
 }
@@ -169,6 +169,7 @@ $homeSlug = $homeSlug?('/'.trim($homeSlug,'/')):'';
 //initiate config ednpoint.json
 $endpoint = [
     'domain' => $client['endpoint'][$system['mode']]['domain'],
+    'home' => $client['endpoint'][$system['mode']]['home'],
     'admin' => [
         'app' => $homeSlug.$multiTenantVuePrefix.$client['endpoint'][$system['mode']]['admin'],
         'auth' => $homeSlug.$multiTenantVuePrefix
@@ -181,7 +182,7 @@ $endpoint = [
         'app' => $homeSlug.$client['endpoint'][$system['mode']]['api'],
         'auth' => $homeSlug
     ],
-    'laravel'  => [        
+    'laravel'  => [
         'admin' => [
             'app' => $multiTenantLaravelPrefix.$client['endpoint'][$system['mode']]['admin'],
             'auth' => $multiTenantLaravelPrefix
@@ -194,7 +195,7 @@ $endpoint = [
             'app' => $client['endpoint'][$system['mode']]['api'],
             'auth' => ''
         ]
-    ]   
+    ]
 ];
 $newPackageLocal = []; //untuk filtered packageLocal.json yang akan disave ulang
 $newPackageLocalEnv = []; //untuk filtered packageLocalEnv.json yang akan disave ulang
@@ -254,7 +255,7 @@ if (!function_exists('processSidenav')) {
 
 // looping semua packageconfig yg ada untuk proses filtering dan pemrosesan yang menghasilkan _packageLocal.json, _sidenav.json dan _acl.json di MainApp/config
 foreach ($package as $item) {
-    
+
     // get data packageconfig dari packageLocal.json di MainApp/config untuk diproses selanjutnya
     $newPackageLocal[$item['package_namespace']] =
         isset($tmpPackageLocal[$item['package_namespace']])
@@ -274,19 +275,19 @@ foreach ($package as $item) {
         if(isset($newPackageLocalEnv[$item['package_namespace']][$value]))
             unset($newPackageLocalEnv[$item['package_namespace']][$value]);
     }
-    
+
     // merge packageconfig asli dari masing-masing module dengan packageconfig dari packageLocal.json di MainApp/config
     $packageLocal[$item['package_namespace']] = recuresive_array_merge($item, $newPackageLocal[$item['package_namespace']]);
 
-    
+
     // merge packageconfig sebelumnya (hasil merge) dengan packageconfig dari packageLocalEnv.json di MainApp/config
     // if ($system['mode'] == 'dev') {
         $packageLocal[$item['package_namespace']] = recuresive_array_merge(
             $packageLocal[$item['package_namespace']],
             $newPackageLocalEnv[$item['package_namespace']]
         );
-    // }    
-    
+    // }
+
 
     /**
      * proses generate _acl.json dan _sidenav.json
@@ -295,11 +296,11 @@ foreach ($package as $item) {
         //proses _acl.json
         if($packageLocal[$item['package_namespace']]['access']['has_acl']){
             $acl[$item['package_namespace']] = [
-                'acl_caption' => 
+                'acl_caption' =>
                     isset($packageLocal[$item['package_namespace']]['access']['acl_caption'])?
                     $packageLocal[$item['package_namespace']]['access']['acl_caption']:
                     $packageLocal[$item['package_namespace']]['access']['caption'],
-                'acl_description' => 
+                'acl_description' =>
                     isset($packageLocal[$item['package_namespace']]['access']['acl_description'])?
                     $packageLocal[$item['package_namespace']]['access']['acl_description']:
                     $packageLocal[$item['package_namespace']]['access']['description'],
@@ -315,13 +316,13 @@ foreach ($package as $item) {
         //proses _sidenav
         if($packageLocal[$item['package_namespace']]['access']['is_navbar']){
             $tmpSidenavTmp = ['package_namespace'=>$item['package_namespace'],$item['package_namespace'] => $packageLocal[$item['package_namespace']]['access']];
-            
+
             if(isset($tmpSidenavTmp[$item['package_namespace']]['children'])){
                 $tmpSidenavTmp[$item['package_namespace']]['children'] = processSidenav($tmpSidenavTmp[$item['package_namespace']]['children']);
                 if(count($tmpSidenavTmp[$item['package_namespace']]['children'])==0)
                     unset($tmpSidenavTmp[$item['package_namespace']]['children']);
-            }    
-            
+            }
+
             if(isset($packageLocal[$item['package_namespace']]['access']['position'])){
                 $tmpSidenav[ $packageLocal[$item['package_namespace']]['access']['position'] ] = $tmpSidenavTmp;
             }else{
@@ -329,11 +330,11 @@ foreach ($package as $item) {
             }
         }
     }
-    
+
 }
 
 
-// merge packageconfig sebelumnya (hasil merge) dengan packageconfig dari packageLocal.json di Mmasing-masing config project (jika project multi project)    
+// merge packageconfig sebelumnya (hasil merge) dengan packageconfig dari packageLocal.json di Mmasing-masing config project (jika project multi project)
 $packageLocal = recuresive_array_merge(
     $packageLocal,
     $tmpPackageLocalPerProjectEnv
@@ -464,15 +465,15 @@ foreach ($packageLocal as $item) {
     if(isset($item['binding']) && isset($item['binding']['interface'])){
         foreach($item['binding']['interface'] as $contract => $service){
             $binding['interface'][$contract] = $service;
-        }        
+        }
     }
 
-    
+
     //provider per module
     if(isset($item['providers']) && $item['is_package']==0){
         foreach($item['providers']as $provider){
             $providers[] = $provider;
-        }        
+        }
     }
 
     /*
@@ -480,7 +481,7 @@ foreach ($packageLocal as $item) {
     ----------------------------
     */
     $moduleEndpoints = $packageLocal[$item['package_namespace']]['endpoint'][$system['mode']];
-    foreach ($moduleEndpoints as $app => $moduleEndpoint) {        
+    foreach ($moduleEndpoints as $app => $moduleEndpoint) {
         //jika module endpoint diawal "/" berarti tidak menggunakan apps endpoint
         if($moduleEndpoint == '' || $moduleEndpoint[0]!='/'){
             $endpoint[$app][$item['package_namespace']] = $endpoint[$app]['app'].'/'.$moduleEndpoint;
@@ -488,10 +489,10 @@ foreach ($packageLocal as $item) {
         }else{
             $endpoint[$app][$item['package_namespace']] = $homeSlug.$multiTenantVuePrefix.$moduleEndpoint;
             $endpoint['laravel'][$app][$item['package_namespace']] = $multiTenantLaravelPrefix.$moduleEndpoint;
-        }    
+        }
         //jika memiliki fitur auth dan module user maka assign auth endpointnya
         if($system['has_auth'] && isset($packageLocal['moduser']) && $packageLocal['moduser']['enable']){
-            $authEndpoint = $packageLocal['moduser']['auth_endpoint'][$system['mode']];            
+            $authEndpoint = $packageLocal['moduser']['auth_endpoint'][$system['mode']];
             if($authEndpoint[0]!='/'){
                 $endpoint[$app]['auth'] = $endpoint[$app]['app'].'/'.$authEndpoint;
                 $endpoint['laravel'][$app]['auth'] = $endpoint['laravel'][$app]['app'].'/'.$authEndpoint;
@@ -499,7 +500,7 @@ foreach ($packageLocal as $item) {
                 $endpoint[$app]['auth'] = $homeSlug.$multiTenantVuePrefix.$authEndpoint;
                 $endpoint['laravel'][$app]['auth'] = $multiTenantLaravelPrefix.$authEndpoint;
             }
-            
+
         }
     }
 
@@ -516,14 +517,14 @@ foreach ($packageLocal as $item) {
         $packagePath = "../../../Modules/".$item['package_dir']."/";
         $packageMainPath = "../../Modules/".$item['package_dir']."/";
     }
-    
+
     //load package hanya jika aktif saja
     if($packageLocal[$item['package_namespace']]['enable'] ){
-        
+
         //untuk loader build.js
         if ($system['web_admin']['full_vue'] && file_exists($filePath . "resources/js/build.js")) {
             $moduleBuildJs[] = '    require("' . $packageMainPath . 'resources/js/build")(fs,mix);' . "\n";
-            // $moduleBuildJs[] = var build1 = 
+            // $moduleBuildJs[] = var build1 =
         }
 
         //untuk loader web-build.js
@@ -535,7 +536,7 @@ foreach ($packageLocal as $item) {
         if (file_exists($filePath . "resources/js/main.js")) {
             $moduleMainJs[] = 'require("' . $packageMainPath . 'resources/js/main");' . "\n";
         }
-        
+
         //untuk loader vuex store
         if (file_exists($filePath."resources/js/store/store.js")) {
             $moduleStore[] = "import ".$item['package_namespace'].' from "'.$packagePath.'resources/js/store/store";' . "\n";
@@ -593,13 +594,13 @@ if(isset($system['multitenant']['active']) && $system['multitenant']['active']){
             if(!isset($moduleRouterAdminNamespacePerTenant[$tenantData[0]]))$moduleRouterAdminNamespacePerTenant[$tenantData[0]] = [];
             $moduleRouterAdminPerTenant[] = "import " . $tenantData[1]  . $tenantData[0] . ' from "' . $path . '";' . "\n";
             $moduleRouterAdminNamespacePerTenant[$tenantData[0]][] = ".concat(" . $tenantData[1] . $tenantData[0] . ")";
-            
+
         }
         foreach($moduleRouterAdminNamespacePerTenant as $tenantId => $tmpTenant){
             $moduleRouterAdminNamespacePerTenant[$tenantId] = '"'.$tenantId.'": []'.implode('',$tmpTenant);
         }
     }
-    
+
     /**
      * loop router index.js
      */
@@ -625,12 +626,12 @@ if(isset($system['multitenant']['active']) && $system['multitenant']['active']){
         }
     }
 
-    
+
     /**
      * loop vuex per tenant
      * -------------------------------------------------------------------------
      */
-    
+
     $tenantPath = base_path((isset($system['multiproject']['active']) && $system['multiproject']['active'])?
         ('app/MainApp/Projects/'.$client['project_code'].'/Tenants/*/Modules/*/resources/js/store/store.js'):
         ('app/MainApp/Tenants/*/Modules/*/resources/js/store/store.js'));
@@ -647,20 +648,20 @@ if(isset($system['multitenant']['active']) && $system['multitenant']['active']){
             if(!isset($moduleStoreNamespacePerTenant[$tenantData[0]]))$moduleStoreNamespacePerTenant[$tenantData[0]] = [];
             $moduleStorePerTenant[] = "import " . $tenantData[1]  . $tenantData[0] . ' from "' . $path . '";' . "\n";
             $moduleStoreNamespacePerTenant[$tenantData[0]][] = "..." . $tenantData[1] . $tenantData[0];
-            
+
         }
         foreach($moduleStoreNamespacePerTenant as $tenantId => $tmpTenant){
             $moduleStoreNamespacePerTenant[$tenantId] = '"'.$tenantId.'": {'.implode(',',$tmpTenant).'}';
         }
     }
 
-    
-    
+
+
     /**
      * loop vuex auto resource per tenant
      * -------------------------------------------------------------------------
      */
-    
+
     $tenantPath = base_path((isset($system['multiproject']['active']) && $system['multiproject']['active'])?
         ('app/MainApp/Projects/'.$client['project_code'].'/Tenants/*/Modules/*/resources/js/store/storeConfig.js'):
         ('app/MainApp/Tenants/*/Modules/*/resources/js/store/storeConfig.js'));
@@ -677,7 +678,7 @@ if(isset($system['multitenant']['active']) && $system['multitenant']['active']){
             if(!isset($moduleStoreConfigNamespacePerTenant[$tenantData[0]]))$moduleStoreConfigNamespacePerTenant[$tenantData[0]] = [];
             $moduleStoreConfigPerTenant[] = "import " . $tenantData[1]  . $tenantData[0] . ' from "' . $path . '";' . "\n";
             $moduleStoreConfigNamespacePerTenant[$tenantData[0]][] = "..." . $tenantData[1] . $tenantData[0];
-            
+
         }
         foreach($moduleStoreConfigNamespacePerTenant as $tenantId => $tmpTenant){
             $moduleStoreConfigNamespacePerTenant[$tenantId] = '"'.$tenantId.'": {'.implode(',',$tmpTenant).'}';
@@ -704,28 +705,28 @@ if(isset($system['binding']['interface'])){
     foreach($system['binding']['interface'] as $contract => $service){
         if(!isset($binding['interface'][$contract]))
             $binding['interface'][$contract] = $service;
-    }        
+    }
 }
 //binding class
 if(isset($system['binding']['class'])){
     foreach($system['binding']['class'] as $contract => $service){
         if(!isset($binding['class'][$contract]))
             $binding['class'][$contract] = $service;
-    }        
+    }
 }
 //binding route
 if(isset($system['binding']['route'])){
     foreach($system['binding']['route'] as $contract => $service){
         if(!isset($binding['route'][$contract]))
             $binding['route'][$contract] = $service;
-    }        
+    }
 }
 //binding alias
 if(isset($system['binding']['alias'])){
     foreach($system['binding']['alias'] as $contract => $service){
         if(!isset($binding['alias'][$contract]))
             $binding['alias'][$contract] = $service;
-    }        
+    }
 }
 
 //merge providers
