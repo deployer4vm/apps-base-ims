@@ -172,6 +172,10 @@ class Tenant extends BaseRepository
         // jika mengakses domain storage all tenant maka tandai sebagai koneksi domain storage
         }else if($domain==config('AppConfig.system.multitenant.alltenant_storage_domain')){
             $this->setOnStorageAlltenant();
+
+        // jika mengakses domain general API maka tandai sebagai koneksi domain api
+        }else if($domain==config('AppConfig.system.multitenant.general_api_domain')){
+            $this->setOnGeneralApi();                
             
         }else{
             $tenant = $this->getTenantByDomain($domain[0]);//$this->getTenantModel()->where('domain',$domain)->first();
@@ -219,6 +223,15 @@ class Tenant extends BaseRepository
     }
 
     /**
+     * set aplikasi yang sedang aktif adalah domain api general
+     */
+    public function setOnGeneralApi()
+    {
+        $config = app('config');
+        $config->set('tenant',['isOnGeneralApi'=>true]);
+    }
+
+    /**
      * apakah yang aktif sekarang adalah aplikasi tenant managementnya ?
      * 
      * @return Boolean true jika yang aktif adalah aplikasi tenant management, false jika bukan
@@ -227,6 +240,26 @@ class Tenant extends BaseRepository
     {
         return config('tenant.isOnTenantManager',false);
     }    
+
+    /**
+     * apakah yang aktif sekarang adalah storage all tenant
+     * 
+     * @return Boolean true jika yang aktif adalah storage all tenant, false jika bukan
+     */
+    public function isOnStorageAlltenant() 
+    {
+        return config('tenant.isOnStorageAlltenant',false);
+    }
+    
+    /**
+     * apakah yang aktif sekarang adalah domain api general ?
+     * 
+     * @return Boolean true jika yang diakses adalah domain api general, false jika bukan
+     */
+    public function isOnGeneralApi() 
+    {
+        return config('tenant.isOnGeneralApi',false);
+    }
     
     /**
      * END - GROUP MANAGE ACTIAVE TENANT
