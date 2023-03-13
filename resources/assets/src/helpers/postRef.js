@@ -7,7 +7,7 @@ export default {
     getPostRef(formId) {
         return globals()
             .LocalApi.get(
-                globals().Web.getEndpoint(globals().AppConfig.endpoint.api.app) + (globals().AppConfig.system.post_ref_endpoint?globals().AppConfig.system.post_ref_endpoint:'sys/postref'),
+                globals().Web.getEndpoint(globals().AppConfig.endpoint.api.app) + (globals().AppConfig.system.post_ref_endpoint?globals().AppConfig.system.post_ref_endpoint:'/sys/postref'),
                 {
                     params: {
                         form_id:formId
