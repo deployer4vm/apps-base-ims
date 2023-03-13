@@ -75,3 +75,18 @@ Route::get(config('AppConfig.system.lang_endpoint','sys/lang'),'LangController@r
  */
 Route::match(['post','get'],config('AppConfig.system.editor_endpoint.upload','sys/editor/upload'),'KindeditorController@upload')->name('sys.editor.upload');
 Route::match(['post','get'],config('AppConfig.system.editor_endpoint.filemanager','sys/editor/filemanager'),'KindeditorController@filemanager')->name('sys.editor.filemanager');
+
+/**
+ * Post reference
+ * -------------------------------------------------
+ */
+
+$group = [
+    'prefix' => config('AppConfig.system.post_ref_endpoint','sys/postref'),
+    // 'middleware' => 'auth:api'
+];
+Route::group($group,function(){  
+    // register 1 post ref id
+    Route::get('/','PostReferenceController@getRef');
+
+});

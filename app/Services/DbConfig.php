@@ -25,12 +25,13 @@ class DbConfig extends BaseRepository
      * @param mix       $default        default value yang diset jika key tidak ada, isi null jika
      *                                  tidak set default value
      * @param boolean   $saveDefault    default value yang diset jika key tidak ada
+     * @param Boolean   $castAsArray    true jika value diperlakukan sebagai array
      * 
      * @return mix|null                 null jika gagal, $default value yang diset jika berhasil
      */
-    public function getConfig(string $group,string $key,$default=null,$saveDefault=true)  
+    public function getConfig(string $group,string $key,$default=null,$saveDefault=true,$castAsArray=false)  
     {        
-        return $this->_getConfig($group,$key,$default,$saveDefault,config('tenant.id',$this->tenantId));
+        return $this->_getConfig($group,$key,$default,$saveDefault,config('tenant.id',$this->tenantId),$castAsArray);
     }
 
     /**
@@ -41,12 +42,13 @@ class DbConfig extends BaseRepository
      * @param mix       $default        default value yang diset jika key tidak ada, isi null jika
      *                                  tidak set default value
      * @param boolean   $saveDefault    default value yang diset jika key tidak ada
+     * @param Boolean   $castAsArray    true jika value diperlakukan sebagai array
      * 
      * @return mix|null                 null jika gagal, $default value yang diset jika berhasil
      */
-    public function getGlobalConfig(string $group,string $key,$default=null,$saveDefault=true)  
+    public function getGlobalConfig(string $group,string $key,$default=null,$saveDefault=true,$castAsArray=false)  
     {        
-        return $this->_getConfig($group,$key,$default,$saveDefault,0);
+        return $this->_getConfig($group,$key,$default,$saveDefault,0,$castAsArray);
     }
 
 
@@ -59,12 +61,12 @@ class DbConfig extends BaseRepository
      *                                  tidak set default value
      * @param boolean   $saveDefault    default value yang diset jika key tidak ada
      * @param integer   $tenantId       tenant id, 0 jika global (all tenant)
+     * @param Boolean   $castAsArray    true jika value diperlakukan sebagai array
      * 
      * @return string|null                 null jika gagal, $default value yang diset jika berhasil
      */
-    private function _getConfig(string $group,string $key,$default=null,$saveDefault=true, $tenantId = 0)  
+    private function _getConfig(string $group,string $key,$default=null,$saveDefault=true,$tenantId=0,$castAsArray=false)  
     {        
-        // $model = MConfig::where('tenant_id',$tenantId)->where('group',$group)->where('key',$key)->first();
         $data = $this->_getOne(new MConfig,[
             ['tenant_id',$tenantId],
             ['group',$group],
@@ -72,13 +74,22 @@ class DbConfig extends BaseRepository
         ]);
 
         if($data){
-            $default = $data['value'];
+            if($castAsArray){
+                $default = json_decode($data['value'],true);
+            }else{
+                $default = $data['value'];
+            }
         }else{
-            if($default!=null && $saveDefault && $key)
-                $this->_setConfig($group,$key,$default,$tenantId); 
+            if($default!=null && $saveDefault && $key){
+                if($castAsArray){
+                    $this->_setConfig($group,$key,json_encode($default),$tenantId);
+                }else{
+                    $this->_setConfig($group,$key,$default,$tenantId);
+                } 
+            }
         }
 
-        return isset($default['value'])?$default['value']:$default;
+        return $default;
     }
 
     /**

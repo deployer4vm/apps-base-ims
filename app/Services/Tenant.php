@@ -276,6 +276,15 @@ class Tenant extends BaseRepository
         
         $input['domain'] = $input['group_app'] . '.' . config('AppConfig.system.multitenant.main_domain');
 
+        // pastikan default config sudah terset
+        if(!isset($input['config'])){
+            $input['config'] = [
+                'storage_limit'=>0,
+                'db_limit'=>0,
+                'resource_limit'=>0,
+            ];
+        }
+        
         $return = $this->_autoResourceCreate('createTenant',[$input]);
         if($return){
             $this->_autoResourceCreate('createTenantDomain',[[
@@ -462,6 +471,13 @@ class Tenant extends BaseRepository
         if(!$tenantId)$tenantId=config('tenant.id');
         $this->getDbConnection($tenantId);// generate dulu confignya
         return Schema::connection($this->getDbConnectionName($tenantId))->hasTable($tableName);
+    }
+    
+    public function tableColumnExists($tableName,$columnName,$tenantId=false)
+    {
+        if(!$tenantId)$tenantId=config('tenant.id');
+        $this->getDbConnection($tenantId);// generate dulu confignya
+        return Schema::connection($this->getDbConnectionName($tenantId))->hasColumn($tableName,$columnName);
     }
     
     /**

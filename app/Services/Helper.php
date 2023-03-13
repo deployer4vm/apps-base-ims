@@ -98,4 +98,59 @@ class Helper
 		}     
 		return $temp;
 	}
+    
+    /**
+     * BC MATH
+     */
+
+    
+    /**
+     * penambahan
+     */
+    public static function bcadd($num1,$num2)
+    {
+        $num1 = self::bcToString($num1);
+        $num2 = self::bcToString($num2);
+        return rtrim(rtrim(bcadd($num1,$num2),'0'),'.')?:'0';
+    }
+
+    /**
+     * pengurangan
+     */
+    public static function bcsub($num1,$num2)
+    {
+        $num1 = self::bcToString($num1);
+        $num2 = self::bcToString($num2);
+        return rtrim(rtrim(bcsub($num1,$num2),'0'),'.')?:'0';
+    }
+
+    /**
+     * perkalian
+     */
+    public static function bcmul($num1,$num2)
+    {
+        $num1 = self::bcToString($num1);
+        $num2 = self::bcToString($num2);
+        return rtrim(rtrim(bcmul($num1,$num2),'0'),'.')?:'0';
+    }
+    
+    /**
+     * pembagian
+     */
+    public static function bcdiv($num1,$num2)
+    {
+        $num1 = self::bcToString($num1);
+        $num2 = self::bcToString($num2);
+        return rtrim(rtrim(bcdiv($num1,$num2),'0'),'.')?:'0';
+    }
+
+    /**
+     * untuk memastikan jika ada scientifik notation akan diconvert ke decimal biasa
+     */
+    public static function bcToString($num)
+    {
+        if(is_string($num))$num = (float) $num;        
+        $num = rtrim(sprintf("%.20f", $num), "0");
+        return rtrim($num,'.')?:'0';
+    }
 }

@@ -1,6 +1,7 @@
 import layoutHelpers from '@/helpers/layout.js';
 import UserAuth from '@/helpers/userauth.js';
 import Web from '@/helpers/web.js';
+import PostRef from '@/helpers/postRef.js';
 import Trans from '@/helpers/trans.js';
 import AppConfig from '@/appconfig.js';
 import Helper from '@/helpers/helper.js';
@@ -374,6 +375,8 @@ export default function () {
         
         //general web helper
         Web: web,
+        
+        PostRef,
 
         // Check for RTL layout
         get isRTL () {

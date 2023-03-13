@@ -806,6 +806,9 @@ class BaseExport extends BaseRepository
         $file = fopen($tmpFilename, 'w');
         fclose($file);
 
+        // penanda tipe source datanya, apakah model eloquent atau langsung array
+        $isSourceDataModel = true;
+
         // jika resume dari jobs sebelumnya yang di split
         if($exportData['isResumeJob']){
 
@@ -846,6 +849,9 @@ class BaseExport extends BaseRepository
                 $data = $exportData['listingModel'][0]::{$exportData['listingModel'][1]}(
                     $exportData, $exportData['listingParams']
                 );
+                // jika array berarti bukan model eloquent
+                if(is_array($data))
+                    $isSourceDataModel = false;
             }else{
                 $data = new $exportData['listingModel'];
                 $data = $this->_filter($data,$exportData['listingParams']['filter']);
@@ -924,100 +930,45 @@ class BaseExport extends BaseRepository
         $GLOBALS['synapse_export_isBreaking'] = false;
         $GLOBALS['first_row'] = true;
         $GLOBALS['FORCE_CANCEL'] = false;
-        $this->chunkWithLimit($data,100,$offset,$limit, function ($chunkedData) use(
-            $cacheKey,
-            &$isFirstRow,
-            &$reader,
-            &$writer,
-            $startTime,
-            $exportData,
-            $border,
-            $styleBorder,
-            $tmpFilename
-        ) {
-            if(!empty($exportData['listingParams']['filter']['append']))
-                $chunkedData = $chunkedData->append($exportData['listingParams']['filter']['append']);
-
-            $chunkedData = $chunkedData->toArray();
-
-            usleep(100);
-
-            foreach ($chunkedData as $dataRow) {
-                // jika main looping langsung di bypass
-                if(!empty($exportData['template']['coreMainLoopingMethod'])){
-                    $exportData['template']['coreMainLoopingMethod'][0]::{$exportData['template']['coreMainLoopingMethod'][1]}(
-                        $exportData,
-                        $reader,
-                        $writer,
-                        $dataRow
-                    );
-                    continue;
-                }
-
-                //jika tanpa template dan row 1 maka simpan nama2 kolomnya, untuk dijadikan header caption
-                if($isFirstRow && empty($exportData['template']['filepath'])){
-                    $headerColumn = $this->formatExportExcelHeader($cacheKey,$dataRow);
-
-                    //kolom terakhir header
-                    // $countHeader = count($headerColumn);
-                    $styleHeading = (new StyleBuilder())
-                        ->setFontBold()
-                        ->setBorder($border)
-                        ->setBackgroundColor('CCCCCC')
-                        ->build();
-
-                    $writer->addRow(
-                        WriterEntityFactory::createRowFromArray($headerColumn,$styleHeading)
-                    );
-
-                    $isFirstRow = false;//tandai flag first row agar tidak masuk ke sini lg di row selanjutnya
-                }
-
-                // format record sesuai data yang diimport sekarang
-                $insertRow = $this->formatExportExcelRow($cacheKey,$dataRow,$GLOBALS['synapse_export_indexExcelRow'],$GLOBALS['synapse_export_indexData']);
-
-                // jika menyertakan fungsi callback untuk format dataRow maka eksekusi
-                if(!empty($exportData['template']['coreRowFormaterMethod'])){
-                    $insertRow = $exportData['template']['coreRowFormaterMethod'][0]::{$exportData['template']['coreRowFormaterMethod'][1]}(
-                        $exportData, // data export cache
-                        $insertRow, // record data yang sudah diformat
-                        $dataRow, // record data yang diexport, diambil dari database
-                        $GLOBALS['synapse_export_indexExcelRow'],// index/nomor urut baris excel yang saat ini diinsert
-                        $GLOBALS['synapse_export_indexData']+1 // index/nomor urut data yang saat ini sedang diinsert
-                    );
-
-                    // jika false berarti diskip
-                    if($insertRow==false)
-                        continue;
-                }
-                // $reader = Excel::insertRow($reader, $GLOBALS['synapse_export_indexExcelRow'], $insertRow);
-
-                $writer->addRow(
-                    WriterEntityFactory::createRowFromArray($insertRow,$styleBorder)
+        if($isSourceDataModel){
+            $this->chunkWithLimit($data,100,$offset,$limit, function ($chunkedData) use(
+                $cacheKey,
+                &$isFirstRow,
+                &$reader,
+                &$writer,
+                $startTime,
+                $exportData,
+                $border,
+                $styleBorder,
+                $tmpFilename
+            ) {
+                return $this->chunkWithLimit_process(
+                    $chunkedData,
+                    $cacheKey, 
+                    $isFirstRow,
+                    $reader,
+                    $writer,
+                    $startTime,
+                    $exportData,
+                    $border,
+                    $styleBorder,
+                    $tmpFilename
                 );
-
-                $GLOBALS['synapse_export_indexExcelRow']++;
-                $GLOBALS['synapse_export_indexData']++;
-
-                // jika false berarti di cancel
-                if($this->_checkAndCounter($cacheKey)==false){
-                    return false;
-                }
-            }
-
-            // DI SPOUT TIDAK SUPPORT BREAK PROCESS
-            // //break proses setiap kurang dari setengah jam
-            // if((microtime(true)-$startTime)>=1800){
-            // // if((microtime(true)-$startTime)>=5){
-
-            //     // $this->appendExportLog($cacheKey,'<br><span class="text-info">Break on last id </span>'.$lastId.' ('.$GLOBALS['synapse_export_indexData'].')<br>');
-            //     $chunkedData = null;
-            //     unset($chunkedData);
-            //     $this->breakToNextExport($cacheKey, $tmpFilename, $reader, $writer, $GLOBALS['synapse_export_indexExcelRow'],$GLOBALS['synapse_export_indexData']);
-            //     $GLOBALS['synapse_export_isBreaking'] = true;
-            //     return false;
-            // }
-        });
+            });
+        }else{
+            $this->processExportArray(
+                $data,
+                $cacheKey, 
+                $isFirstRow,
+                $reader,
+                $writer,
+                $startTime,
+                $exportData,
+                $border,
+                $styleBorder,
+                $tmpFilename
+            );
+        }
 
         if($GLOBALS['FORCE_CANCEL'])return false;
 
@@ -1094,6 +1045,104 @@ class BaseExport extends BaseRepository
             }
         } while ($countResults == $limit);
 
+        return true;
+    }
+    
+    private function chunkWithLimit_process(
+        $chunkedData,
+        $cacheKey, 
+        &$isFirstRow,
+        &$reader,
+        &$writer,
+        $startTime,
+        $exportData,
+        $border,
+        $styleBorder,
+        $tmpFilename
+    ){
+        
+        if(!empty($exportData['listingParams']['filter']['append']))
+            $chunkedData = $chunkedData->append($exportData['listingParams']['filter']['append']);
+
+        $chunkedData = $chunkedData->toArray();
+        
+        usleep(100);
+
+        foreach ($chunkedData as $dataRow) {
+            // jika main looping langsung di bypass
+            if(!empty($exportData['template']['coreMainLoopingMethod'])){
+                $exportData['template']['coreMainLoopingMethod'][0]::{$exportData['template']['coreMainLoopingMethod'][1]}(
+                    $exportData,
+                    $reader,
+                    $writer,
+                    $dataRow
+                );
+                continue;
+            }    
+
+            //jika tanpa template dan row 1 maka simpan nama2 kolomnya, untuk dijadikan header caption
+            if($isFirstRow && empty($exportData['template']['filepath'])){                
+                $headerColumn = $this->formatExportExcelHeader($cacheKey,$dataRow);
+
+                //kolom terakhir header
+                // $countHeader = count($headerColumn);
+                $styleHeading = (new StyleBuilder())
+                    ->setFontBold()
+                    ->setBorder($border)
+                    ->setBackgroundColor('CCCCCC')
+                    ->build();
+
+                $writer->addRow(
+                    WriterEntityFactory::createRowFromArray($headerColumn,$styleHeading)
+                );
+                
+                $isFirstRow = false;//tandai flag first row agar tidak masuk ke sini lg di row selanjutnya
+            }
+
+            // format record sesuai data yang diimport sekarang
+            $insertRow = $this->formatExportExcelRow($cacheKey,$dataRow,$GLOBALS['synapse_export_indexExcelRow'],$GLOBALS['synapse_export_indexData']);
+
+            // jika menyertakan fungsi callback untuk format dataRow maka eksekusi
+            if(!empty($exportData['template']['coreRowFormaterMethod'])){
+                $insertRow = $exportData['template']['coreRowFormaterMethod'][0]::{$exportData['template']['coreRowFormaterMethod'][1]}(
+                    $exportData, // data export cache
+                    $insertRow, // record data yang sudah diformat
+                    $dataRow, // record data yang diexport, diambil dari database
+                    $GLOBALS['synapse_export_indexExcelRow'],// index/nomor urut baris excel yang saat ini diinsert
+                    $GLOBALS['synapse_export_indexData']+1 // index/nomor urut data yang saat ini sedang diinsert
+                );
+
+                // jika false berarti diskip
+                if($insertRow==false)
+                    continue;
+            }               
+            // $reader = Excel::insertRow($reader, $GLOBALS['synapse_export_indexExcelRow'], $insertRow);
+
+            $writer->addRow(
+                WriterEntityFactory::createRowFromArray($insertRow,$styleBorder)
+            );
+
+            $GLOBALS['synapse_export_indexExcelRow']++;
+            $GLOBALS['synapse_export_indexData']++;                     
+            
+            // jika false berarti di cancel
+            if($this->_checkAndCounter($cacheKey)==false){
+                return false;
+            }        
+        }
+        
+        // DI SPOUT TIDAK SUPPORT BREAK PROCESS
+        // //break proses setiap kurang dari setengah jam 
+        // if((microtime(true)-$startTime)>=1800){
+        // // if((microtime(true)-$startTime)>=5){
+            
+        //     // $this->appendExportLog($cacheKey,'<br><span class="text-info">Break on last id </span>'.$lastId.' ('.$GLOBALS['synapse_export_indexData'].')<br>');
+        //     $chunkedData = null;
+        //     unset($chunkedData);
+        //     $this->breakToNextExport($cacheKey, $tmpFilename, $reader, $writer, $GLOBALS['synapse_export_indexExcelRow'],$GLOBALS['synapse_export_indexData']);
+        //     $GLOBALS['synapse_export_isBreaking'] = true;
+        //     return false;
+        // }
         return true;
     }
 

@@ -169,7 +169,7 @@ $homeSlug = $homeSlug?('/'.trim($homeSlug,'/')):'';
 //initiate config ednpoint.json
 $endpoint = [
     'domain' => $client['endpoint'][$system['mode']]['domain'],
-    'home' => $client['endpoint'][$system['mode']]['home'],
+    // 'home' => $client['endpoint'][$system['mode']]['home'],
     'admin' => [
         'app' => $homeSlug.$multiTenantVuePrefix.$client['endpoint'][$system['mode']]['admin'],
         'auth' => $homeSlug.$multiTenantVuePrefix

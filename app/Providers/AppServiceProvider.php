@@ -116,6 +116,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Schema::defaultStringLength(191);
         Router::mixin(new RouterMixin());
+        bcscale(8);
 
         Validator::extend('cannot_empty', function ($attribute, $value, $parameters, $validator) {
             return !empty($value);
