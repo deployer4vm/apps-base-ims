@@ -80,7 +80,7 @@ trait ModelDataTenant
     {
         // jika sebelumnya nama table dengan prefix tenant telah diset,
         // maka tolak set nama table baru
-        if($this->_tableNameSetted && $this->table)
+        // if($this->_tableNameSetted && $this->table)
             $table=$this->table;
 
         $this->table = $table;

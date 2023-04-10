@@ -113,7 +113,7 @@ class Utilities
     {
         //list perintah artisan yg hanya bisa dieksekusi langsung via command line, tidak bisa via class Artisan
         $shellOnlyCommands = [
-            'synapse:updateTenantList',//ditambahkan disini agar bisa dieksekusi tanpa bergantung pada facade Artisan
+            // 'synapse:updateTenantList',//ditambahkan disini agar bisa dieksekusi tanpa bergantung pada facade Artisan
             'clear-compiled',
             'package:discover',
             'backup:run',
