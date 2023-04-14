@@ -67,7 +67,7 @@ class DbConfig extends BaseRepository
      */
     private function _getConfig(string $group,string $key,$default=null,$saveDefault=true,$tenantId=0,$castAsArray=false)  
     {        
-        $data = $this->_getOne(new MConfig,[
+        $data = $this->_getOne(MConfig::select('value'),[
             ['tenant_id',$tenantId],
             ['group',$group],
             ['key',$key]
@@ -129,7 +129,7 @@ class DbConfig extends BaseRepository
      */
     private function _listConfig($group,$tenantId = 0,$returnValue=false)  
     {        
-        $list = $this->_list(new Mconfig, [
+        $list = $this->_list(MConfig::select(['value','key']), [
             ['tenant_id',$tenantId],
             ['group',$group]
         ]);
@@ -194,7 +194,7 @@ class DbConfig extends BaseRepository
 
         //jika config sudah ada maka update data nya
         if($oldConfig){
-            return $this->_update(new Mconfig,[
+            return $this->_update(new MConfig,[
                 ['tenant_id',$tenantId],
                 ['group',$group],
                 ['key',$key],
@@ -203,7 +203,7 @@ class DbConfig extends BaseRepository
             ]);
         //jika belum ada maka create
         }else{
-            return $this->_create(new Mconfig,[
+            return $this->_create(new MConfig,[
                 'tenant_id' => $tenantId,
                 'group' => $group,
                 'key' => $key,
@@ -221,7 +221,7 @@ class DbConfig extends BaseRepository
      */
     public function deleteConfig(string $group,string $key) 
     {                
-        return $this->_delete(new Mconfig,[
+        return $this->_delete(new MConfig,[
             ['tenant_id',config('tenant.id',$this->tenantId)],
             ['group',$group],
             ['key',$key],
@@ -236,7 +236,7 @@ class DbConfig extends BaseRepository
      */
     public function deleteGlobalConfig(string $group,string $key) 
     {                
-        return $this->_delete(new Mconfig,[
+        return $this->_delete(new MConfig,[
             ['tenant_id',0],
             ['group',$group],
             ['key',$key],

@@ -36,7 +36,7 @@ class ConfigController extends BaseController
      */
     public function readList(Request $request)
     {
-        $model = new MConfig;
+        $model = MConfig::select(['group','key','value']);
     
         $model = $model->where('tenant_id',$request->input('tenant_id',config('tenant.id',0)));
 

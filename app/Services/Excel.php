@@ -71,7 +71,6 @@ class Excel
         return $reader; 
     }
 
-    
     public function setFontBold(&$reader, $cell)
     {
         $styleArray = ['font'=>['bold'=>true]];        
@@ -216,7 +215,8 @@ class Excel
                                                             //    set will be iterated.        
         $result = [];
         foreach ($cellIterator as $key2 => $cell) {
-            $result[$key2] = $cell->getFormattedValue();
+            // $result[$key2] = $cell->getFormattedValue();
+            $result[$key2] = $cell->getValue();
         }
         $rowIterator = null;
         unset($rowIterator,$cell,$key2);
@@ -240,6 +240,7 @@ class Excel
 
         foreach ($data as $key => $value) {
             $option = ['quote'=>'auto','type'=>'default'];
+            // $option = ['quote'=>'auto'];
 
             //jika array berarti menggunakan format sendiri
             if(is_array($value)){
@@ -323,13 +324,35 @@ class Excel
         // $reader->getActiveSheet()->getStyle($key)->setQuotePrefix(true);
     }
 
-    public function insertRow(&$reader,$row, $templateVar){
+    /**
+     * Tambah sheet baru
+     */
+    public function createSheet(&$reader)
+    {
+        $objPHPExcel->createSheet();
+        return $objPHPExcel;
+    }
+
+    /**
+     * Insert Row Baru
+     */
+    public function insertRow(&$reader,$row, $templateVar)
+    {
         $reader->getActiveSheet()->insertNewRowBefore($row, 1);
         $newvar = [];
         foreach ($templateVar as $key => $value) {
             $newvar[$key.$row] = $value;
         }
         return $this->setCell($reader,$newvar);
+    }
+
+    /**
+     * tambah kolom baru
+     */
+    public function insertNewColumnBefore(&$reader,$column,$count=1)
+    {
+        $reader->getActiveSheet()->insertNewColumnBefore($column, $count);
+        return $reader;
     }
 
     public function download(&$reader){

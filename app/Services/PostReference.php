@@ -53,6 +53,7 @@ class PostReference //extends BaseRepository
         $this->_tmpRefIdNow = now()->format('YmdHis');
         $refId = $this->generateRandomrefId($formId,$tenantId,$userId);
         while($this->getModel($tenantId)
+            ->select('ref_id')
             ->where('form_id',$formId)
             ->where('ref_id',$refId)
             ->where('tenant_id',$tenantId)
@@ -98,6 +99,7 @@ class PostReference //extends BaseRepository
         $userId = empty($userId)?(UserAuth::user('id')??0):$userId;
 
         $tmp = $this->getModel($tenantId)
+            ->select('ref_id')
             ->where('form_id',$formId)
             ->where('ref_id',$refId)
             ->where('tenant_id',$tenantId)
