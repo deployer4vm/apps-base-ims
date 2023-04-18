@@ -75,7 +75,6 @@ class RouteServiceProvider extends ServiceProvider
 
         // set domain khusus untuk cdn multi tenant
         $tmpConfig = config('filesystems.disks.alltenant');
-        dd(config('AppConfig.system.multitenant.alltenant_storage_domain'));
         $tmpConfig['url'] = config('AppConfig.system.multitenant.alltenant_storage_domain',config('AppConfig.system.multitenant.owner_domain','')).$tmpConfig['url'];
         app()->config['filesystems.disks.alltenant'] = $tmpConfig;
 
