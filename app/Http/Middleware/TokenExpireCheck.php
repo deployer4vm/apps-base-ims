@@ -44,7 +44,7 @@ class TokenExpireCheck
                 return;
             }else{
                 ApiToken::where('api_token',$token)->update(['updated_at'=>now()]);
-            }            
+            }
         }
         return $next($request);
     }
