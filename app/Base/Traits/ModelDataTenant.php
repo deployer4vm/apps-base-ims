@@ -81,9 +81,14 @@ trait ModelDataTenant
     {
         // jika sebelumnya nama table dengan prefix tenant telah diset,
         // maka tolak set nama table baru
-        // if($this->_tableNameSetted && $this->table)
-        if(config('AppConfig.system.multitenant.data_mode',1)==2)
-            $table=$this->table;
+        if(config('AppConfig.system.multitenant.data_mode',1)==2){
+            if (empty($this->tenantId))
+                $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
+            $prefix = empty($this->tenantId)?'':(config('AppConfig.system.multitenant.table_prefix','_').$this->tenantId.'_');
+            $table = $prefix.$this->table;
+        }else{
+            $table = $this->table;
+        }
 
         $this->table = $table;
 
@@ -96,10 +101,9 @@ trait ModelDataTenant
             $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
 
         $table = $this->table;
-        // Log::info(['a',$this->_tableNameSetted,$table]);
         if(config('AppConfig.system.multitenant.data_mode',1)==2){// && !$this->_tableNameSetted){
-            $table = config('AppConfig.system.multitenant.table_prefix','_').$this->tenantId.'_'.$this->table;
-            $this->_tableNameSetted = true;
+            $prefix = empty($this->tenantId)?'':(config('AppConfig.system.multitenant.table_prefix','_').$this->tenantId.'_');
+            $table = $prefix.$this->table;
         }
         // Log::info(['b',$this->_tableNameSetted,$table]);
 
