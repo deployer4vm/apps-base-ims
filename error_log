@@ -1,0 +1,3 @@
+[29-Jul-2022 03:54:15 UTC] PHP Warning:  file_get_contents(/home/smartziswaf/zakat/apps-base/config/../app/MainApp/config/_system.json): failed to open stream: No such file or directory in /home/smartziswaf/zakat/apps-base/config/hpsynapse.php on line 6
+[29-Jul-2022 03:54:15 UTC] PHP Warning:  file_get_contents(/home/smartziswaf/zakat/apps-base/config/../app/MainApp/config/_client.json): failed to open stream: No such file or directory in /home/smartziswaf/zakat/apps-base/config/hpsynapse.php on line 7
+[29-Jul-2022 03:54:15 UTC] PHP Warning:  file_get_contents(/home/smartziswaf/zakat/apps-base/config/../app/MainApp/config/_packageLocal.json): failed to open stream: No such file or directory in /home/smartziswaf/zakat/apps-base/config/hpsynapse.php on line 155
