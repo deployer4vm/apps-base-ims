@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Log;
 trait ModelDataTenant
 {
     protected $tenantId = 0;
-    protected $_tableNameSetted = false;
     
     /**
      * Overide data model jika diperlukan
@@ -81,8 +80,14 @@ trait ModelDataTenant
     {
         // jika sebelumnya nama table dengan prefix tenant telah diset,
         // maka tolak set nama table baru
-        if($this->_tableNameSetted && $this->table)
-            $table=$this->table;
+        if(config('AppConfig.system.multitenant.data_mode',1)==2){
+            if (empty($this->tenantId))
+                $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');    
+            $prefix = empty($this->tenantId)?'':(config('AppConfig.system.multitenant.table_prefix','_').$this->tenantId.'_');
+            $table = $prefix.$this->table;
+        }else{
+            $table = $this->table;
+        }
 
         $this->table = $table;
 
@@ -95,9 +100,9 @@ trait ModelDataTenant
             $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
 
         $table = $this->table;
-        if(config('AppConfig.system.multitenant.data_mode',1)==2 && !$this->_tableNameSetted){
-            $table = config('AppConfig.system.multitenant.table_prefix','_').$this->tenantId.'_'.$this->table;
-            $this->_tableNameSetted = true;
+        if(config('AppConfig.system.multitenant.data_mode',1)==2){// && !$this->_tableNameSetted){
+            $prefix = empty($this->tenantId)?'':(config('AppConfig.system.multitenant.table_prefix','_').$this->tenantId.'_');
+            $table = $prefix.$this->table;
         }
         
         return $table;
