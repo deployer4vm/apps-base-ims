@@ -60,11 +60,12 @@ trait ModelDataTenant
     
     public function getConnectionName()
     {
-        //get tenant id yang terset di model ini
-        if (empty($this->tenantId))
-            $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
             
         if(config('AppConfig.system.multitenant.data_mode',1)==3){
+            //get tenant id yang terset di model ini
+            if (empty($this->tenantId))
+                $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
+
             if($this->connection != Tenant::getDbConnectionName($this->tenantId)){
                 $this->setDbPerTenant();
                 $this->connection = Tenant::getDbConnectionName($this->tenantId);
@@ -80,15 +81,9 @@ trait ModelDataTenant
     {
         // jika sebelumnya nama table dengan prefix tenant telah diset,
         // maka tolak set nama table baru
-        if(config('AppConfig.system.multitenant.data_mode',1)==2){
-            if (empty($this->tenantId))
-                $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');    
-            $prefix = empty($this->tenantId)?'':(config('AppConfig.system.multitenant.table_prefix','_').$this->tenantId.'_');
-            $table = $prefix.$this->table;
-        }else{
+        if(config('AppConfig.system.multitenant.data_mode',1)==2)
             $table = $this->table;
-        }
-
+        
         $this->table = $table;
 
         return $this;
@@ -96,11 +91,11 @@ trait ModelDataTenant
 
     public function getTable()
     {
-        if (empty($this->tenantId))
-            $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
 
         $table = $this->table;
         if(config('AppConfig.system.multitenant.data_mode',1)==2){// && !$this->_tableNameSetted){
+            if (empty($this->tenantId))
+                $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
             $prefix = empty($this->tenantId)?'':(config('AppConfig.system.multitenant.table_prefix','_').$this->tenantId.'_');
             $table = $prefix.$this->table;
         }

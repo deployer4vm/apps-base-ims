@@ -105,15 +105,12 @@ class Tenant extends BaseRepository
             $domainData = TenantDomain::where('domain',$domain)->where('status','!=',0)->first();
             $this->_tmpTenantListByDomain[$domain] = $domainData?$this->getTenantModel()->where('id',$domainData['tenant_id'])->first():false;
 
-            // $this->_tmpTenantListByDomain[$domain] = $this->getTenantModel()->whereHas('domain',function($m) use($domain){
-            //     $m->where('domain',$domain)->where('status',1);
-            // })->first();
-
             if($this->_tmpTenantListByDomain[$domain]){
                 $this->_tmpTenantListByDomain[$domain] = $this->_tmpTenantListByDomain[$domain]->toArray();
                 $this->_tmpTenantListByDomain[$domain]['domain'] = $domainData->toArray();
+            }else{
+                return false;
             }
-
 
             $this->_tmpTenantListByGroupApp[$this->_tmpTenantListByDomain[$domain]['group_app']] = $this->_tmpTenantListByDomain[$domain];
             $this->_tmpTenantList[$this->_tmpTenantListByDomain[$domain]['id']] = $this->_tmpTenantListByDomain[$domain];
