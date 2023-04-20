@@ -6,16 +6,15 @@ use App\Facades\Tenant;
 use Illuminate\Support\Facades\Log;
 
 /**
- * use trait ini di model yang datanya ada pemisahan antar tenantnya
+ * use trait ini di model yang datanya ada pemisahan antar tenantnya 
  */
 trait ModelDataTenant
 {
     protected $tenantId = 0;
-    protected $_tableNameSetted = false;
-
+    
     /**
      * Overide data model jika diperlukan
-     *
+     * 
      * 1 mode share dalam 1 table
      * 2 mode beda table
      * 3 mode beda database
@@ -24,7 +23,7 @@ trait ModelDataTenant
     {
         return config('AppConfig.system.multitenant.data_mode',1);
     }
-
+    
     /**
      * set tenant aktif model ini
      */
@@ -47,7 +46,7 @@ trait ModelDataTenant
     {
         if (empty($this->tenantId))
             $this->tenantId = $GLOBALS['model_tenant_id'] = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
-
+                   
         return $this->tenantId;
     }
 
@@ -55,17 +54,18 @@ trait ModelDataTenant
     {
         if (empty($this->tenantId))
             $this->tenantId = $GLOBALS['model_tenant_id'] = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
-
+        
         Tenant::setDb($this->tenantId);
     }
-
+    
     public function getConnectionName()
     {
-        //get tenant id yang terset di model ini
-        if (empty($this->tenantId))
-            $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
-
+            
         if(config('AppConfig.system.multitenant.data_mode',1)==3){
+            //get tenant id yang terset di model ini
+            if (empty($this->tenantId))
+                $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
+
             if($this->connection != Tenant::getDbConnectionName($this->tenantId)){
                 $this->setDbPerTenant();
                 $this->connection = Tenant::getDbConnectionName($this->tenantId);
@@ -73,17 +73,17 @@ trait ModelDataTenant
         }else{
             $this->connection = config('database.perTenant');
         }
-
-        return parent::getConnectionName();
+        
+        return parent::getConnectionName(); 
     }
 
     public function setTable($table)
     {
         // jika sebelumnya nama table dengan prefix tenant telah diset,
         // maka tolak set nama table baru
-        // if($this->_tableNameSetted && $this->table)
-            $table=$this->table;
-
+        if(config('AppConfig.system.multitenant.data_mode',1)==2)
+            $table = $this->table;
+        
         $this->table = $table;
 
         return $this;
@@ -91,16 +91,15 @@ trait ModelDataTenant
 
     public function getTable()
     {
-        if (empty($this->tenantId))
-            $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
 
         $table = $this->table;
         if(config('AppConfig.system.multitenant.data_mode',1)==2){// && !$this->_tableNameSetted){
+            if (empty($this->tenantId))
+                $this->tenantId = isset($GLOBALS['model_tenant_id'])?$GLOBALS['model_tenant_id']:config('tenant.id');
             $prefix = empty($this->tenantId)?'':(config('AppConfig.system.multitenant.table_prefix','_').$this->tenantId.'_');
             $table = $prefix.$this->table;
         }
-        // Log::info(['b',$this->_tableNameSetted,$table]);
-
+        
         return $table;
     }
 }
