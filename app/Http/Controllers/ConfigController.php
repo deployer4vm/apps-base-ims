@@ -88,7 +88,8 @@ class ConfigController extends BaseController
                         $model->update($updateData);
                     }else{
                         $updateData['group'] = $value['group'];
-                        $updateData['key'] = $value['key'];
+                        $updateData['key'] = $value['key'];                        
+                        $updateData['tenant_id'] = $tenantId;
                         $model->create($updateData);
                     }
                 }
