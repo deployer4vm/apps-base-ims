@@ -3,12 +3,12 @@
         <div class="d-flex align-items-center">
             <b-btn
                 v-if="showBack"
-                class="p-2 rounded-0 btn btn-secondary d-inline-block borderless text-nowrap"
+                class="btn btn btn btn-xs w-icon btn-dark mr-3 btn-secondary"
                 @click="goBack"
             >
-                <span class="ion ion-ios-arrow-back"></span>&nbsp; {{ Trans.get("lang.back") }}
+                <i class="fi fi-rr-arrow-left"></i><span>{{ Trans.get("lang.back") }} </span>
             </b-btn>
-            <h5 class="p-2 pl-4 m-0 d-inline-block text-nowrap font-weight-normal">
+            <h5 class="my-2 pr-1 m-0 d-inline-block text-nowrap title-breadcrumb">
                 {{ pageTitle }}
             </h5>
         </div>
