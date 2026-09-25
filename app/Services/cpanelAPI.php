@@ -204,8 +204,8 @@ class cpanelAPI
             $httpHeaders[] = "Content-type: multipart/form-data";
             curl_setopt($ch,CURLOPT_POSTFIELDS, $this->postData);
         }
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, TRUE);
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $httpHeaders);
@@ -239,7 +239,7 @@ class cpanelAPI
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, $mr > 0);
         curl_setopt($ch, CURLOPT_MAXREDIRS, $mr);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, TRUE);
         return curl_exec($ch);
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 use App\Models\Backup as BModel;
+use Illuminate\Support\Facades\File;
 
 use App\Base\BaseRepository;
 
@@ -26,7 +27,7 @@ class Backup extends BaseRepository
         $backup = BModel::orderBy('id','ASC')->first();
 
         //delete file
-        exec('rm -rf "'.$backup->path.'"');
+        $this->deleteBackupFile($backup->path);
 
         $backup->delete();
     }
@@ -38,7 +39,16 @@ class Backup extends BaseRepository
         if($backup){
             $this->_delete($this->model, $where);
             //delete file
-            exec('rm -rf "'.$backup['path'].'"');
+            $this->deleteBackupFile($backup['path']);
+        }
+    }
+
+    private function deleteBackupFile($path)
+    {
+        $backupRoot = realpath(storage_path('app/backups'));
+        $target = realpath($path);
+        if ($backupRoot && $target && strpos($target, $backupRoot.DIRECTORY_SEPARATOR) === 0 && is_file($target)) {
+            File::delete($target);
         }
     }
 }

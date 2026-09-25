@@ -5,7 +5,12 @@ const path = require("path");
 const trim = require("lodash/trim");
 var fs = require("fs");
 
-let systemVar = JSON.parse(fs.readFileSync("app/MainApp/config/_system.json"));
+const generatedSystemConfig = "app/MainApp/config/_system.json";
+const defaultSystemConfig = "app/MainApp/config/system.json";
+const systemConfigPath = fs.existsSync(generatedSystemConfig)
+    ? generatedSystemConfig
+    : defaultSystemConfig;
+let systemVar = JSON.parse(fs.readFileSync(systemConfigPath));
 var publicPath = path.normalize(systemVar.public_path?trim(systemVar.public_path,'/'):'public');
 
 /*
@@ -42,6 +47,7 @@ mix.webpackConfig({
     resolve: {
         alias: {
             "@": path.join(__dirname, "resources/assets/src"),
+            "vue$": "vue/dist/vue.esm.js",
             node_modules: path.join(__dirname, "node_modules")
         }
     },

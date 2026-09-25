@@ -7,8 +7,9 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 use App\Facades\Backup;
+use Symfony\Component\Process\Process;
 
 use Carbon\Carbon;
 
@@ -38,26 +39,40 @@ class GenerateBackup implements ShouldQueue
         $dbName = config('database.connections.mysql.database');
         $userName = config('database.connections.mysql.username');
         $password = config('database.connections.mysql.password');
-        $backupPath = public_path('backup_file');
-        $newBackupPath = public_path('backup_file'.DIRECTORY_SEPARATOR.$now);
+        $backupPath = storage_path('app/backups');
+        $newBackupPath = $backupPath.DIRECTORY_SEPARATOR.'work'.DIRECTORY_SEPARATOR.$now;
         $uploadPath = public_path('upload');
 
-        if(!file_exists($newBackupPath)){
-            exec('cd "'.$backupPath.'" && mkdir "'.$now.'"');
+        if (!File::isDirectory($newBackupPath)) {
+            File::makeDirectory($newBackupPath, 0750, true);
+        }
+        if (!File::isDirectory($uploadPath)) {
+            File::makeDirectory($uploadPath, 0750, true);
         }
 
-        //backup database
-        exec('cd "'.$newBackupPath.'" && mysqldump -u '.$userName.' -p"'.$password.'" '.$dbName.' > db.sql');
-        // exec('cd "'.$newBackupPath.'" && touch db.sql');
-        //compress file upload
-        exec('cd "'.$newBackupPath.'" && tar -C "'.$uploadPath.'" -zcvf upload.tar.gz .');
-        //compress semua hasil backup
-        exec('cd "'.$backupPath.'" && tar -C "'.$newBackupPath.'" -zcvf '.$now.'.tar.gz .');
-        //delete semua file 
-        exec('rm -rf "'.$newBackupPath.'"');
+        $dump = new Process(
+            ['mysqldump', '-u', $userName, $dbName],
+            $newBackupPath,
+            ['MYSQL_PWD' => (string) $password]
+        );
+        $dump->mustRun();
+        File::put($newBackupPath.DIRECTORY_SEPARATOR.'db.sql', $dump->getOutput());
+
+        (new Process([
+            'tar', '-C', $uploadPath, '-zcf',
+            $newBackupPath.DIRECTORY_SEPARATOR.'upload.tar.gz', '.'
+        ]))->mustRun();
+
+        $archivePath = $backupPath.DIRECTORY_SEPARATOR.$now.'.tar.gz';
+        (new Process([
+            'tar', '-C', $newBackupPath, '-zcf', $archivePath,
+            'db.sql', 'upload.tar.gz'
+        ]))->mustRun();
+
+        File::deleteDirectory($newBackupPath);
         Backup::create([
             'backup_date'=>$now,
-            'path'=>$backupPath.DIRECTORY_SEPARATOR.$now.'.tar.gz',
+            'path'=>$archivePath,
             'status'=>1
         ]);
 
