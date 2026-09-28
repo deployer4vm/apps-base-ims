@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Services\Utilities;
+use hpsynapse\moduser\Facades\UserAuth;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,7 +15,7 @@ use App\Services\Utilities;
 | contains the "web" middleware group. Now create something great!
 |
 */
-Route::group(['prefix'=>'system-queue'],function(){
+Route::group(['prefix'=>'system-queue', 'middleware'=>'auth'],function(){
     // listing and manage export
     Route::group(['prefix'=>'export'],function(){
         Route::get('list', 'queue\ExportController@listQueue')->name('system.queue.export.list');
@@ -33,18 +34,25 @@ Route::group(['prefix'=>'system-queue'],function(){
     });
     // restart scheduller
     Route::get('restart', function(Request $request){
+        abort_unless(UserAuth::isWebDev(), 403);
         $return = Utilities::resetSchedulerWorker();
         return $return;
     });
 });
 
-Route::get('/storage{any}', 'StorageController@index')->where('any', '.*');
+Route::get('/storage{any}', 'StorageController@index')
+    ->where('any', '.*')
+    ->middleware('throttle:120,1');
+Route::get('/public_storage{any}', 'StorageController@publicStorage')
+    ->where('any', '.*')
+    ->middleware('throttle:120,1');
 //jika artisan web access aktif, maka buka
 if(config('AppConfig.system.has_artisan_web_access',false)){
     $artisanEndpoind = config('AppConfig.system.has_artisan_web_access','/update/run-artisan/').'{action}';
     Route::get($artisanEndpoind, function(Request $request){
+        abort_unless(UserAuth::isWebDev(), 403);
         $command = $request->route('action');
         $return = Utilities::artisan($command);
         return $return;
-    });
+    })->middleware('auth');
 }

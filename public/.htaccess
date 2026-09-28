@@ -1,20 +1,43 @@
-<IfModule mod_rewrite.c>
-    <IfModule mod_negotiation.c>
-        Options -MultiViews -Indexes
-    </IfModule>
+<IfModule mod_negotiation.c>
+    Options -MultiViews -Indexes
+</IfModule>
 
+# Only Laravel's front controller may be executed as PHP from the public root.
+<FilesMatch "(?i)^(?!index\.php$).*\.(?:php(?:[0-9]+)?|phtml|pht|phar|phps)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Allow,Deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Prevent accidental exposure of common secret and backup file types.
+<FilesMatch "(?i)\.(?:env|ini|log|sql|bak|conf|ya?ml)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Allow,Deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
     RewriteEngine On
+
+    # Legacy backups must never be served from the public document root.
+    RewriteRule ^backup_file(?:/|$) - [F,L,NC]
+
+    # Force a legacy public_storage symlink through Laravel's access checks.
+    RewriteRule ^public_storage(?:/|$) index.php [L,NC]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-    # Redirect Trailing Slashes If Not A Folder...
-    # RewriteCond %{REQUEST_FILENAME} !-d
-    # RewriteCond %{REQUEST_URI} (.+)/$
-    # RewriteRule ^ %1 [L,R=301]
-
-    # Handle Front Controller...
+    # Handle Front Controller
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]

@@ -2,10 +2,9 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Artisan;
-
 use App\Models\Tenant as MTenant;
 use App\Facades\Tenant;
+use Symfony\Component\Process\Process;
 
 class Utilities
 {
@@ -136,14 +135,20 @@ class Utilities
             'optimize:clear',
             'optimize'
         ];
-        $ret = '';
-        if(in_array($command,$shellOnlyCommands)){
-            $ret = shell_exec('cd '.base_path('').' && php artisan ' . $command);
-        }else{
-            Artisan::call($command);
-            $ret = Artisan::output();
+        if (!in_array($command, $shellOnlyCommands, true)) {
+            throw new \InvalidArgumentException('Artisan command is not allowed.');
         }
-        return ['comamnd'=>$command,'return'=>$ret];
+
+        $arguments = preg_split('/\s+/', trim($command));
+        $process = new Process(array_merge([PHP_BINARY, base_path('artisan')], $arguments), base_path());
+        $process->setTimeout(null);
+        $process->run();
+
+        return [
+            'comamnd' => $command,
+            'return' => $process->getOutput().$process->getErrorOutput(),
+            'exit_code' => $process->getExitCode(),
+        ];
     }
     
 
@@ -154,7 +159,9 @@ class Utilities
     {
         $ret = [];
         // kill all artisan
-        $ret[] = shell_exec('pkill -f artisan');
+        $killProcess = new Process(['pkill', '-f', 'artisan']);
+        $killProcess->run();
+        $ret[] = $killProcess->getOutput().$killProcess->getErrorOutput();
         // reset cache
         $ret[] = self::artisan('optimize:clear');
         $ret[] = self::artisan('optimize:clear');// 2 kali eksekusi untuk memastikan benar2 terhapus

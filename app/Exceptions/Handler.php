@@ -56,7 +56,7 @@ class Handler extends ExceptionHandler
             if($isApi){ 
                 return response()->json(['status'=>404,'message'=>__('alert.resource_not_found'),'data'=>null,'errors'=>[true]],404);
             }else{
-                return response()->view('error.generic',['message'=>__('alert.resource_not_found'),'code'=>404]);
+                return response()->view('error.generic',['message'=>__('alert.resource_not_found'),'code'=>404], 404);
             }
         }else if($exception instanceof \Illuminate\Auth\AuthenticationException){
             if($isApi){ 
@@ -66,14 +66,14 @@ class Handler extends ExceptionHandler
                 if($exception->redirectTo()){
                     return response()->redirectTo($exception->redirectTo())->with('alert', ['type' => 'danger', 'message'=>__('alert.auth_required'),'code'=>401]);
                 }else{
-                    return response()->view('error.generic',['message'=>__('alert.invalid_token'),'code'=>401]);
+                    return response()->view('error.generic',['message'=>__('alert.invalid_token'),'code'=>401], 401);
                 }
             }
         }else if($exception instanceof \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException){
             if($isApi){ 
                 return response()->json(['status'=>405,'message'=>__('alert.resource_not_found'),'data'=>null,'errors'=>[true]],405);
             }else{
-                return response()->view('error.generic',['message'=>__('alert.resource_not_found'),'code'=>405]);
+                return response()->view('error.generic',['message'=>__('alert.resource_not_found'),'code'=>405], 405);
             }
         }
         

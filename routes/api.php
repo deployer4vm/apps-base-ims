@@ -73,8 +73,16 @@ Route::get(config('AppConfig.system.lang_endpoint','/sys/lang'),'LangController@
  * kindeditor
  * -------------------------------------------------
  */
-Route::match(['post','get'],config('AppConfig.system.editor_endpoint.upload','/sys/editor/upload'),'KindeditorController@upload')->name('sys.editor.upload');
-Route::match(['post','get'],config('AppConfig.system.editor_endpoint.filemanager','/sys/editor/filemanager'),'KindeditorController@filemanager')->name('sys.editor.filemanager');
+Route::middleware(['auth:api', 'throttle:30,1'])->group(function () {
+    Route::post(
+        config('AppConfig.system.editor_endpoint.upload','/sys/editor/upload'),
+        'KindeditorController@upload'
+    )->name('sys.editor.upload');
+    Route::get(
+        config('AppConfig.system.editor_endpoint.filemanager','/sys/editor/filemanager'),
+        'KindeditorController@filemanager'
+    )->name('sys.editor.filemanager');
+});
 
 /**
  * Post reference

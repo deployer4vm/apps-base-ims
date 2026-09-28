@@ -13,13 +13,14 @@ class Kernel extends HttpKernel
      *
      * @var array
      */
-    protected $middleware = [        
+    protected $middleware = [
         // \App\Http\Middleware\TrustHosts::class,
         \App\Http\Middleware\TrustProxies::class,
         \Fruitcake\Cors\HandleCors::class,
         \App\Http\Middleware\CheckForMaintenanceMode::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
+        \App\Http\Middleware\SecureHeaders::class,
         // \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         // \App\Http\Middleware\AppGroupCheck::class,//dipindah ke routeserviceprovider
     ];
@@ -74,5 +75,4 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'TenantOnly' => \App\Http\Middleware\TenantOnly::class,
     ];
-
 }

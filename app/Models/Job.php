@@ -25,7 +25,15 @@ class Job extends Model
     public function getFormatedPayloadAttribute()
     {
         $payload = json_decode($this->payload,true);
-        $payload['data']['command'] = (array) unserialize($payload['data']['command']);
+        if (!isset($payload['data']['command']) || !is_string($payload['data']['command'])) {
+            return $payload;
+        }
+
+        $command = unserialize($payload['data']['command'], ['allowed_classes' => false]);
+        $payload['data']['command'] = is_object($command)
+            ? get_object_vars($command)
+            : (array) $command;
+
         return $payload;
     }
 }

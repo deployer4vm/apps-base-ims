@@ -50,26 +50,44 @@ class GenerateBackup implements ShouldQueue
             File::makeDirectory($uploadPath, 0750, true);
         }
 
-        $dump = new Process(
-            ['mysqldump', '-u', $userName, $dbName],
-            $newBackupPath,
-            ['MYSQL_PWD' => (string) $password]
-        );
-        $dump->mustRun();
-        File::put($newBackupPath.DIRECTORY_SEPARATOR.'db.sql', $dump->getOutput());
-
-        (new Process([
-            'tar', '-C', $uploadPath, '-zcf',
-            $newBackupPath.DIRECTORY_SEPARATOR.'upload.tar.gz', '.'
-        ]))->mustRun();
-
         $archivePath = $backupPath.DIRECTORY_SEPARATOR.$now.'.tar.gz';
-        (new Process([
-            'tar', '-C', $newBackupPath, '-zcf', $archivePath,
-            'db.sql', 'upload.tar.gz'
-        ]))->mustRun();
+        try {
+            $dump = new Process(
+                ['mysqldump', '-u', $userName, $dbName],
+                $newBackupPath,
+                ['MYSQL_PWD' => (string) $password]
+            );
+            $dump->setTimeout(null);
+            $dump->mustRun();
 
-        File::deleteDirectory($newBackupPath);
+            $databaseDump = $newBackupPath.DIRECTORY_SEPARATOR.'db.sql';
+            File::put($databaseDump, $dump->getOutput());
+            File::chmod($databaseDump, 0600);
+
+            $uploadArchive = new Process([
+                'tar', '-C', $uploadPath, '-zcf',
+                $newBackupPath.DIRECTORY_SEPARATOR.'upload.tar.gz', '.'
+            ]);
+            $uploadArchive->setTimeout(null);
+            $uploadArchive->mustRun();
+            File::chmod($newBackupPath.DIRECTORY_SEPARATOR.'upload.tar.gz', 0600);
+
+            File::put($archivePath, '');
+            File::chmod($archivePath, 0600);
+            $backupArchive = new Process([
+                'tar', '-C', $newBackupPath, '-zcf', $archivePath,
+                'db.sql', 'upload.tar.gz'
+            ]);
+            $backupArchive->setTimeout(null);
+            $backupArchive->mustRun();
+            File::chmod($archivePath, 0600);
+        } catch (\Throwable $e) {
+            File::delete($archivePath);
+            throw $e;
+        } finally {
+            File::deleteDirectory($newBackupPath);
+        }
+
         Backup::create([
             'backup_date'=>$now,
             'path'=>$archivePath,
