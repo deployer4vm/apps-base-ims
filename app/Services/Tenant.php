@@ -490,13 +490,14 @@ class Tenant extends BaseRepository
     public function getDbSize($tenantId = 0)
     {
         if ($this->dbExists($tenantId)) {
+            $databaseName = $this->getDbConnection($tenantId)['database'];
             $query = 'SELECT table_name AS "Table",
                     ((data_length + index_length) / 1024 / 1024) AS "Size"
                     FROM information_schema.TABLES
-                    WHERE table_schema = "' . $this->getDbConnection($tenantId)['database'] . '"
+                    WHERE table_schema = ?
                     ORDER BY (data_length + index_length) DESC';
             $result = $this->db($tenantId)
-                ->select($query);
+                ->select($query, [$databaseName]);
             $size = array_sum(array_column($result, 'Size'));
             return round((float) $size, 2);
         }
@@ -709,6 +710,9 @@ class Tenant extends BaseRepository
      */
     public function createDatabase($tenantId, $dbServerId = 0)
     {
+        $tenantId = $this->validateNumericIdentifier($tenantId, 'tenant ID');
+        $dbServerId = $this->validateNumericIdentifier($dbServerId, 'database server ID');
+
         if (
             ($dbServerId == 0 && config('xmlapi.dbcreate_use_cpanel'))
             || ($dbServerId != 0
@@ -733,6 +737,8 @@ class Tenant extends BaseRepository
      */
     public function createDatabaseSql($tenantId, $dbServerId = 0)
     {
+        $tenantId = $this->validateNumericIdentifier($tenantId, 'tenant ID');
+        $dbServerId = $this->validateNumericIdentifier($dbServerId, 'database server ID');
 
         //jika database sudah ada maka tolak
         if ($this->dbExists($tenantId)) {
@@ -742,19 +748,33 @@ class Tenant extends BaseRepository
         // jika di server db utama
         if ($dbServerId == 0) {
             $dbServerConfig = "database.connections." . config("database.perTenant");
-            $schemaName = config($dbServerConfig . ".database_prefix")
-                . $tenantId;
-            $charset = config($dbServerConfig . ".charset", 'utf8mb4');
-            $collation = config(
-                $dbServerConfig . ".collation",
-                'utf8mb4_general_ci'
+            $schemaName = $this->validateSqlIdentifier(
+                config($dbServerConfig . ".database_prefix") . $tenantId,
+                'database name'
             );
-            DB::statement("CREATE DATABASE IF NOT EXISTS $schemaName CHARACTER SET $charset COLLATE $collation;");
+            $charset = $this->validateSqlIdentifier(
+                config($dbServerConfig . ".charset", 'utf8mb4'),
+                'database charset'
+            );
+            $collation = $this->validateSqlIdentifier(
+                config($dbServerConfig . ".collation", 'utf8mb4_general_ci'),
+                'database collation'
+            );
+            DB::statement("CREATE DATABASE IF NOT EXISTS `$schemaName` CHARACTER SET $charset COLLATE $collation;");
         } else {
             $dbServerConfig = "database.multi_database_server.servers." . $dbServerId;
-            $schemaName = config($dbServerConfig . ".database_prefix") . $tenantId;
-            $charset = config($dbServerConfig . ".charset", 'utf8mb4');
-            $collation = config($dbServerConfig . ".collation", 'utf8mb4_general_ci');
+            $schemaName = $this->validateSqlIdentifier(
+                config($dbServerConfig . ".database_prefix") . $tenantId,
+                'database name'
+            );
+            $charset = $this->validateSqlIdentifier(
+                config($dbServerConfig . ".charset", 'utf8mb4'),
+                'database charset'
+            );
+            $collation = $this->validateSqlIdentifier(
+                config($dbServerConfig . ".collation", 'utf8mb4_general_ci'),
+                'database collation'
+            );
 
             $pdo = new \PDO(
                 "mysql:host=" . config($dbServerConfig . ".host"),
@@ -762,7 +782,7 @@ class Tenant extends BaseRepository
                 config($dbServerConfig . ".password")
             );
             // $pdo = Tenant::getDbRawPDO($koperasiId);
-            $pdo->exec("CREATE DATABASE IF NOT EXISTS $schemaName CHARACTER SET $charset COLLATE $collation;");
+            $pdo->exec("CREATE DATABASE IF NOT EXISTS `$schemaName` CHARACTER SET $charset COLLATE $collation;");
         }
         // generate connection config per tenant nya
         // Tenant::getDbConnection($koperasiId);
@@ -780,6 +800,8 @@ class Tenant extends BaseRepository
      */
     public function createDatabaseCpanel($tenantId, $dbServerId = 0)
     {
+        $tenantId = $this->validateNumericIdentifier($tenantId, 'tenant ID');
+        $dbServerId = $this->validateNumericIdentifier($dbServerId, 'database server ID');
 
         // jika di server db utama
         if ($dbServerId == 0) {
@@ -798,7 +820,10 @@ class Tenant extends BaseRepository
             ];
         }
 
-        $schemaName = $dbPrefix . $tenantId;
+        $schemaName = $this->validateSqlIdentifier(
+            $dbPrefix . $tenantId,
+            'database name'
+        );
         $uapi = new \App\Services\cpanelAPI(
             $cpanel['username'],
             $cpanel['password'],
@@ -810,6 +835,26 @@ class Tenant extends BaseRepository
             $this->error = $ret->errors[0];
 
         return $ret->status ? true : false;
+    }
+
+    private function validateNumericIdentifier($value, $label)
+    {
+        $value = (string) $value;
+        if (!preg_match('/\A[0-9]+\z/D', $value)) {
+            throw new \InvalidArgumentException("Invalid $label");
+        }
+
+        return (int) $value;
+    }
+
+    private function validateSqlIdentifier($value, $label)
+    {
+        $value = (string) $value;
+        if (!preg_match('/\A[A-Za-z0-9_]+\z/D', $value)) {
+            throw new \InvalidArgumentException("Invalid $label");
+        }
+
+        return $value;
     }
 
     /**

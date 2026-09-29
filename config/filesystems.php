@@ -128,7 +128,7 @@ return [
     |
     */
 
-    'links' => [
-        public_path('public_storage') => storage_path('app/public'),
-    ],
+    // Public files are served through StorageController so MIME and access
+    // checks cannot be bypassed by a direct symbolic link.
+    'links' => [],
 ];

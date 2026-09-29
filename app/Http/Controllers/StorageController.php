@@ -2,386 +2,133 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\Request;
-
 use App\Base\BaseController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 /**
- * handle serving file di storage
+ * Serve tenant storage files without exposing the storage directory directly.
  */
 class StorageController extends BaseController
 {
-    private $filemtime = '';
+    private const PUBLIC_IMAGE_PREFIXES = [
+        'image/',
+        'images/',
+        'editor/image/',
+        'editor/images/',
+        'company/',
+        'public/image/',
+        'public/images/',
+    ];
 
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-    }
+    private const INLINE_IMAGE_MIMES = [
+        'image/gif',
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/bmp',
+        'image/x-icon',
+        'image/vnd.microsoft.icon',
+    ];
 
-    /**
-     * serve uplaod file di /storage/app/files/*
-     * urlnya nya /storage/*
-     *
-     * @param Request $request *semua optional
-     *      size : id/key size nya
-     */
     public function index(Request $request)
     {
-        $segment = $request->segments();
-        array_shift($segment); // buang segment "storage"
-        
-        $fullFilePath = implode('/', $segment);
-        // dd(Storage::path($fullFilePath));
-        //isi segement di /storage/*
-        switch ($segment[0]) {
-            case 'editor': // handle file yang diupload dari kind editor
-                return $this->editor($request, $segment, $fullFilePath);
-                break;
-            case 'private': //jika akses file yang perlu akses token [SOON]
-                if (Storage::exists($fullFilePath)) {
-                    $fileName = end($segment);
-                    if ($request->input('download', false)) {
-                        return $this->serverDownload(
-                            $fullFilePath,
-                            $fileName,
-                            $request->input('size', false)
-                        );
-                    } else {
-                        return $this->serverFile(
-                            $fullFilePath,
-                            $fileName,
-                            $request->input('size', false)
-                        );
-                    }
-                }
-                break;
-            case 'content': //handle sementara file pengumuman untuk di mobile, nanti perbaiki mobile nya
-                $fileName = end($segment);
-                return $this->serverFileAlltenant($fullFilePath, $fileName, $request->input('size', false));
-                break;
-            case '': // lainnya
-            case 'image': // handle file image
-            case 'images': // handle file image
-            default: // jika tidak dihandle khusus maka langsung didownload saja
-                if (Storage::exists($fullFilePath)) {
-                    $fileName = end($segment);
-                    if ($request->input('download', false)) {
-                        return $this->serverDownload($fullFilePath, $fileName, $request->input('size', false));
-                    } else {
-                        return $this->serverFile($fullFilePath, $fileName, $request->input('size', false));
-                    }
-                }
-                break;
+        $path = ltrim((string) $request->route('any', ''), '/');
+        if (strpos($path, 'content/') === 0) {
+            return $this->serve(
+                $request,
+                Storage::disk('alltenant'),
+                ['content/']
+            );
         }
-        return $this->serveNotFound($fullFilePath);
+
+        return $this->serve($request, Storage::disk(config('filesystems.default')));
     }
 
-    private function serveNotFound($path)
+    public function publicStorage(Request $request)
     {
-        // jika gambar maka serve default
-        if($this->isImage($path)){
-            $fileName = 'image-not-found.jpg';
-            $fullFilePathTmp = resource_path('assets/images/default/default.jpg');
+        return $this->serve($request, Storage::disk('public'), ['company/']);
+    }
 
-            $mime = $this->getMime($fileName);
-            $hash = sha1($fullFilePathTmp);
-            $this->filemtime = filemtime($fullFilePathTmp);
-            $gmtMtime = gmdate('D, d M Y H:i:s', $this->filemtime) . ' GMT';
-    
-            $this->setHeader($hash, $gmtMtime);
-    
-            header("Expires: " . gmdate('D, d M Y H:i:s \G\M\T', time() + 31536000));
-            header("Content-disposition: inline; filename=" . $fileName);
-            header("Content-type: " . $mime);
-
-            exit(file_get_contents($fullFilePathTmp));
-        }else{
+    private function serve(Request $request, $disk, array $publicImagePrefixes = null)
+    {
+        $path = ltrim((string) $request->route('any', ''), '/');
+        if (!$this->isSafePath($path) || !$disk->exists($path)) {
             abort(404);
         }
+
+        $mime = $this->mimeType($disk, $path);
+        $isPublicImage = $this->hasPublicImagePrefix(
+            $path,
+            $publicImagePrefixes === null ? self::PUBLIC_IMAGE_PREFIXES : $publicImagePrefixes
+        )
+            && in_array($mime, self::INLINE_IMAGE_MIMES, true);
+
+        if (!$isPublicImage && !$this->isAuthenticated()) {
+            abort(404);
+        }
+
+        $forceDownload = $request->boolean('download') || !$isPublicImage;
+
+        return $this->streamFile($disk, $path, $mime, $forceDownload, $isPublicImage);
     }
 
-    private function isImage($path)
+    private function isSafePath($path)
     {
-        return strpos(strtolower($path),'image')!==false 
-            || strpos(strtolower($path),'.jpg')!==false 
-            || strpos(strtolower($path),'.jpeg')!==false 
-            || strpos(strtolower($path),'.gif')!==false 
-            || strpos(strtolower($path),'.png')!==false;
+        if ($path === '' || strpos($path, "\0") !== false || strpos($path, '\\') !== false) {
+            return false;
+        }
+
+        return !preg_match('#(^|/)\.{1,2}(/|$)#', $path);
     }
 
-    /**
-     * jika file dari KindEditor
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param array $segment
-     * @param string $fullFilePath
-     * @return true|string string = file not found
-     */
-    private function editor($request, $segment, $fullFilePath)
+    private function hasPublicImagePrefix($path, array $prefixes)
     {
-        $fileName = end($segment);
-        if (Storage::exists($fullFilePath)) {
-            if ($segment[1] == 'image' || $segment[1] == 'images') {
-                return $this->serverFile($fullFilePath, $fileName, $request->input('size', false));
-            } else {
-                return $this->serverDownload($fullFilePath, $fileName, $request->input('size', false));
+        foreach ($prefixes as $prefix) {
+            if (strpos($path, $prefix) === 0) {
+                return true;
             }
         }
 
-        return $this->serveNotFound($fullFilePath);
+        return false;
     }
 
-    /**
-     * Set Default Header
-     *
-     * @param string $hash ETag Hash
-     * @param string $gmtMtime File Modified Time
-     * @return void
-     */
-    private function setHeader($hash, $gmtMtime)
+    private function isAuthenticated()
     {
-        header("Cache-Control: public, max-age: 2592000");
-        header("Last-Modified: " . $gmtMtime);
-        header("ETag: " . $hash);
-        header("Accept-Ranges: bytes");
-        //header_remove("X-Powered-By");
-
-        if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
-            $d = new \DateTime($_SERVER['HTTP_IF_MODIFIED_SINCE'], new \DateTimeZone('UTC'));
-            if ($this->filemtime == $d->format('U')) {
-                header('HTTP/1.1 304 Not Modified');
-                die();
-            }
-        }
-
-        if (isset($_SERVER['HTTP_IF_NONE_MATCH'])) {
-            if ($_SERVER['HTTP_IF_NONE_MATCH'] == $hash) {
-                header('HTTP/1.1 304 Not Modified');
-                die();
-            }
-        }
-
-        if (isset($_SERVER['HTTP_IF_NONE_MATCH']) && !empty($_SERVER['HTTP_IF_NONE_MATCH'])) {
-            $tmp = explode(';', $_SERVER['HTTP_IF_NONE_MATCH']); // IE fix!
-            if (!empty($tmp[0]) && strtotime($tmp[0]) == strtotime($gmtMtime)) {
-                header('HTTP/1.1 304 Not Modified');
-                die();
-            }
-        }
-
-        //header("Content-Transfer-Encoding: binary");
-        header("Pragma: public");
+        return Auth::guard('web')->check() || Auth::guard('api')->check();
     }
 
-    /**
-     * Parse/View the file
-     *
-     * @param string $fullFilePath
-     * @param string $fileName Filename to be sent to browser
-     * @param boolean $size new resolution if image, and if given
-     * @return true|void
-     */
-    private function serverFile($fullFilePath, $fileName, $size = false)
+    private function mimeType($disk, $path)
     {
-        $fullFilePathTmp = Storage::path($fullFilePath);
-        $mime = $this->getMime($fileName);
-        $hash = sha1($fullFilePathTmp);
-        $this->filemtime = filemtime($fullFilePathTmp);
-        $gmtMtime = gmdate('D, d M Y H:i:s', $this->filemtime) . ' GMT';
-
-        $this->setHeader($hash, $gmtMtime);
-
-        header("Expires: " . gmdate('D, d M Y H:i:s \G\M\T', time() + 31536000));
-        header("Content-disposition: inline; filename=" . $fileName);
-        header("Content-type: " . $mime);
-
-        if ($size) {
-            $this->resizeImage($fullFilePath, $size);
-            return true;
-        } else {
-            exit(Storage::get($fullFilePath));
+        try {
+            return (string) $disk->mimeType($path);
+        } catch (\Throwable $e) {
+            return 'application/octet-stream';
         }
     }
 
-    /**
-     * By Pass sementara akses all tenant
-     **/
-    private function serverFileAlltenant($fullFilePath, $fileName, $size = false)
+    private function streamFile($disk, $path, $mime, $download, $isPublic)
     {
-        $fullFilePathTmp = Storage::disk('alltenant')->path($fullFilePath);
-        $mime = $this->getMime($fileName);
-        $hash = sha1($fullFilePathTmp);
-        $this->filemtime = filemtime($fullFilePathTmp);
-        $gmtMtime = gmdate('D, d M Y H:i:s', $this->filemtime) . ' GMT';
-
-        $this->setHeader($hash, $gmtMtime);
-
-        header("Expires: " . gmdate('D, d M Y H:i:s \G\M\T', time() + 31536000));
-        header("Content-disposition: inline; filename=" . $fileName);
-        header("Content-type: " . $mime);
-
-        if ($size) {
-            $this->resizeImage($fullFilePath, $size);
-            return true;
-        } else {
-            exit(Storage::disk('alltenant')->get($fullFilePath));
+        $stream = $disk->readStream($path);
+        if (!is_resource($stream)) {
+            abort(404);
         }
-    }
 
-    private function serverDownload($fullFilePath, $fileName, $size = false)
-    {
-        $fullFilePathTmp = Storage::path($fullFilePath);
-        $mime = $this->getMime($fileName);
-        $size   = filesize($fullFilePathTmp);
-        $hash = sha1($fullFilePathTmp);
-        $this->filemtime = filemtime($fullFilePathTmp);
-        $gmtMtime = gmdate('D, d M Y H:i:s', $this->filemtime) . ' GMT';
+        $fileName = preg_replace('/[^A-Za-z0-9._-]/', '_', basename($path));
+        $headers = [
+            'Content-Type' => $mime,
+            'Content-Disposition' => ($download ? 'attachment' : 'inline').'; filename="'.$fileName.'"',
+            'X-Content-Type-Options' => 'nosniff',
+            'Content-Security-Policy' => "default-src 'none'; sandbox",
+            'Cache-Control' => $isPublic
+                ? 'public, max-age=2592000, immutable'
+                : 'private, no-store, max-age=0',
+        ];
 
-        $this->setHeader($hash, $gmtMtime);
-
-        header("Expires: " . gmdate('D, d M Y H:i:s \G\M\T', time() + 31536000));
-        header("Content-disposition: attachment; filename=" . $fileName);
-        header('Content-Description: File Transfer');
-        header('Content-Type: application/octet-stream');
-        header('Content-Transfer-Encoding: binary');
-        header('Content-Length: ' . $size);
-
-        if ($size) {
-            $this->resizeImage($fullFilePath, $size);
-            return true;
-        } else {
-            exit(Storage::get($fullFilePath));
-        }
-    }
-
-    /**
-     * SOON - image dengan fungsi resize
-     */
-    private function resizeImage($fullFilePath, $size)
-    {
-        if (config('AppConfig.system.upload.size.' . $size)) {
-        }
-        exit(Storage::get($fullFilePath));
-    }
-
-    /**
-     * HELPER
-     * -------------------------------------------------------------------------
-     */
-    private $ext = array(
-        'image' => array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico'),
-        'flash' => array('swf', 'flv'),
-        'media' => array(
-            'swf', 'flv', 'mp3', 'mp4', 'wav', 'wma', 'wmv', 'mid', 'midi', 'avi',
-            'mpg', 'mpeg', 'asf', 'rm', 'rmvb'
-        ),
-        'file' => array(
-            'css', 'xml', 'doc', 'docx', 'rtf', 'pdf', 'xls', 'xlsx', 'ppt', 'pps',
-            'htm', 'html', 'txt', 'zip', 'rar', 'gz', 'bz2'
-        ),
-        'download' => array(
-            'gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', 'swf', 'flv', 'mp3', 'mp4',
-            'wav', 'wma', 'wmv', 'mid', 'midi', 'avi', 'mpg', 'mpeg', 'asf', 'rm',
-            'rmvb', 'css', 'xml', 'doc', 'docx', 'rtf', 'pdf', 'xls', 'xlsx', 'ppt',
-            'pps', 'htm', 'html', 'txt', 'zip', 'rar', 'gz', 'bz2'
-        ),
-        'fileauto' => array('brehoh')
-    );
-
-    /**
-     * Get Extension from filename
-     *
-     * @param string $filename
-     * @return string
-     */
-    private function getExt($filename)
-    {
-        $ext = strtolower(ltrim(strrchr($filename, '.'), '.'));
-        return $ext;
-    }
-
-    /**
-     * get mime by extention from filename
-     *
-     * @param string $filename
-     * @return string
-     */
-    private function getMime($filename)
-    {
-        $ext = $this->getExt($filename);
-        return $this->mime()[$ext] ?? 'application/octet-stream';
-    }
-
-    /**
-     * Get a predefined MIME Types array
-     *
-     * @return array
-     */
-    private function mime()
-    {
-        //font
-        $mime['eot'] = 'application/vnd.ms-fontobject';
-        $mime['otf'] = 'application/vnd.oasis.opendocument.formula-template';
-        $mime['ttf'] = 'text/plain';
-        $mime['svg'] = 'image/svg+xml';
-
-        //image
-        $mime['gif'] = 'image/gif';
-        $mime['jpg'] = 'image/jpeg';
-        $mime['jpeg'] = 'image/jpeg';
-        $mime['png'] = 'image/png';
-        $mime['bmp'] = 'image/bmp';
-        $mime['ico'] = 'image/x-icon';
-
-        //flash
-        $mime['swf'] = 'application/x-shockwave-flash';
-        $mime['flv'] = 'video/x-flv';
-
-        //file
-        $mime['doc'] = 'application/msword';
-        $mime['docx'] = 'application/msword';
-        $mime['rtf'] = 'application/msword';
-        $mime['pdf'] = 'application/pdf';
-        $mime['xls'] = 'application/vnd.ms-excel';
-        $mime['xlsx'] = 'application/vnd.ms-excel';
-        $mime['ppt'] = 'application/vnd.ms-powerpoint';
-        $mime['pps'] = 'application/vnd.ms-powerpoint';
-        $mime['htm'] = 'text/html';
-        $mime['html'] = 'text/html';
-        $mime['txt'] = 'text/plain';
-        $mime['zip'] = 'application/octet-stream';
-        $mime['rar'] = 'application/octet-stream';
-        $mime['gz'] = 'application/octet-stream';
-        $mime['bz2'] = 'application/octet-stream';
-
-        //media ('swf', 'flv', 'mp3', 'wav', 'wma', 'wmv', 'mid', 'avi', 'mpg', 'asf', 'rm', 'rmvb')
-        $mime['swf'] = 'application/x-shockwave-flash';
-        $mime['flv'] = 'video/x-flv';
-        $mime['mp3'] = 'audio/mpeg';
-        $mime['mp4'] = 'video/mp4';
-        $mime['wav'] = 'audio/x-wav';
-        $mime['wma'] = 'audio/x-ms-wma';
-        $mime['wmv'] = 'audio/x-ms-wmv';
-        $mime['mid'] = 'audio/midi';
-        $mime['midi'] = 'audio/midi';
-        $mime['avi'] = 'video/msvideo';
-        $mime['mpg'] = 'video/mpeg';
-        $mime['mpeg'] = 'video/mpeg';
-        $mime['asf'] = 'video/x-ms-asf';
-        $mime['rm'] = 'application/vnd.rn-realmedia';
-        $mime['rmvb'] = 'application/vnd.rn-realmedia-vbr';
-
-        //other
-        $mime['js'] = 'application/javascript';
-        $mime['css'] = 'text/css';
-        $mime['xml'] = 'application/xml';
-        $mime['php'] = 'php';
-
-        return $mime;
+        return response()->stream(function () use ($stream) {
+            fpassthru($stream);
+            fclose($stream);
+        }, 200, $headers);
     }
 }
