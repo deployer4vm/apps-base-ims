@@ -8,6 +8,16 @@ use Tests\TestCase;
 
 class StorageSecurityTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Production deployments may run this suite while the application is
+        // intentionally in maintenance mode. Bypass only that middleware so
+        // these tests still exercise the storage and authentication controls.
+        $this->withoutMiddleware(\App\Http\Middleware\CheckForMaintenanceMode::class);
+    }
+
     public function test_public_images_are_served_with_safe_headers(): void
     {
         Storage::fake('local');
